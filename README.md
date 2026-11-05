@@ -104,13 +104,13 @@ Simultaneously, retail shop owners struggle with daily store management, multi-p
 
 ---
 
-## 3. Multi-Room Isolation & System Architecture
+## 3. Multi-Room Isolation, Native Switch 0.31.0 & System Architecture
 
-MunimJi decouples shop-level intake, store operations, external vendor disputes, and CA-level regulatory oversight through strict room and tenant isolation:
+MunimJi synthesizes native Switch collaboration protocol mechanics with high-throughput worker queues and Indian commercial retail operations:
 
 ```
 +---------------------------------------------------------------------------------------------------+
-|                           SWITCH MULTI-ROOM COLLABORATION TOPOLOGY                                |
+|                        SWITCH NATIVE COLLABORATION TOPOLOGY (0.31.0)                              |
 |                                                                                                   |
 |  +-------------------------------+   +-----------------------------+   +-----------------------+  |
 |  |     Shop Room (Private)       |   | Vendor Dispute Desk (Shared)|   | CA Office Room(Shared)|  |
@@ -124,6 +124,29 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 |                  |                                                                 |              |
 |                  +-----------------------------------+-----------------------------+              |
 |                                                      |                                            |
++------------------------------------------------------|--------------------------------------------+
+                                                       v
++---------------------------------------------------------------------------------------------------+
+|                   SWITCH WEBSOCKET ADAPTER & AUDIENCE DISCLOSURE GUARD                            |
+|                                                                                                   |
+|  - Switch 0.31.0 WebSocket Client (adapters/switch_client.py) with cursor recovery and heartbeat  |
+|  - Live Member Verification (domain/services/disclosure.py) preventing cross-shop data leaks       |
+|  - Standalone FastMCP Tool Server on port 8765 (api/mcp/server.py) for read-only inspection       |
++------------------------------------------------------|--------------------------------------------+
+                                                       v
++---------------------------------------------------------------------------------------------------+
+|               POSTGRESQL SKIP LOCKED 3-LANE CONCURRENCY WORKER QUEUE                              |
+|                                                                                                   |
+|  [ Fast Lane ] Inward message fan-out and immediate room event notifications                      |
+|  [ IO Lane ]   Vision/OCR extraction, PDF rendering, and external portal calls                    |
+|  [ Slow Lane ] GSTR-2B reconciliations, 3-way bank audits, and trial balance balancing           |
++------------------------------------------------------|--------------------------------------------+
+                                                       v
++---------------------------------------------------------------------------------------------------+
+|                      9-STATE FINITE STATE MACHINE & IMMUTABLE REVISIONS                           |
+|                                                                                                   |
+|  DocumentCase -> InvoiceRevision -> FieldEvidence (immutable page and confidence audit trails)   |
+|  States: RECEIVED -> INGESTED -> VALIDATED -> VERIFIED -> DEFECTIVE -> RESOLVED -> FILED         |
 +------------------------------------------------------|--------------------------------------------+
                                                        v
 +---------------------------------------------------------------------------------------------------+
@@ -333,17 +356,79 @@ AssureFlow/
 |-- Dockerfile                          # Production container image definition
 |-- docker-compose.yml                  # PostgreSQL and API service orchestrator
 |-- requirements.txt                    # Python dependency manifest
+|-- alembic.ini                         # Database migration configuration
 |-- switch.template.yaml                # Declarative Switch agent and 3-room topology
 |-- DEMO_SCRIPT.md                      # Complete 15-beat video recording script
 |-- MUNIMJI_COMMERCIAL_ROADMAP.md       # Product roadmap & monetization strategy
 |-- MUNIMJI_ENTERPRISE_IMPLEMENTATION_PLAN.md # Enterprise architectural specification
 |-- README.md                           # Comprehensive architectural documentation
 |
+|-- adapters/                           # Switch Protocol & System Adapters
+|   |-- switch_client.py                # Switch 0.31.0 WebSocket client with ping/pong & cursor tracking
+|   |-- inbox_writer.py                 # Idempotent room event intake
+|   |-- pdf.py                          # PyMuPDF visual and text extraction
+|   |-- excel.py                        # GSTR-2B Excel spreadsheet importer
+|   |-- storage.py                      # Content-addressable sha256 blob storage
+|   |-- run.py                          # Standalone adapter daemon
+|   `-- llm.py                          # LLM provider adapter
+|
+|-- domain/                             # Core Compliance Domain & State Machine
+|   |-- models.py                       # Immutable DocumentCase, InvoiceRevision & FieldEvidence models
+|   |-- states.py                       # Strict 9-state finite state machine
+|   |-- workflow.py                     # Case lifecycle transitions & validation
+|   |-- ca_actions.py                   # Chartered Accountant action signatures
+|   `-- services/                       # Domain Services
+|       |-- intake.py                   # Extraction intake and normalization
+|       |-- checks.py                   # Rule runner & issue classification
+|       |-- cases.py                    # Case query and status aggregations
+|       |-- reconciliation.py           # 2-way & 3-way matching logic
+|       |-- snapshots.py                # Cryptographic review pack generator
+|       |-- disclosure.py               # Audience Disclosure Guard (cross-room isolation)
+|       `-- compensation.py             # Transactional superseding notices
+|
+|-- rules/                              # Deterministic Statutory GST Rules
+|   |-- registry.py                     # Rule registration & dispatch
+|   |-- gstin.py                        # ISO/IEC 7064 Mod-36 checksum
+|   |-- arithmetic.py                   # Strict integer paise arithmetic
+|   |-- routing.py                      # Simple vs serious defect triaging
+|   |-- reconcile.py                    # GSTR-2B matching rules
+|   `-- types.py                        # Rule input/output schema definitions
+|
+|-- workers/                            # Dedicated PostgreSQL 3-Lane Concurrency Queue
+|   |-- queue.py                        # FOR UPDATE SKIP LOCKED queue implementation
+|   |-- runner.py                       # Multi-lane worker runner (fast, io, slow lanes)
+|   |-- outbox.py                       # Transactional outbox pattern
+|   |-- cpu_pool.py                     # CPU-bound OCR and math task pool
+|   `-- handlers/                       # Job handlers for intake, checks, digests
+|
+|-- api/                                # Domain API & Business-Tool MCP Server
+|   |-- main.py                         # Internal domain FastAPI service
+|   |-- deps.py                         # Dependency injection & authentication
+|   |-- routers/tools.py                # Internal tools router
+|   `-- mcp/                            # Model Context Protocol
+|       `-- server.py                   # FastMCP server on port 8765
+|
+|-- agents/                             # Agent Definitions & Room Topologies
+|   `-- rooms.yaml                      # Room definitions, agent allow-lists & provisioning
+|
+|-- migrations/                         # Alembic Database Migrations
+|   |-- env.py                          # Alembic environment runner
+|   `-- versions/                       # Migration version history (P0 through P6)
+|
+|-- seed/                               # Golden Test Fixtures & Seed Data
+|   |-- loader.py                       # Golden database seeder
+|   |-- make_fixtures.py                # Fixture generation utility
+|   |-- practice.yaml                   # CA practice configuration
+|   `-- fixtures/                       # Golden synthetic invoices (F01 through F21)
+|
 |-- scripts/
 |   |-- generate_synthetic_bills.py     # Generates 18 realistic PDF & PNG invoices
 |   |-- seed_database.py                # Initializes tenants, shops, users, staff, and invoices
 |   |-- test_e2e_flow.py                # Automated dry run executing demo beats
-|   `-- demo_switch_live.py             # 1-Click interactive terminal war-room runner (15 Beats)
+|   |-- demo_switch_live.py             # 1-Click interactive terminal war-room runner (15 Beats)
+|   |-- demo_offline.py                 # Offline demo playback runner
+|   |-- acceptance.py                   # End-to-end acceptance verification
+|   `-- isolation_matrix.py             # Cross-tenant isolation verification
 |
 |-- synthetic_data/
 |   |-- bills_pdf/                      # Generated synthetic PDF tax invoices
@@ -617,7 +702,7 @@ python scripts/seed_database.py
 # 5. Run full automated end-to-end demo dry run
 python scripts/test_e2e_flow.py
 
-# 6. Run complete test suite (143 automated unit and integration tests across 35 test suites)
+# 6. Run complete test suite (176 automated unit, rule, and integration tests across 37 test suites)
 pytest
 
 # 7. Run 1-Click Interactive Terminal War-Room Playback (All 15 beats with colorized agent handoffs)
@@ -659,9 +744,42 @@ Setup Steps:
 3. Set Verify Token to: `munimji_meta_verify_token_2026` (or configure via `WHATSAPP_VERIFY_TOKEN`).
 4. Subscribe to the `messages` event field.
 
-### Option E: Docker Compose (PostgreSQL + FastAPI)
+### Option E: Docker Compose (Unified Enterprise Stack)
 ```cmd
 docker-compose up --build
+```
+This boots:
+- `db`: PostgreSQL 16 on port 5433 with user `af`.
+- `migrate`: Automatic Alembic database migration to head.
+- `api`: FastAPI domain service on port 8000.
+- `worker`: Multi-lane queue worker running fast, io, and slow lanes.
+- `adapter`: Switch 0.31.0 live room connection daemon.
+
+### Option F: Native Switch 0.31.0 Adapter & FastMCP Business Tool Server
+```cmd
+# 1. Run PostgreSQL database migrations
+alembic upgrade head
+
+# 2. Start the 3-lane worker runner
+python -m workers.runner
+
+# 3. Start the Switch WebSocket adapter
+python -m adapters.run
+
+# 4. Launch the standalone FastMCP Business-Tool Server (Port 8765)
+python -m api.mcp.server
+```
+
+### Option G: Running the Complete 176-Test Verification Suite
+```cmd
+# Run core MunimJi unit, integration, and operational test suites (143 tests)
+pytest tests --ignore=tests/offline -q
+
+# Run golden statutory rule and offline fixture test suites (33 tests)
+pytest tests/offline -q
+
+# Or run the entire combined test suite in one command
+pytest
 ```
 
 ---
@@ -677,8 +795,9 @@ MunimJi never submits filings directly to the GST Network portal. The AI agents 
 ### Track 1: Best Business Workflow ($2,000 USD)
 - **Problem Solved:** Overcomes the monthly GST crunch, informal receipt leakage, supplier default under Rule 37A, inventory spoilage, and manual payroll math for India's 63M+ MSMEs.
 - **Workflow Orchestration:** Connects 3 isolated Switch rooms (`shop-sharma-kirana`, `ca-office`, `vendor-dispute-desk`) across 7 specialized autonomous agents with multi-party dispute loops and deterministic verification.
+- **Switch Native Collaboration:** Full Switch 0.31.0 WebSocket protocol with live member checking, heartbeat pings/pongs, and cursor recovery.
 - **Deterministic Code Checks:** Zero hallucinations in tax calculations; check-digit validation, 3-way reconciliation, double-entry ledger balancing, and statutory EPF/ESIC payroll deduction formulas run exclusively on deterministic Python code.
-- **Enterprise-Ready:** Full JWT authentication, bcrypt hashing, multi-tenant database schema, role-based access control, and 138 automated tests.
+- **Enterprise-Ready:** Full JWT authentication, bcrypt hashing, multi-tenant database schema, role-based access control, dedicated 3-lane worker queue, and 176 automated tests.
 
 ### Sponsored Track: Code with Wispr Voice Track ($500 USD)
 - **Hands-Busy Floor Utility:** Solves the physical bottleneck of kirana and warehouse workers who cannot type on computers while unloading inventory or serving counter customers.
