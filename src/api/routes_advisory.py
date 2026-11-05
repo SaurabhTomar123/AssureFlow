@@ -71,3 +71,4 @@ def get_blocked_itc_warnings(shop_id: str, db: Session = Depends(get_db)):
         "shop_id": shop_id,
         "blocked_itc_items": detect_blocked_itc_section_17_5(shop_id, db),
     }
+

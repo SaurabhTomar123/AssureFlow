@@ -32,3 +32,4 @@ def test_get_accounts_book_seeded_shop(db_session):
     assert breakdown["operating_expenses"] > 0.0
 
     assert len(book["entries"]) == book["entry_count"]
+

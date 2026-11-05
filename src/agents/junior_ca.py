@@ -114,3 +114,4 @@ class JuniorCAAgent:
             f"Estimated Tax Savings: ~INR {analysis['estimated_tax_saved_30pct']:,.2f}\n\n"
             f"Junior CA Advisory: {analysis['recommendation']}"
         )
+

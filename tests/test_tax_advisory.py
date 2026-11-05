@@ -59,3 +59,4 @@ def test_proprietor_tax_savings_plan():
     assert "Section 80C" in sections
     assert "Section 80D" in sections
     assert "Section 80CCD(1B)" in sections
+

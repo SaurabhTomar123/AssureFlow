@@ -64,3 +64,4 @@ def test_telegram_bot_process_tax_savings_command():
     events = bot.process_update(update)
     assert len(events) >= 1
     assert any("Section 32" in e["text"] for e in events)
+

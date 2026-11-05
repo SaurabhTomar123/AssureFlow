@@ -39,3 +39,4 @@ def test_api_blocked_itc():
     data = response.json()
     assert data["shop_id"] == "shop-sharma-kirana"
     assert "blocked_itc_items" in data
+

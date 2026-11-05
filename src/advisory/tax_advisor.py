@@ -182,3 +182,4 @@ def generate_proprietor_tax_savings_plan(
         "total_potential_annual_tax_saved": round(total_potential_savings, 2),
         "advice_items": advice_items,
     }
+
