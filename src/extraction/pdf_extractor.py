@@ -20,3 +20,4 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 def is_scanned_pdf(pdf_path: str) -> bool:
     text = extract_text_from_pdf(pdf_path)
     return len(text.strip()) < 30
+

@@ -5,6 +5,7 @@ from src.agents.bill_reader import BillReaderAgent
 from src.agents.gst_checker import GSTCheckerAgent
 from src.agents.follow_up import FollowUpAgent
 from src.agents.return_preparer import ReturnPreparerAgent
+from src.agents.junior_ca import JuniorCAAgent
 
 
 class SwitchWebhookRouter:
@@ -13,6 +14,7 @@ class SwitchWebhookRouter:
         self.gst_checker = GSTCheckerAgent()
         self.follow_up = FollowUpAgent()
         self.return_preparer = ReturnPreparerAgent()
+        self.junior_ca = JuniorCAAgent()
 
     def handle_message(
         self,
@@ -94,6 +96,38 @@ class SwitchWebhookRouter:
                         "room": room_name,
                         "sender": "follow-up",
                         "text": f"Shop Status for {shop.name}:\nTotal Bills Sent: {len(bills)}\nClean: {clean_c}\nPending/Flagged: {flagged_c}",
+                    })
+
+                elif any(cmd in text.strip().lower() for cmd in ["/khata", "/accounts", "khata", "accounts"]):
+                    lang = "hi" if any(w in text.lower() for w in ["dikhao", "batao", "mera", "kya"]) else "en"
+                    khata_text = self.junior_ca.handle_khata_request(shop.id, db, language=lang)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "junior-ca",
+                        "text": khata_text,
+                    })
+
+                elif any(cmd in text.strip().lower() for cmd in ["/tax_savings", "/savings", "tax bachat", "tax save"]):
+                    lang = "hi" if any(w in text.lower() for w in ["kaise", "bachayein", "batao", "salah"]) else "en"
+                    savings_text = self.junior_ca.handle_tax_savings_request(shop.id, db, language=lang)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "junior-ca",
+                        "text": savings_text,
+                    })
+
+                elif text.strip().startswith("/presumptive"):
+                    parts = text.strip().split()
+                    turnover = float(parts[1]) if len(parts) > 1 else 5000000.0
+                    digital_pct = float(parts[2]) if len(parts) > 2 else 80.0
+                    presump_text = self.junior_ca.handle_presumptive_tax_request(
+                        annual_turnover=turnover,
+                        digital_pct=digital_pct,
+                    )
+                    responses.append({
+                        "room": room_name,
+                        "sender": "junior-ca",
+                        "text": presump_text,
                     })
 
             elif room_name == "ca-office":
@@ -194,3 +228,4 @@ class SwitchWebhookRouter:
             return responses
         finally:
             db.close()
+

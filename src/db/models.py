@@ -99,3 +99,23 @@ class ComplianceIssueModel(Base):
 
     bill = relationship("Bill", back_populates="issues")
     shop = relationship("Shop", back_populates="issues")
+
+
+class LedgerEntry(Base):
+    __tablename__ = "ledger_entries"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    bill_id = Column(String(36), ForeignKey("bills.id"), nullable=True)
+
+    category = Column(String(64), nullable=False)
+    description = Column(String(255), nullable=False)
+    amount = Column(Float, default=0.0)
+    tax_amount = Column(Float, default=0.0)
+    total_outflow = Column(Float, default=0.0)
+    entry_date = Column(String(32), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shop = relationship("Shop")
+    bill = relationship("Bill")
+

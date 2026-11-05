@@ -35,3 +35,4 @@ def test_generate_valid_gstin():
 def test_validate_gstin_checksum_invalid_lengths():
     assert validate_gstin_checksum("SHORT") is False
     assert validate_gstin_checksum("1234567890123456") is False
+

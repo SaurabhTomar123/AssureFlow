@@ -53,3 +53,4 @@ class FollowUpAgent:
             f"Bills submitted this month: {bills_submitted} (compared to ~{last_month_bills} last month).\n"
             f"Please drop your remaining purchase invoices into this group today."
         )
+

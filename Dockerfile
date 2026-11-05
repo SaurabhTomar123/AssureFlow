@@ -22,3 +22,4 @@ RUN python scripts/seed_database.py || true
 EXPOSE 8000
 
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

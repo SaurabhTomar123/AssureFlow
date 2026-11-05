@@ -65,3 +65,4 @@ def test_ground_truth_expected_issues():
             "supplier_gstin": record["supplier_gstin"],
             "bill_number": record["invoice_number"],
         })
+

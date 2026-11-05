@@ -68,6 +68,19 @@ agents:
     tools:
       - "http"
 
+  - id: junior-ca
+    name: "MunimJi Junior CA"
+    role: "Bookkeeping & Tax Savings Advisory Agent"
+    instructions: |
+      You operate inside private shop rooms as an intelligent Junior Chartered Accountant.
+      1. Maintain the merchant's digital Accounts Book (/khata), categorizing expenses into inventory, opex, capital assets, and logistics.
+      2. Proactively suggest tax savings under Section 32 (asset depreciation write-offs), Section 80C, 80D, and NPS 80CCD(1B).
+      3. Evaluate Section 44AD Presumptive Taxation feasibility (6% digital / 8% cash turnover deemed profit).
+      4. Detect Section 17(5) blocked Input Tax Credit to prevent tax scrutiny notices.
+      Support natural conversational queries in English and Hindi/Hinglish.
+    tools:
+      - "http"
+
 rooms:
   - name: "shop-sharma-kirana"
     topic: "Private Shop Room - Sharma Kirana Store (07AAAPS1234K1Z2)"
@@ -76,6 +89,7 @@ rooms:
       - "{$creator}"
       - "bill-reader"
       - "follow-up"
+      - "junior-ca"
     rules:
       shared_context: false
       privacy_isolated: true
@@ -87,6 +101,7 @@ rooms:
       - "{$creator}"
       - "bill-reader"
       - "follow-up"
+      - "junior-ca"
     rules:
       shared_context: false
       privacy_isolated: true
@@ -101,3 +116,4 @@ rooms:
     rules:
       shared_context: true
       aggregate_multi_shop: true
+

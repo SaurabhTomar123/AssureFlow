@@ -67,3 +67,4 @@ def test_switch_ca_commands():
     )
     assert len(events_ask) == 1
     assert "Supplier Inquiry Notice Drafted" in events_ask[0]["text"]
+

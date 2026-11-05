@@ -104,3 +104,4 @@ def test_return_preparer_ca_alert_and_summary():
     })
     assert "Clean Invoices Ready for Filing: 14" in summary_msg
     assert "Total Eligible ITC: INR 13000.00" in summary_msg
+

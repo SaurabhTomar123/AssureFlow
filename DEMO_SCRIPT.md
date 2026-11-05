@@ -73,7 +73,33 @@ This script outlines the exact sequence for recording the hackathon demo video (
 
 ---
 
-## Beat 7: Architecture & Conclusion (2:40 - 3:00)
+## Beat 7: Junior CA Accounts Book & Khata Ledger (2:25 - 2:40)
+- **Visual:** Back in `shop-sharma-kirana`, owner types `/khata`.
+- **Action:**
+  - `junior-ca` agent immediately returns the shop's accounts book:
+    - Total Cash Outflow: INR 1,24,246.00
+    - Inventory Mal Kharid: INR 48,400.00
+    - Operating Expenses: INR 51,400.00
+    - Capital Equipment: INR 9,000.00
+- **Narrator Voiceover:**
+  > "MunimJi is also your merchant's daily bookkeeper. Typing /khata categorizes purchases into resale inventory, shop operating expenses, and capital equipment in seconds."
+
+---
+
+## Beat 8: Junior CA Tax Savings & 44AD Optimization (2:40 - 2:55)
+- **Visual:** Owner types `/tax_savings` and `/presumptive 6000000 85`.
+- **Action:**
+  - `junior-ca` suggests:
+    - Write off INR 1,350 depreciation on shop equipment under Section 32.
+    - Personal tax deductions under Section 80C, 80D (health insurance), and NPS 80CCD(1B).
+    - Recommends Section 44AD Presumptive Taxation (saving ~INR 1,02,600 on 85% digital turnover with exemption from Section 44AB audits).
+- **Narrator Voiceover:**
+  > "Like a true Junior CA, MunimJi actively suggests tax deductions—from Section 32 asset depreciation to Section 44AD presumptive tax savings—putting money back in small business pockets."
+
+---
+
+## Beat 9: Architecture & Conclusion (2:55 - 3:00)
 - **Visual:** Display architecture slide highlighting Switch rooms, agent isolation, and core rule.
 - **Narrator Voiceover:**
-  > "MunimJi is built on Switch: private rooms per shop ensure complete confidentiality, while shared rooms give CAs cross-client superpowers. AI reads, code checks, human decides. Thank you!"
+  > "MunimJi is powered by Switch: private rooms per shop ensure complete confidentiality, while shared rooms give CAs cross-client superpowers. AI reads and advises, code checks, human decides. Thank you!"
+

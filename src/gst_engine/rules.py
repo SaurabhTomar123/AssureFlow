@@ -142,3 +142,4 @@ def check_duplicate_bill(
             return True, bill.get("id")
 
     return False, None
+

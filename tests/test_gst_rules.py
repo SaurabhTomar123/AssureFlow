@@ -161,3 +161,4 @@ def test_validator_coordinator():
     interstate_err_bill["supplier_gstin"] = generate_valid_gstin("27", "MUMBA1234M")
     issues = validate_bill_compliance(interstate_err_bill, buyer_gstin=buyer)
     assert any(i.issue_type == "WRONG_TAX_TYPE" and i.severity == "serious" for i in issues)
+

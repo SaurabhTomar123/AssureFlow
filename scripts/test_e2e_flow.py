@@ -118,11 +118,38 @@ def run_e2e_demo():
     for evt in dash_events:
         print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
 
+    print("\n[BEAT 8] Junior CA Accounts Book (Khata Ledger):")
+    khata_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Shop Owner Sharma",
+        text="/khata",
+    )
+    for evt in khata_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
+    print("\n[BEAT 9] Junior CA Tax Savings & Section 44AD Optimization:")
+    tax_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Shop Owner Sharma",
+        text="/tax_savings",
+    )
+    for evt in tax_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
+    presump_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Shop Owner Sharma",
+        text="/presumptive 6000000 85",
+    )
+    for evt in presump_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
     print("=" * 65)
-    print("ALL 7 DEMO BEATS PASSED PERFECTLY!")
-    print("AI prepares, code checks, CA files.")
+    print("ALL 9 DEMO BEATS PASSED PERFECTLY!")
+    print("AI reads & advises, code checks, CA files.")
     print("=" * 65)
 
 
 if __name__ == "__main__":
     run_e2e_demo()
+

@@ -41,3 +41,4 @@ def generate_valid_gstin(state_code: str, pan: str, entity_num: str = "1") -> st
     base = f"{state_code}{pan}{entity_num}Z"
     check_digit = calculate_gstin_check_digit(base)
     return f"{base}{check_digit}"
+

@@ -35,3 +35,4 @@ class GSTCheckerAgent:
             "simple_issues": [i.to_dict() for i in simple_issues],
             "serious_issues": [i.to_dict() for i in serious_issues],
         }
+
