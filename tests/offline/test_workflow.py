@@ -172,13 +172,6 @@ def test_resolvable_issue_and_non_resolvable_issue(h: Harness) -> None:
     assert h.case(bad).status == "needs_resolution"
 
 
-def test_deferred_actions_say_not_available(h: Harness) -> None:
-    ref = h.ingest("F09_total_mismatch")
-    rr = h.open_rr(ref)
-    h.event("ca", "ca", f"{rr} override accepted by CA")
-    assert "not available in this release" in h.last("ca")
-
-
 def test_unsupported_document_is_held_for_ca(h: Harness) -> None:
     ref = h.ingest("F15_credit_note")
     assert h.case(ref).status == "needs_resolution"

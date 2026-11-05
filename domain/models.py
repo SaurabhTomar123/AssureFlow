@@ -120,6 +120,7 @@ class ChatIdentity(Base):
     practice_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("practices.id"))
     platform: Mapped[str] = mapped_column(String(32))
     platform_user_id: Mapped[str] = mapped_column(String(255))
+    chat_username: Mapped[str | None] = mapped_column(String(120), nullable=True)
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"))
     verified_at: Mapped[datetime] = ts()
     revoked_at: Mapped[datetime | None] = ts(nullable=True)
@@ -246,7 +247,7 @@ class ExecutionGrant(Base):
         *shop_fk(),
         CheckConstraint(
             "operation IN ('preserve_document','extract_generation','run_checks','notify',"
-            "'build_snapshot','build_export','import_statement','reconcile')",
+            "'build_snapshot','build_export','import_statement','reconcile','run_acceptance')",
             name="execution_grants_operation_check",
         ),
         {"info": {"phase": "P0"}},
@@ -310,6 +311,8 @@ class Document(Base):
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     page_count: Mapped[int] = mapped_column(Integer)
     storage_key: Mapped[str] = mapped_column(String(512))
+    page_from: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    page_to: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = ts()
 
 
@@ -887,6 +890,42 @@ class ReconciliationResult(Base):
     differences: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
 
 
+# --------------------------------------------------------------------------------------------- P5
+
+
+class TestRun(Base):
+    """Acceptance runs started from the synthetic testing room (append-only)."""
+
+    __tablename__ = "test_runs"
+    __table_args__ = ({"info": {"phase": "P5"}},)
+    __test__ = False
+    run_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    environment: Mapped[str] = mapped_column(String(16))
+    mode: Mapped[str] = mapped_column(String(16))
+    switch_versions: Mapped[str] = mapped_column(String(64))
+    app_commit: Mapped[str] = mapped_column(String(64))
+    fixture_version: Mapped[str] = mapped_column(String(32))
+    started_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    assertions: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    failures: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    artifact_refs: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    report_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = ts()
+
+
+class DigestRun(Base):
+    """One scheduled digest per room per local date; drives stop rules and escalation."""
+
+    __tablename__ = "digest_runs"
+    __table_args__ = (UniqueConstraint("room_binding_id", "local_date"), {"info": {"phase": "P5"}})
+    id: Mapped[uuid.UUID] = pk()
+    room_binding_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("room_bindings.id"))
+    local_date: Mapped[str] = mapped_column(String(10))
+    items: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    escalated: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    created_at: Mapped[datetime] = ts()
+
+
 APPEND_ONLY_TABLES = (
     "documents",
     "field_evidence",
@@ -897,6 +936,7 @@ APPEND_ONLY_TABLES = (
     "statements",
     "statement_lines",
     "reconciliation_results",
+    "test_runs",
 )
 
 

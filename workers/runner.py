@@ -18,6 +18,7 @@ from workers.queue import LeasedJob, fail, heartbeat, lease_one
 
 log = get_logger("runner")
 IDLE_SLEEP = 0.5
+DIGEST_CHECK_SECONDS = 60
 
 
 def run_job(job: LeasedJob) -> str:
@@ -58,6 +59,17 @@ def lane_loop(lane: str, slot: int, stop: threading.Event) -> None:
         run_job(job)
 
 
+def digest_loop(stop: threading.Event) -> None:
+    """Every minute, enqueue today's digests that are due (idempotent per room per day)."""
+    from common.db import transaction
+    from domain.services.digests import schedule_due
+
+    while not stop.is_set():
+        with transaction() as s:
+            schedule_due(s)
+        stop.wait(DIGEST_CHECK_SECONDS)
+
+
 def outbox_loop(stop: threading.Event) -> None:
     while not stop.is_set():
         if dispatch_once() == 0:
@@ -82,7 +94,10 @@ def main() -> None:
     settings = get_settings()
     configure_logging()
     stop = threading.Event()
-    threads = [threading.Thread(target=outbox_loop, args=(stop,), daemon=True)]
+    threads = [
+        threading.Thread(target=outbox_loop, args=(stop,), daemon=True),
+        threading.Thread(target=digest_loop, args=(stop,), daemon=True),
+    ]
     for lane, slots in (
         ("fast", settings.WORKER_FAST_SLOTS),
         ("io", settings.WORKER_IO_SLOTS),

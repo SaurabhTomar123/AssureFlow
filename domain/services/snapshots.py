@@ -32,6 +32,7 @@ from domain.models import (
 )
 from domain.periods import Readiness, readiness, why_held
 from domain.scope import is_assigned_ca
+from domain.services import compensation
 from domain.services import messages as msg
 from domain.services.base import UNASSIGNED, period_version, post, room_for_shop
 from domain.services.cases import duplicate_key
@@ -221,6 +222,7 @@ def build_snapshot(s: Session, shop: Shop, period: str, correlation_id: str) -> 
         )
     ).scalars():
         old.status = "superseded"
+        compensation.snapshot_superseded(s, old, "rebuilt", correlation_id)
     snap = Snapshot(
         practice_id=shop.practice_id,
         shop_id=shop.id,
@@ -314,6 +316,7 @@ def approve_snapshot(
     u_now = period_version(s, snap.shop_id, UNASSIGNED, lock=True)
     if (p_now, u_now) != (snap.period_version, snap.unassigned_version):
         snap.status = "stale"
+        compensation.snapshot_superseded(s, snap, "stale", ctx.request_id)
         shop = s.get(Shop, snap.shop_id)
         assert shop is not None
         grant = issue_grant(
@@ -351,6 +354,7 @@ def approve_snapshot(
         )
     ).scalars():
         old.status, old.superseded_by = "superseded", snap.id
+        compensation.snapshot_superseded(s, old, "approved_newer", ctx.request_id)
     snap.status = "approved"
     snap.approved_by = ctx.verified_user_id
     snap.approved_at = utcnow()

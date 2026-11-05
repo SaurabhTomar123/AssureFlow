@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from common.errors import Forbidden, NotAvailable, NotFound, StaleRevision, ValidationFailed
+from common.errors import Forbidden, NotFound, StaleRevision, ValidationFailed
 from domain import states as st
 from domain.context import require_live_context, revoke_grants
 from domain.models import (
@@ -28,9 +28,16 @@ from domain.scope import is_assigned_ca
 from domain.services import messages as msg
 from domain.services.base import audit, case_event, post, room_for_shop
 from domain.services.cases import Exec, current_revision, release_duplicate_key
-from domain.services.checks import latest_run, open_issues, open_review_request
-from domain.workflow import Event
-from rules import routing
+from domain.services.checks import (
+    evaluate,
+    latest_run,
+    open_issues,
+    open_review_request,
+    record_check_run,
+    route_issues,
+)
+from domain.workflow import Command, Event
+from rules import registry, routing
 
 ACTIONS = (
     "include",
@@ -38,8 +45,8 @@ ACTIONS = (
     "resolve_issue",
     "request_owner_clarification",
     "request_supplier_replacement",
+    "include_with_override",
 )
-DEFERRED = ("include_with_override", "reopen")
 
 
 @dataclass
@@ -146,8 +153,8 @@ def _transition(
 def perform(
     s: Session, ctx: RequestContext, rr_ref: str, action: str, arg: str | None, reason: str | None
 ) -> ActionResult:
-    if action in DEFERRED:
-        raise NotAvailable(f"'{action.replace('_', ' ')}' is deferred in the hackathon release.")
+    if action == "reopen":
+        raise ValidationFailed("Reopen names the case, not a review request: `reopen INV-0001 <reason>`.")
     if action not in ACTIONS:
         raise ValidationFailed(f"Unknown action '{action}'.")
     rr, case = _bind(s, ctx, rr_ref)
@@ -163,6 +170,35 @@ def perform(
         rr.status = "decided"
         _transition(s, ctx, case, "ca_include", {"review_request": rr.public_ref})
         reply = f"{case.case_ref} included. It will count in the monthly pack."
+    elif action == "include_with_override":
+        if not arg or not reason:
+            raise ValidationFailed("Use `RR-0001 override <RULE-ID>[,<RULE-ID>] <reason>`.")
+        named = {r.strip().upper() for r in arg.split(",") if r.strip()}
+        blocking = [i for i in open_issues(s, case) if i.blocking]
+        uncovered = sorted(i.rule_id for i in blocking if i.rule_id.upper() not in named)
+        if uncovered:
+            raise ValidationFailed(
+                f"Name every blocking issue to override; still open: {', '.join(uncovered)}."
+            )
+        for issue in blocking:
+            rule = registry.BY_ID.get(issue.rule_id)
+            if rule is None or not rule.overridable:
+                raise Forbidden(
+                    f"{issue.rule_id} ({issue.category}) is never overridable: arithmetic, GSTIN structure, "
+                    "exact duplicates and unsupported documents need a correction or an exclusion."
+                )
+        st.target(case.status, "ca_include_with_override")
+        for issue in blocking:
+            _decide(s, ctx, rr, case, "include_with_override", reason, issue)
+            issue.status, issue.disposition, issue.updated_at = "resolved", "override", utcnow()
+        rr.status = "decided"
+        _transition(
+            s, ctx, case, "ca_include_with_override", {"review_request": rr.public_ref, "override": arg}
+        )
+        reply = (
+            f"{case.case_ref} included with an override of {', '.join(sorted(named))} ({reason}). "
+            "The override is listed in the export."
+        )
     elif action == "exclude":
         if not reason:
             raise ValidationFailed("Exclude needs a reason, e.g. `RR-0001 exclude duplicate of INV-0002`.")
@@ -277,6 +313,50 @@ def perform(
             )
         reply = f"{case.case_ref} is now waiting for the supplier. The owner has a draft request to send."
     return ActionResult(reply=f"{rr.public_ref}: {reply}", case_ref=case.case_ref)
+
+
+def reopen(s: Session, ctx: RequestContext, case_ref: str, reason: str | None) -> ActionResult:
+    """excluded -> needs_resolution; the issues are re-raised by a new check run (CA action model)."""
+    require_live_context(ctx)
+    if not reason:
+        raise ValidationFailed("Reopen needs a reason: `reopen INV-0001 <reason>`.")
+    case = s.execute(
+        select(Invoice)
+        .where(Invoice.practice_id == ctx.practice_id, Invoice.case_ref == case_ref.upper())
+        .with_for_update()
+    ).scalar_one_or_none()
+    if case is None:
+        raise NotFound(f"No case {case_ref}.")
+    if not is_assigned_ca(s, ctx.verified_user_id, case.shop_id):
+        raise Forbidden("Only the CA assigned to this shop can reopen its cases.")
+    st.target(case.status, "ca_reopen")
+    rr = s.execute(
+        select(ReviewRequest)
+        .where(ReviewRequest.invoice_id == case.id)
+        .order_by(ReviewRequest.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    rev = current_revision(s, case)
+    if rr is None or rev is None or rev.status != "confirmed":
+        raise ValidationFailed(
+            f"{case.case_ref} has no confirmed revision to reopen; ask the owner to confirm it."
+        )
+    _decide(s, ctx, rr, case, "reopen", reason)
+    _transition(s, ctx, case, "ca_reopen", {"reason": reason})
+    Exec(s, case, ctx.request_id, context=ctx)._claim_duplicate_key(Command("claim_duplicate_key"))
+    results, inputs_hash, results_hash = evaluate(s, case, rev)
+    _, blocking, _ = record_check_run(s, case, rev, results, inputs_hash, results_hash)
+    if blocking:
+        route_issues(s, case, ctx.request_id)
+        open_review_request(s, case, ctx.request_id)
+        state = "needs resolution"
+    else:
+        _transition(s, ctx, case, "issues_resolved", {"reason": "reopened, checks clean"})
+        open_review_request(s, case, ctx.request_id)
+        state = "ready for CA"
+    return ActionResult(
+        reply=f"{case.case_ref} reopened ({reason}); checks re-ran, now {state}.", case_ref=case.case_ref
+    )
 
 
 def ambiguous_reply() -> str:

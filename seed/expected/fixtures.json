@@ -319,5 +319,14 @@
    "taxable": "1500.00",
    "total": "1770.00"
   }
+ },
+ "F21_two_invoices": {
+  "expected_non_pass": {},
+  "file": "F21_two_invoices.pdf",
+  "kind": "pdf",
+  "note": "two invoices in one file: split per page",
+  "sha256": "fd5b8b57f8aa0e8d54cf58ae244fdeea6c92c643efae9d8e784c5768127535c9",
+  "shop": "sharma",
+  "totals": {}
  }
 }

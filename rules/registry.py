@@ -62,7 +62,7 @@ RULES: tuple[RuleDef, ...] = (
     RuleDef(
         "R-PART-01", 1, "particulars", True, "CGST Rules r.46", "Required particulars", checks.particulars
     ),
-    RuleDef("R-DUP-01", 1, "duplicate", True, "Duplicate key", "Exact duplicate", checks.exact_duplicate),
+    RuleDef("R-DUP-01", 1, "duplicate", False, "Duplicate key", "Exact duplicate", checks.exact_duplicate),
     RuleDef("R-DUP-02", 1, "duplicate", True, "Similarity", "Suspected duplicate", checks.similar_duplicate),
 )
 

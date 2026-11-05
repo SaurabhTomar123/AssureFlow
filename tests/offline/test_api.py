@@ -22,6 +22,7 @@ TOKENS = {
     "tok-sharma": {"agent": "assure-flow", "rooms": ["af-shop-sharma"]},
     "tok-ca": {"agent": "assure-flow", "rooms": ["af-ca-review"]},
     "tok-gupta": {"agent": "assure-flow", "rooms": ["af-shop-gupta"]},
+    "tok-other": {"agent": "assure-flow", "rooms": ["zz-shop-other"]},
 }
 
 
@@ -62,47 +63,118 @@ def H(token: str, ctx: str, key: str | None = None) -> dict[str, str]:
     return headers
 
 
-def test_scoped_reads_and_cross_shop_isolation_matrix(h: Harness, client: TestClient) -> None:
+SHARMA_MARKERS = ("INV-0001", "Sharma", "R-0001", "SN-0001", "RR-0001")
+ROOM_SCOPED = ("/status", "/directory", "/handoffs/pending", "/ops/health", "/ops/failed-jobs", "/context")
+
+
+def other_practice_context() -> str:
+    """A second practice with its own shop, owner and room: nothing of practice one may be reachable."""
+    from rules.gstin import make_gstin
+
+    with transaction() as s:
+        practice = m.Practice(name="Other practice (synthetic)")
+        s.add(practice)
+        s.flush()
+        shop = m.Shop(
+            practice_id=practice.id,
+            code="other",
+            name="Other Store",
+            state_code="07",
+            gstin=make_gstin("07", "OTHER5555Q"),
+        )
+        user = m.User(practice_id=practice.id, handle="owner.other", display_name="Other", role="owner")
+        s.add_all([shop, user])
+        s.flush()
+        s.add(m.ShopMembership(user_id=user.id, shop_id=shop.id))
+        tools = sorted({r for r in TOOL_NAMES})
+        room = m.RoomBinding(
+            environment="test",
+            practice_id=practice.id,
+            name="zz-shop-other",
+            switch_room_id="unbound:zz-shop-other",
+            purpose="shop_intake",
+            config_version="1",
+            agent_roles_and_tools={"assure-flow": {"tools": tools}},
+        )
+        s.add(room)
+        s.flush()
+        s.add(m.RoomBindingShop(room_binding_id=room.id, shop_id=shop.id))
+        s.flush()
+    return ctx_for("zz-shop-other", "owner.other")
+
+
+TOOL_NAMES = (
+    "get_request_context",
+    "get_receipt_status",
+    "get_case",
+    "get_status",
+    "get_check_results",
+    "explain_issue",
+    "request_clarification",
+    "draft_supplier_request",
+    "list_pending_handoffs",
+    "get_period_readiness",
+    "request_snapshot",
+    "get_snapshot_manifest",
+    "list_directory",
+    "get_health",
+    "list_failed_jobs",
+    "describe_job",
+)
+
+
+def test_isolation_matrix_every_route_other_shop_and_other_practice(h: Harness, client: TestClient) -> None:
     ref = h.ingest("F01_clean_intrastate_5pct")
+    h.ingest("F08_wrong_tax_type")
     h.event("ca", "ca", f"{h.open_rr(ref)} include")
     h.event("ca", "ca", "snapshot sharma 2026-11")
     with transaction() as s:
         art = s.execute(select(m.Artifact)).scalars().first()
-        job = s.execute(select(m.Job).where(m.Job.type == "fetch_and_store")).scalar_one()
+        job = s.execute(select(m.Job).where(m.Job.type == "fetch_and_store")).scalars().first()
     sharma = ctx_for("af-shop-sharma", "owner.sharma")
     assert client.get(f"/invoices/{ref}", headers=H("tok-sharma", sharma)).json()["status"] == "approved"
-
-    gupta = ctx_for("af-shop-gupta", "owner.gupta")
-    targets = {
-        "/invoices/{ref}": f"/invoices/{ref}",
-        "/invoices/{ref}/checks": f"/invoices/{ref}/checks",
-        "/receipts/{ref}": "/receipts/R-0001",
-        "/shops/{code}/periods/{period}/readiness": "/shops/sharma/periods/2026-11/readiness",
-        "/snapshots/{ref}/manifest": "/snapshots/SN-0001/manifest",
-        "/artifacts/{artifact_id}/download": f"/artifacts/{art.id if art else uuid.uuid4()}/download",
-        "/jobs/{job_id}": f"/jobs/{job.id}",
+    fill = {
+        "{ref}": ref,
+        "{rule_id}": "R-TAX-01",
+        "{code}": "sharma",
+        "{period}": "2026-11",
+        "{artifact_id}": str(art.id if art else uuid.uuid4()),
+        "{job_id}": str(job.id if job else uuid.uuid4()),
+        "{prefix}": str(job.id)[:8] if job else "deadbeef",
     }
-    paths = app.openapi()["paths"]
-    for template, methods in paths.items():
-        if template in ("/healthz", "/readyz", "/context"):
-            continue
-        for method in methods:
-            if method == "get":
-                url = targets[template]
-                resp = client.get(url, headers=H("tok-gupta", gupta))
-            else:
-                url = (
-                    template.replace("{code}", "sharma")
-                    .replace("{period}", "2026-11")
-                    .replace("{ref}", "RR-0001")
-                )
-                resp = client.post(
-                    url,
-                    json={"action": "include"} if "decisions" in url else {},
-                    headers=H("tok-gupta", gupta, key=uuid.uuid4().hex),
-                )
-            assert resp.status_code in (403, 404), (template, method, resp.status_code)
-            assert "error" in resp.json()
+    special = {
+        "/receipts/{ref}": "/receipts/R-0001",
+        "/snapshots/{ref}/manifest": "/snapshots/SN-0001/manifest",
+        "/review-requests/{ref}/decisions": "/review-requests/RR-0001/decisions",
+    }
+    bodies = {"decisions": {"action": "include"}, "clarifications": {"question": "x?"}}
+    contexts = {
+        "other shop": ("tok-gupta", ctx_for("af-shop-gupta", "owner.gupta")),
+        "other practice": ("tok-other", other_practice_context()),
+    }
+    checked = 0
+    for label, (token, ctx) in contexts.items():
+        for template, methods in app.openapi()["paths"].items():
+            if template in ("/healthz", "/readyz"):
+                continue
+            url = special.get(template, template)
+            for key, value in fill.items():
+                url = url.replace(key, value)
+            for method in methods:
+                if method == "get":
+                    resp = client.get(url, headers=H(token, ctx))
+                else:
+                    body = next((b for k, b in bodies.items() if k in url), {})
+                    resp = client.post(url, json=body, headers=H(token, ctx, key=uuid.uuid4().hex))
+                checked += 1
+                if template in ROOM_SCOPED and resp.status_code == 200:
+                    leaked = [mk for mk in SHARMA_MARKERS if mk in resp.text]
+                    assert not leaked, (label, template, leaked)
+                else:
+                    assert resp.status_code in (403, 404), (label, template, method, resp.status_code)
+                    assert "error" in resp.json()
+    routes = sum(len(ms) for tpl, ms in app.openapi()["paths"].items() if tpl not in ("/healthz", "/readyz"))
+    assert checked == routes * len(contexts) and routes >= 19
     # The shop room's agent token cannot be replayed with a CA-room context.
     ca = ctx_for("af-ca-review", "ca.mehta")
     assert client.get(f"/invoices/{ref}", headers=H("tok-sharma", ca)).status_code == 403

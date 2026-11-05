@@ -23,7 +23,9 @@ from domain.models import (
     CheckResult,
     ExecutionGrant,
     FieldEvidence,
+    Handoff,
     Invoice,
+    Issue,
     Job,
     Receipt,
     Shop,
@@ -31,6 +33,8 @@ from domain.models import (
 )
 from domain.periods import parse_period, readiness, why_held
 from domain.scope import can_read_shop, is_assigned_ca
+from domain.services import operations as ops
+from domain.services.base import post, room_for_shop
 from domain.services.cases import current_revision
 from domain.services.checks import latest_run
 from domain.services.snapshots import request_snapshot
@@ -243,3 +247,146 @@ def get_job(job_id: uuid.UUID, c: Caller = Depends(caller), s: Session = Depends
 def post_decision(ref: str, body: DecisionRequest, c: Caller = Depends(caller)) -> dict[str, Any]:
     """Agents can never decide or approve. CA decisions arrive only as the CA's own room reply."""
     raise Forbidden("Decisions are recorded only from the assigned CA's own reply in the CA review room.")
+
+
+@router.get("/status")
+def get_status(c: Caller = Depends(caller), s: Session = Depends(get_db)) -> dict[str, Any]:
+    """Status of the shop this room covers (shop intake rooms only)."""
+    c.require_tool("get_status")
+    if len(c.shops) != 1 or not can_read_shop(s, c.context.verified_user_id, c.shops[0]):
+        raise NotFound("This room does not cover exactly one shop.")
+    cases = list(
+        s.execute(select(Invoice).where(Invoice.shop_id == c.shops[0]).order_by(Invoice.case_ref)).scalars()
+    )
+    return {
+        "cases": [{"case_ref": x.case_ref, "status": x.status, "why": why_held(s, x)} for x in cases],
+    }
+
+
+@router.get("/invoices/{ref}/issues/{rule_id}")
+def explain_issue(
+    ref: str, rule_id: str, c: Caller = Depends(caller), s: Session = Depends(get_db)
+) -> dict[str, Any]:
+    c.require_tool("explain_issue")
+    case = _case(s, c, ref)
+    issue = s.execute(
+        select(Issue).where(Issue.revision_id == case.current_revision_id, Issue.rule_id == rule_id.upper())
+    ).scalar_one_or_none()
+    if issue is None:
+        raise NotFound(f"No issue {rule_id} on {ref}.")
+    result = s.get(CheckResult, issue.check_result_id)
+    return {
+        "rule_id": issue.rule_id,
+        "status": issue.status,
+        "owner": issue.owner_role,
+        "next_action": issue.next_action,
+        "message": result.message if result else None,
+        "calculation": result.calculation if result else {},
+        "tax_amount_associated": str(issue.exposure_amount) if issue.exposure_amount is not None else None,
+        "wording": "Tax amount associated with this issue; not money lost and not an eligibility decision.",
+    }
+
+
+@router.get("/invoices/{ref}/supplier-draft")
+def draft_supplier_request(
+    ref: str, c: Caller = Depends(caller), s: Session = Depends(get_db)
+) -> dict[str, Any]:
+    """A draft only: an authorized owner sends it; agents never message suppliers."""
+    c.require_tool("draft_supplier_request")
+    case = _case(s, c, ref)
+    rev = current_revision(s, case)
+    if rev is None:
+        raise NotFound(f"{ref} has not been read yet.")
+    issues = [
+        i.rule_id
+        for i in s.execute(
+            select(Issue).where(
+                Issue.revision_id == rev.id, Issue.status.in_(("awaiting_supplier", "awaiting_ca"))
+            )
+        ).scalars()
+    ]
+    return {
+        "case_ref": case.case_ref,
+        "draft": (
+            f"Dear {rev.supplier_name or 'Supplier'},\nPlease issue a corrected tax invoice for "
+            f"{rev.invoice_number or 'the invoice'} dated {rev.invoice_date or '?'} "
+            f"(points: {', '.join(issues) or 'see attached review'}).\nThank you."
+        ),
+        "send": "owner sends it; not sent automatically",
+    }
+
+
+@router.get("/handoffs/pending")
+def list_pending_handoffs(c: Caller = Depends(caller), s: Session = Depends(get_db)) -> dict[str, Any]:
+    c.require_tool("list_pending_handoffs")
+    rows = s.execute(
+        select(Handoff, Invoice.case_ref)
+        .join(Invoice, Invoice.id == Handoff.case_id)
+        .where(Handoff.shop_id.in_(c.shops), Handoff.status == "pending")
+        .order_by(Handoff.created_at)
+    ).all()
+    return {
+        "handoffs": [
+            {
+                "case_ref": ref,
+                "summary": h.issue_summary,
+                "next_action": h.next_action,
+                "responsible": h.responsible_role,
+            }
+            for h, ref in rows
+            if is_assigned_ca(s, c.context.verified_user_id, h.shop_id)
+        ]
+    }
+
+
+@router.get("/directory")
+def list_directory(c: Caller = Depends(caller), s: Session = Depends(get_db)) -> dict[str, Any]:
+    c.require_tool("list_directory")
+    return {"directory": ops.directory_text(s, c.context, c.room)}
+
+
+@router.get("/ops/health")
+def get_health(c: Caller = Depends(caller), s: Session = Depends(get_db)) -> dict[str, Any]:
+    c.require_tool("get_health")
+    ops.require_role(s, c.context, "operator")
+    return {"health": ops.health_text(s)}
+
+
+@router.get("/ops/failed-jobs")
+def list_failed_jobs(c: Caller = Depends(caller), s: Session = Depends(get_db)) -> dict[str, Any]:
+    c.require_tool("list_failed_jobs")
+    ops.require_role(s, c.context, "operator")
+    return {"failed": ops.failed_jobs_text(s)}
+
+
+@router.get("/ops/jobs/{prefix}")
+def describe_job(prefix: str, c: Caller = Depends(caller), s: Session = Depends(get_db)) -> dict[str, Any]:
+    c.require_tool("describe_job")
+    ops.require_role(s, c.context, "operator")
+    return {"job": ops.describe_job(s, prefix)}
+
+
+class ClarificationRequest(Strict):
+    question: str
+
+
+@router.post("/invoices/{ref}/clarifications", status_code=202)
+def request_clarification(
+    ref: str, body: ClarificationRequest, c: Caller = Depends(caller), s: Session = Depends(get_db)
+) -> dict[str, Any]:
+    """Ask the owner one focused question about a case in its shop room. Changes no case state."""
+    c.require_tool("request_clarification")
+    case = _case(s, c, ref)
+    room = room_for_shop(s, case.shop_id, "shop_intake")
+    if room is None:
+        raise NotFound("No shop room is bound.")
+    question = body.question.strip()[:500]
+    post(
+        s,
+        room,
+        action_id=f"clarify-agent:{c.context.context_id}:{case.case_ref}",
+        body=f"Question about {case.case_ref}: {question}\nReply with a correction like `{case.case_ref} total=1180.00`.",
+        case_ref=case.case_ref,
+        correlation_id=c.context.request_id,
+    )
+    return {"status": "posted", "case_ref": case.case_ref}

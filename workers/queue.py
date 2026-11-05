@@ -48,7 +48,7 @@ def enqueue(
 
     if type not in registered_types():
         raise RuntimeError(f"no handler registered for job type {type}")
-    result: CursorResult[Any] = s.execute(  # type: ignore[assignment]
+    inserted = s.execute(
         insert(Job)
         .values(
             id=uuid.uuid4(),
@@ -61,8 +61,9 @@ def enqueue(
             run_after=utcnow() + timedelta(seconds=delay_seconds),
         )
         .on_conflict_do_nothing(index_elements=["dedupe_key"])
-    )
-    return bool(result.rowcount)
+        .returning(Job.id)
+    ).scalar_one_or_none()
+    return inserted is not None
 
 
 def lease_one(lane: str, owner: str, url: str | None = None) -> LeasedJob | None:

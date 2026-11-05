@@ -38,7 +38,7 @@ from domain.models import (
 )
 from domain.scope import is_owner_of
 from domain.services import messages as msg
-from domain.services.base import audit, case_event, post
+from domain.services.base import audit, case_event, post, room_for_shop
 from domain.services.cases import (
     Exec,
     current_revision,
@@ -46,7 +46,7 @@ from domain.services.cases import (
     release_duplicate_key,
     revoke_older_generations,
 )
-from domain.workflow import Event
+from domain.workflow import Command, Event
 from workers.queue import enqueue
 
 LINE_DECIMALS = {
@@ -254,8 +254,13 @@ def persist_extraction(
     result: ExtractionV1,
     grant: ExecutionGrant,
     correlation_id: str,
-) -> InvoiceRevision:
-    """Draft revision, line items and per-field evidence; case -> needs_confirmation."""
+) -> InvoiceRevision | None:
+    """Draft revision, line items and per-field evidence; case -> needs_confirmation.
+
+    A multi-page file that holds several invoices is split instead (returns None)."""
+    if result.multiple_invoices and document.page_count > 1 and document.page_from is None:
+        split_document(s, case=case, document=document, grant=grant, correlation_id=correlation_id)
+        return None
     previous = current_revision(s, case)
     revision_no = (
         s.execute(
@@ -327,6 +332,66 @@ def persist_extraction(
     case.current_revision_id = rev.id
     Exec(s, case, correlation_id, grant=grant).run(Event("extraction_persisted"))
     return rev
+
+
+def split_document(
+    s: Session, *, case: Invoice, document: Document, grant: ExecutionGrant, correlation_id: str
+) -> list[Invoice]:
+    """One invoice per page: this case keeps page 1 (a new document generation, re-read); every other page
+    becomes its own case linked by split_from_invoice_id. Originals are untouched; documents are new rows."""
+    shop = s.get(Shop, case.shop_id)
+    assert shop is not None
+    receipt = s.get(Receipt, document.receipt_id)
+    assert receipt is not None
+
+    def page_doc(target: Invoice, page: int) -> None:
+        s.add(
+            Document(
+                practice_id=shop.practice_id,
+                shop_id=shop.id,
+                receipt_id=document.receipt_id,
+                invoice_id=target.id,
+                document_generation=target.document_generation,
+                sha256=document.sha256,
+                mime=document.mime,
+                size_bytes=document.size_bytes,
+                page_count=1,
+                storage_key=document.storage_key,
+                page_from=page,
+                page_to=page,
+            )
+        )
+        s.flush()
+
+    case.document_generation += 1
+    revoke_older_generations(s, case)
+    page_doc(case, 1)
+    case_event(s, case, "document_split", correlation_id, {"pages": document.page_count, "keeps_page": 1})
+    Exec(s, case, correlation_id, grant=grant)._enqueue_extraction(Command("enqueue_extraction"))
+    children: list[Invoice] = []
+    for page in range(2, document.page_count + 1):
+        child = new_case(s, shop, correlation_id)
+        child.split_from_invoice_id = case.id
+        page_doc(child, page)
+        executor = Exec(s, child, correlation_id, grant=grant)
+        executor.notes = {"receipt_ref": receipt.public_ref, "pages": "1"}
+        executor.run(Event("document_preserved"))
+        children.append(child)
+    room = room_for_shop(s, case.shop_id, "shop_intake")
+    if room is not None:
+        parts = [f"{case.case_ref} (page 1)"] + [
+            f"{c.case_ref} (page {i})" for i, c in enumerate(children, 2)
+        ]
+        post(
+            s,
+            room,
+            action_id=f"split:{case.id}:{case.document_generation}",
+            body=f"{receipt.public_ref} holds {document.page_count} invoices, so it was split: {', '.join(parts)}. "
+            "Each one gets its own summary to confirm.",
+            case_ref=case.case_ref,
+            correlation_id=correlation_id,
+        )
+    return children
 
 
 # ------------------------------------------------------------------------------- step 4 confirm

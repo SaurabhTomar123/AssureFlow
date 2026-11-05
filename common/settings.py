@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     SWITCH_CREDENTIALS_FILE: str = "./data/switch_credentials.json"
     ROOM_BINDINGS_FILE: str = "./agents/rooms.yaml"
     ROOM_CONFIG_VERSION: str = "1"
-    BUSINESS_MCP_BIND: str = "127.0.0.1:8000"
+    BUSINESS_MCP_BIND: str = "127.0.0.1:8765"
     BUSINESS_MCP_TOKENS_FILE: str = "./data/business_tokens.json"
 
     REQUEST_CONTEXT_TTL_SECONDS: int = 900
@@ -54,6 +54,16 @@ class Settings(BaseSettings):
     CPU_TASK_TIMEOUT_SECONDS: int = 90
 
     DEFAULT_TZ: str = "Asia/Kolkata"
+    DIGEST_LOCAL_TIME: str = "10:00"
+    QUIET_HOURS: str = "20:00-09:00"
+    DIGEST_ESCALATE_AFTER: int = 2
+    LIVE_MEMBER_CHECK: bool = True
+    SWITCH_TRUSTED_USERNAMES: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    API_BASE_URL: str = "http://127.0.0.1:8000"
+    ACCEPTANCE_TIMEOUT_SECONDS: int = 900
+    COST_USD_PER_MTOK_INPUT: Decimal = Decimal("4")
+    COST_USD_PER_MTOK_OUTPUT: Decimal = Decimal("20")
+    USD_INR: Decimal = Decimal("88")
     ACK_TARGET_SECONDS: int = 5
     EXTRACTION_TARGET_SECONDS: int = 90
 
@@ -62,6 +72,13 @@ class Settings(BaseSettings):
     def _split_backoff(cls, value: object) -> object:
         if isinstance(value, str):
             return [int(part) for part in value.replace(" ", "").split(",") if part]
+        return value
+
+    @field_validator("SWITCH_TRUSTED_USERNAMES", mode="before")
+    @classmethod
+    def _split_names(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [part.strip() for part in value.split(",") if part.strip()]
         return value
 
 

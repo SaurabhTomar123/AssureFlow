@@ -171,10 +171,11 @@ def extract_document(job: LeasedJob) -> None:
         document = intake.current_document(s, case)
         assert document is not None
         storage_key, mime, sha = document.storage_key, document.mime, document.sha256
+        page_from, page_to = document.page_from, document.page_to
         shop_key = f"shop-{case.shop_id}"
     data = LocalStorage().get(storage_key)
     try:
-        prepared = run_cpu(pdf.prepare_for_extraction, data, mime)
+        prepared = run_cpu(pdf.prepare_for_extraction, data, mime, page_from, page_to)
     except (CpuTaskTimeout, CpuTaskFailed) as exc:
         raise Retryable(str(exc)) from exc
     try:
@@ -376,6 +377,79 @@ def reconcile_job(job: LeasedJob) -> None:
         recon.reconcile(s, statement, job.correlation_id)
 
 
+# ------------------------------------------------------------------------------ P3/P5 scheduled + testing
+
+
+def daily_digest(job: LeasedJob) -> None:
+    from domain.services.digests import run_digest
+
+    with transaction() as s:
+        fence_and_complete(s, job)
+        check_grant(s, job.grant_id, "notify")
+        run_digest(
+            s, uuid.UUID(job.payload["room_binding_id"]), job.payload["local_date"], job.correlation_id
+        )
+
+
+def run_acceptance(job: LeasedJob) -> None:
+    import json
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    from domain.models import TestRun
+    from domain.services.operations import format_report
+
+    settings = get_settings()
+    with transaction() as s:
+        check_grant(s, job.grant_id, "run_acceptance")
+    run_id = uuid.uuid4().hex[:12]
+    root = Path(__file__).resolve().parents[2]
+    env = {**os.environ, "ACCEPTANCE_RUN_ID": run_id}
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "scripts.acceptance"],
+            cwd=root,
+            env=env,
+            timeout=settings.ACCEPTANCE_TIMEOUT_SECONDS,
+            capture_output=True,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise Permanent("acceptance run exceeded its time limit") from exc
+    report_path = root / "docs" / "release" / f"acceptance-{run_id}.json"
+    if not report_path.exists():
+        raise Permanent("acceptance run produced no report")
+    report = json.loads(report_path.read_text("utf-8"))
+    with transaction() as s:
+        fence_and_complete(s, job)
+        run = TestRun(
+            run_id=run_id,
+            environment=settings.ENVIRONMENT,
+            mode=report["mode"],
+            switch_versions=str(report["switch_server_version"])[:64],
+            app_commit=report["app_commit"],
+            fixture_version=report["fixture_version"],
+            started_by=uuid.UUID(job.payload["user_id"]),
+            assertions=report["assertions"],
+            failures=report["failures"],
+            artifact_refs=report["artifacts"],
+            report_hash=report["report_hash"],
+        )
+        s.add(run)
+        room = s.execute(
+            select(RoomBinding).where(RoomBinding.switch_room_id == job.payload["room_id"])
+        ).scalar_one()
+        post(
+            s,
+            room,
+            action_id=f"acceptance:{run_id}",
+            body=format_report(run),
+            correlation_id=job.correlation_id,
+        )
+
+
 HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "process_inbox_event": process_inbox_event,
     "fetch_and_store": fetch_and_store,
@@ -385,6 +459,8 @@ HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "build_export": build_export,
     "import_statement": import_statement,
     "reconcile": reconcile_job,
+    "daily_digest": daily_digest,
+    "run_acceptance": run_acceptance,
 }
 
 
@@ -423,6 +499,16 @@ def on_dead(s: Session, job: Job) -> None:
         actor="worker",
         request_id=job.correlation_id,
         after={"type": job.type, "error": (job.last_error or "")[:200]},
+    )
+    from domain.services.operations import ops_alert
+
+    ops_alert(
+        s,
+        None,
+        f"dead:{job.id}",
+        f"job {str(job.id)[:8]} ({job.type}) is dead after {job.attempts} attempts; "
+        f"error type {(job.last_error or 'unknown').split(':')[0]}. `job {str(job.id)[:8]}` / `retry {str(job.id)[:8]}`.",
+        job.correlation_id,
     )
     log.error("job.dead", job_id=str(job.id), type=job.type)
 

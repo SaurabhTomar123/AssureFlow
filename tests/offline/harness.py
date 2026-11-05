@@ -19,15 +19,29 @@ from workers.runner import drain
 
 FIXTURES = Path(__file__).resolve().parents[2] / "seed" / "fixtures"
 INDEX = json.loads((FIXTURES.parent / "expected" / "fixtures.json").read_text("utf-8"))
-ROOMS = {"sharma": "unbound:af-shop-sharma", "gupta": "unbound:af-shop-gupta", "ca": "unbound:af-ca-review"}
+ROOMS = {
+    "sharma": "unbound:af-shop-sharma",
+    "gupta": "unbound:af-shop-gupta",
+    "ca": "unbound:af-ca-review",
+    "home": "unbound:af-practice-home",
+    "ops": "unbound:af-operations",
+    "testing": "unbound:af-synthetic-testing",
+}
 SENDERS = {
     "sharma": "@switch-user-sharma:test",
     "gupta": "@switch-user-gupta:test",
     "ca": "@switch-user-mehta:test",
     "ops": "@switch-user-rao:test",
+    "dev": "@switch-user-iyer:test",
     "stranger": "@switch-user-stranger:test",
 }
-HANDLES = {"sharma": "owner.sharma", "gupta": "owner.gupta", "ca": "ca.mehta", "ops": "ops.rao"}
+HANDLES = {
+    "sharma": "owner.sharma",
+    "gupta": "owner.gupta",
+    "ca": "ca.mehta",
+    "ops": "ops.rao",
+    "dev": "dev.iyer",
+}
 
 
 class Harness:
@@ -49,6 +63,7 @@ class Harness:
                         practice_id=user.practice_id,
                         platform="switch",
                         platform_user_id=SENDERS[key],
+                        chat_username=key,
                         user_id=user.id,
                     )
                 )

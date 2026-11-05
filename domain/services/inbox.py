@@ -35,6 +35,7 @@ from domain.periods import assign_period, parse_period, readiness, why_held
 from domain.scope import is_assigned_ca, is_owner_of
 from domain.services import intake
 from domain.services import messages as msg
+from domain.services import operations as ops
 from domain.services import reconciliation as recon
 from domain.services.base import audit, post, shops_of_room
 from domain.services.snapshots import approve_snapshot, request_snapshot
@@ -56,6 +57,13 @@ COMMAND_WORDS = {
     "readiness",
     "gstr2b",
     "recon",
+    "reopen",
+    "directory",
+    "health",
+    "failed",
+    "retry",
+    "trace",
+    "acceptance",
     "assign",
     "include",
     "exclude",
@@ -132,6 +140,12 @@ def process(s: Session, event: InboxEvent) -> Outcome:
                 handled = _shop_room(s, ctx, event, room, shops, replies)
             elif room.purpose == "ca_review":
                 handled = _ca_room(s, ctx, event, room, shops, replies)
+            elif room.purpose == "practice_home":
+                handled = _practice_room(s, ctx, event, room, shops, replies)
+            elif room.purpose == "operations":
+                handled = _ops_room(s, ctx, event, replies)
+            elif room.purpose == "synthetic_testing":
+                handled = _testing_room(s, ctx, event, room, replies)
     except DomainError as err:
         if isinstance(err, Forbidden):
             _deny(s, event, room, err.code, user_id=user.id, context_id=ctx.context_id)
@@ -351,6 +365,13 @@ def _ca_room(
         else:
             recon.request_import(s, ctx, event, room, shop, period)
         return True
+    if verb == "reopen":
+        case_ref = CASE_RE.search(text)
+        if not case_ref:
+            raise ValidationFailed("Use `reopen INV-0001 <reason>`.")
+        reason = text[case_ref.end() :].strip() or None
+        replies.append(ca_actions.reopen(s, ctx, case_ref.group(0), reason).reply)
+        return True
     rr = RR_RE.search(text)
     rr_ref = rr.group(0).upper() if rr else _thread_rr_ref(s, event)
     action_word = next((w.lower() for w in words if w.lower() in CA_VERBS), None)
@@ -362,7 +383,7 @@ def _ca_room(
             r"^[^a-zA-Z0-9]*", "", text[text.lower().index(action_word) + len(action_word) :]
         ).strip()
         arg = None
-        if action_word == "resolve":
+        if action_word in ("resolve", "override"):
             parts = rest.split(maxsplit=1)
             arg, rest = (parts[0], parts[1] if len(parts) > 1 else "") if parts else (None, "")
         result = ca_actions.perform(s, ctx, rr_ref, CA_VERBS[action_word], arg, rest or None)
@@ -423,6 +444,85 @@ def _ca_room(
         replies.append(f"{case_ref.group(0).upper()} assigned to {words[-1]}.")
         return True
     return False
+
+
+def _practice_room(
+    s: Session,
+    ctx: RequestContext,
+    event: InboxEvent,
+    room: RoomBinding,
+    shops: list[uuid.UUID],
+    replies: list[str],
+) -> bool:
+    words = event.body.strip().split()
+    if not words:
+        return False
+    verb = words[0].lower()
+    if verb == "help":
+        replies.append("Practice home: `directory`, `readiness <shop> 2026-11`.")
+    elif verb == "directory":
+        replies.append(ops.directory_text(s, ctx, room))
+    elif verb == "readiness" and len(words) >= 3:
+        ops.require_role(s, ctx, "ca", "practice_staff")
+        shop = _ca_shop(s, room.practice_id, shops, words[1])
+        period = parse_period(words[2])
+        ready = readiness(s, shop.id, period)
+        replies.append(
+            f"{shop.name} {period}: included {len(ready.included)}, excluded {len(ready.excluded)}, "
+            f"held {len(ready.held)}, unassigned {len(ready.unassigned)}"
+        )
+    else:
+        return False
+    return True
+
+
+def _ops_room(s: Session, ctx: RequestContext, event: InboxEvent, replies: list[str]) -> bool:
+    words = event.body.strip().split()
+    if not words:
+        return False
+    verb = words[0].lower()
+    if verb not in ("help", "health", "failed", "job", "retry", "trace"):
+        return False
+    ops.require_role(s, ctx, "operator")
+    if verb == "help":
+        replies.append("Operations: `health`, `failed`, `job <id>`, `retry <id>`, `trace INV-0001`.")
+    elif verb == "health":
+        replies.append(ops.health_text(s))
+    elif verb == "failed":
+        replies.append(ops.failed_jobs_text(s))
+    elif len(words) < 2:
+        raise ValidationFailed(f"Use `{verb} <id>`.")
+    elif verb == "job":
+        replies.append(ops.describe_job(s, words[1]))
+    elif verb == "retry":
+        replies.append(ops.retry_job(s, ctx, words[1]))
+    else:
+        replies.append(ops.trace_case(s, words[1]))
+    return True
+
+
+def _testing_room(
+    s: Session, ctx: RequestContext, event: InboxEvent, room: RoomBinding, replies: list[str]
+) -> bool:
+    words = event.body.strip().split()
+    if not words:
+        return False
+    verb = words[0].lower()
+    if verb not in ("help", "acceptance", "report", "reset"):
+        return False
+    ops.require_role(s, ctx, "developer")
+    if verb == "help":
+        replies.append("Synthetic testing: `acceptance`, `report <run-id>`, `reset` (test environment only).")
+    elif verb == "acceptance":
+        replies.append(ops.request_acceptance(s, ctx, room))
+    elif verb == "report":
+        if len(words) < 2:
+            raise ValidationFailed("Use `report <run-id>`.")
+        replies.append(ops.report_text(s, words[1]))
+    else:
+        ops.reset_allowed()
+        replies.append("Fixtures are reset by `make reset` in the test environment.")
+    return True
 
 
 def mark(event: InboxEvent, outcome: Outcome) -> None:

@@ -56,6 +56,8 @@ class SwitchPort(Protocol):
         self, room_id: str, mxc: str, max_bytes: int
     ) -> tuple[bytes, str | None, str | None]: ...
 
+    def room_members(self, room_id: str) -> list[str] | None: ...
+
 
 class SwitchHttp:
     def __init__(self, creds: SwitchCredentials, base_url: str | None = None) -> None:
@@ -108,6 +110,11 @@ class SwitchHttp:
         filename = disposition.split("filename=")[-1].strip('"') if "filename=" in disposition else None
         return b"".join(chunks), ctype, filename
 
+    def room_members(self, room_id: str) -> list[str] | None:
+        """Chat usernames of the people currently in the room (Switch `get_room_detail`)."""
+        detail = self.op("get_room_detail", {"room_id": room_id}) or {}
+        return [str(name) for name in detail.get("connected_user_names") or []]
+
     def op(self, operation: str, args: dict[str, Any] | None = None, connected: bool = False) -> Any:
         """Call an operation. Only room-bound operations need the live connection id header."""
         headers = dict(self._auth)
@@ -131,6 +138,7 @@ class FakeSwitch:
     posts: list[tuple[str, str, str]] = field(default_factory=list)
     uploads: list[tuple[str, list[str], str]] = field(default_factory=list)
     fail_next_posts: int = 0
+    members: dict[str, list[str]] = field(default_factory=dict)
 
     def post_message(self, room_id: str, content: str) -> str:
         if self.fail_next_posts:
@@ -151,6 +159,9 @@ class FakeSwitch:
         if len(data) > max_bytes:
             raise LimitExceeded(f"file is larger than {max_bytes // (1024 * 1024)} MB")
         return data, None, None
+
+    def room_members(self, room_id: str) -> list[str] | None:
+        return self.members.get(room_id)
 
     def messages_in(self, room_id: str) -> list[str]:
         return [body for room, body, _ in self.posts if room == room_id]

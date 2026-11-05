@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> int:
-    run_id = uuid.uuid4().hex[:12]
+    run_id = os.environ.get("ACCEPTANCE_RUN_ID") or uuid.uuid4().hex[:12]
     out = ROOT / "docs" / "release"
     out.mkdir(parents=True, exist_ok=True)
     junit = out / f"junit-{run_id}.xml"

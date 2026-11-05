@@ -47,33 +47,52 @@ def inspect_document(data: bytes, mime: str) -> dict[str, Any]:
     return {"pages": 1}
 
 
-def prepare_for_extraction(data: bytes, mime: str, dpi: int = 200, max_side: int = 2000) -> dict[str, Any]:
-    """Per-page text-quality check. If any page fails it, the whole document goes to vision
-    (hackathon cut of P1-06): every page is rendered to PNG. Otherwise the text layer is used."""
+def prepare_for_extraction(
+    data: bytes,
+    mime: str,
+    page_from: int | None = None,
+    page_to: int | None = None,
+    dpi: int = 200,
+    max_side: int = 2000,
+) -> dict[str, Any]:
+    """Per-page text-quality check (P1-06). Each page goes to the model as its text layer when the text is
+    good, as an image when it is weak, and as both when a weak page still has some text (the model is told
+    to prefer the image and lower confidence where they disagree). `page_from`/`page_to` (1-based,
+    inclusive) restrict the document to one split invoice."""
     import pymupdf
     from PIL import Image
 
-    pages_text: list[str] = []
-    images: list[bytes] = []
+    pages: list[dict[str, Any]] = []
     if mime == "application/pdf":
         doc = pymupdf.open(stream=data, filetype="pdf")
-        for page in doc.pages():
-            pages_text.append(page.get_text())
-        needs_vision = any(not _good_text(t) for t in pages_text)
-        if needs_vision:
-            for page in doc.pages():
-                pix = page.get_pixmap(dpi=dpi)
-                images.append(_normalize(pix.tobytes("png"), max_side))
-        return {"mode": "vision" if needs_vision else "text", "pages_text": pages_text, "images": images}
-    with Image.open(io.BytesIO(data)) as img:
-        buf = io.BytesIO()
-        img.convert("RGB").save(buf, format="PNG")
-    return {"mode": "vision", "pages_text": [], "images": [_normalize(buf.getvalue(), max_side)]}
+        first = (page_from or 1) - 1
+        last = (page_to or doc.page_count) - 1
+        for index in range(first, last + 1):
+            page = doc[index]
+            text = page.get_text()
+            entry: dict[str, Any] = {"page": index + 1, "text": None, "image": None}
+            if _good_text(text):
+                entry["text"] = text
+            else:
+                entry["image"] = _normalize(page.get_pixmap(dpi=dpi).tobytes("png"), max_side)
+                if text.strip():
+                    entry["text"] = text
+            pages.append(entry)
+    else:
+        with Image.open(io.BytesIO(data)) as img:
+            buf = io.BytesIO()
+            img.convert("RGB").save(buf, format="PNG")
+        pages.append({"page": 1, "text": None, "image": _normalize(buf.getvalue(), max_side)})
+    kinds = {
+        ("text" if p["text"] and not p["image"] else "image" if not p["text"] else "both") for p in pages
+    }
+    mode = "text" if kinds == {"text"} else "vision" if kinds == {"image"} else "mixed"
+    return {"mode": mode, "pages": pages, "page_from": page_from, "page_to": page_to}
 
 
 def _good_text(text: str) -> bool:
     upper = text.upper()
-    return len(text.strip()) >= MIN_TEXT_CHARS and all(anchor in upper for anchor in MATERIAL_ANCHORS)
+    return len(text.strip()) >= MIN_TEXT_CHARS and any(anchor in upper for anchor in MATERIAL_ANCHORS)
 
 
 def _normalize(png: bytes, max_side: int) -> bytes:

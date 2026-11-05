@@ -130,8 +130,14 @@ def case_event(
     bump_period(s, case.shop_id, case.period or UNASSIGNED)
 
 
-def bump_period(s: Session, shop_id: uuid.UUID, period: str) -> None:
-    """Consistency token: incremented in every transaction that changes a case in that period."""
+def bump_period(s: Session, shop_id: uuid.UUID, period: str, correlation_id: str = "") -> None:
+    """Consistency token: incremented in every transaction that changes a case in that period.
+
+    An approved pack for that month is labelled superseded (compensation notice, once)."""
+    if period != UNASSIGNED:
+        from domain.services.compensation import packs_outdated
+
+        packs_outdated(s, shop_id, period, correlation_id or "period-change")
     s.execute(
         insert(ShopPeriodVersion)
         .values(shop_id=shop_id, period=period, version=1, updated_at=utcnow())

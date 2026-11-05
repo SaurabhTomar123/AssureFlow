@@ -72,8 +72,11 @@ def issue_grant(
     receipt_id: uuid.UUID | None = None,
     context: RequestContext | None = None,
     parent: ExecutionGrant | None = None,
+    scheduled: bool = False,
 ) -> ExecutionGrant:
-    """Grants are issued from a live interactive context, or chained from the job grant that produced them."""
+    """Grants are issued from a live interactive context, chained from the job grant that produced them, or
+    (scheduled=True) for scheduled work, which may only be a `notify` grant: it can read and send messages
+    but never confirm, decide, approve or change revision values (spec section 7)."""
     settings = get_settings()
     event_id: uuid.UUID | None
     context_id: uuid.UUID | None
@@ -87,6 +90,8 @@ def issue_grant(
             parent.initiating_context_id,
             parent.initiating_user_id,
         )
+    elif scheduled and operation == "notify":
+        event_id = context_id = user_id = None
     else:
         raise Unauthenticated("A grant needs an interactive context or a parent grant.")
     grant = ExecutionGrant(

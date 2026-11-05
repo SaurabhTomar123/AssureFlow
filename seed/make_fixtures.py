@@ -699,7 +699,57 @@ def build_gstr2b() -> dict[str, Any]:
     return doc
 
 
+def build_multi() -> str:
+    """F21: one 2-page PDF holding two separate invoices (automatic split test)."""
+    import hashlib
+
+    import pymupdf
+
+    first = Fixture(
+        "F21a",
+        "sharma",
+        "spice",
+        "RSC-2026-260",
+        "2026-11-18",
+        "07",
+        [L("Black pepper 250g", "0904", "12", "140.00", cs="2.5")],
+    )
+    second = Fixture(
+        "F21b",
+        "sharma",
+        "pack",
+        "DPC-801",
+        "2026-11-18",
+        "07",
+        [L("Corrugated rolls", "4808", "3", "900.00", cs="6")],
+    )
+    out = pymupdf.open()
+    for fx in (first, second):
+        out.insert_pdf(pymupdf.open(stream=_pdf(fx), filetype="pdf"))
+    data = out.tobytes(garbage=3, deflate=True, no_new_id=True)
+    (FIXTURES / "F21_two_invoices.pdf").write_bytes(data)
+    sha = hashlib.sha256(data).hexdigest()
+    whole = extraction(first)
+    whole["multiple_invoices"] = True
+    for key, payload in ((sha, whole), (f"{sha}#p1", extraction(first)), (f"{sha}#p2", extraction(second))):
+        (EXTRACTION / f"{key}.json").write_text(json.dumps(payload, indent=1, sort_keys=True), "utf-8")
+    index_path = ROOT / "expected" / "fixtures.json"
+    index = json.loads(index_path.read_text("utf-8"))
+    index["F21_two_invoices"] = {
+        "file": "F21_two_invoices.pdf",
+        "sha256": sha,
+        "shop": "sharma",
+        "kind": "pdf",
+        "note": "two invoices in one file: split per page",
+        "expected_non_pass": {},
+        "totals": {},
+    }
+    index_path.write_text(json.dumps(index, indent=1, sort_keys=True), "utf-8")
+    return sha
+
+
 if __name__ == "__main__":
     result = build()
     build_gstr2b()
+    build_multi()
     print(f"wrote {len(result)} fixtures")

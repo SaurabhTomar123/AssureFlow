@@ -20,7 +20,8 @@ from common.logging import get_logger
 from common.settings import get_settings
 from domain.models import Artifact, Outbox, RoomBinding, utcnow
 from domain.services.base import audit
-from domain.services.disclosure import audience_ok, unauthorized_members
+from domain.services.disclosure import audience_ok, unauthorized_live, unauthorized_members
+from domain.services.operations import ops_alert
 
 log = get_logger("outbox")
 
@@ -72,8 +73,17 @@ def dispatch_once() -> int:
                     },
                 )
                 log.warning("outbox.withheld", room=room.name, action_id=row.action_id)
+                if room.purpose != "operations":
+                    ops_alert(
+                        s,
+                        room.practice_id,
+                        f"withheld:{row.id}",
+                        f"message {row.action_id.split(':')[0]} to {room.name} withheld: room audience failed the "
+                        "disclosure check. Fix membership or assignments, then resend.",
+                        row.correlation_id,
+                    )
                 continue
-            kind, body, destination = row.kind, row.body, row.destination
+            kind, body, destination, audience = row.kind, row.body, row.destination, row.audience_check
             files: list[tuple[str, bytes, str]] = []
             if kind == "files":
                 storage = LocalStorage()
@@ -86,6 +96,41 @@ def dispatch_once() -> int:
                         else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
                     files.append((art.filename, storage.get(art.storage_key), mime))
+        if settings.LIVE_MEMBER_CHECK and audience == "required" and not destination.startswith("unbound:"):
+            try:
+                live = get_switch().room_members(destination)
+            except (httpx.HTTPError, OSError):
+                continue
+            if live is not None:
+                with transaction() as s:
+                    room = s.get(RoomBinding, room_id)
+                    assert room is not None
+                    bad = unauthorized_live(s, room, live)
+                    if bad:
+                        row = s.get(Outbox, row_id)
+                        assert row is not None
+                        row.status, row.last_error = "withheld", "live member check failed"
+                        audit(
+                            s,
+                            action="outbox.withheld",
+                            entity="outbox",
+                            entity_id=row.action_id,
+                            outcome="withheld",
+                            actor="outbox",
+                            request_id=row.correlation_id,
+                            practice_id=room.practice_id,
+                            after={"room": room.name, "live_members": bad},
+                        )
+                        if room.purpose != "operations":
+                            ops_alert(
+                                s,
+                                room.practice_id,
+                                f"withheld-live:{row.id}",
+                                f"message to {room.name} withheld: unexpected live member(s) "
+                                f"{', '.join(bad)}.",
+                                row.correlation_id,
+                            )
+                        continue
         try:
             port = get_switch()
             event_id = (

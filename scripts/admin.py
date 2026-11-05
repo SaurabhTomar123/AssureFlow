@@ -1,9 +1,10 @@
 """Operator commands. Run: python -m scripts.admin <command>
 
 register-agent        Register the assure-flow integration agent in Switch (needs SWITCH_REGISTRATION_KEY)
+create-rooms HANDLE=CHATUSER ...   Agent creates the provisioned rooms in Switch, then binds them
 bind-rooms            Match Switch rooms the agent belongs to against agents/rooms.yaml by name
 unmapped              List senders whose events were rejected (to bind their identities)
-bind-user SENDER HANDLE   Map a Switch participant id to a seeded user (verified identity)
+bind-user SENDER HANDLE [CHATUSER]   Map a Switch participant id (and chat username) to a seeded user
 revoke-user HANDLE    Revoke a user's chat identity and grants (removes their authority)
 health                Print the operator health report
 """
@@ -117,12 +118,16 @@ def unmapped() -> None:
             print(f"{sender}\t(in {room})")
 
 
-def bind_user(sender: str, handle: str) -> None:
+def bind_user(sender: str, handle: str, username: str | None = None) -> None:
     with transaction() as s:
         user = s.execute(select(m.User).where(m.User.handle == handle)).scalar_one()
         s.add(
             m.ChatIdentity(
-                practice_id=user.practice_id, platform="switch", platform_user_id=sender, user_id=user.id
+                practice_id=user.practice_id,
+                platform="switch",
+                platform_user_id=sender,
+                chat_username=username,
+                user_id=user.id,
             )
         )
     print(f"bound {sender} -> {handle}")
@@ -149,7 +154,7 @@ def main(argv: list[str]) -> None:
         bind_rooms()
     elif cmd == "unmapped":
         unmapped()
-    elif cmd == "bind-user" and len(args) == 2:
+    elif cmd == "bind-user" and len(args) in (2, 3):
         bind_user(*args)
     elif cmd == "revoke-user" and len(args) == 1:
         revoke_user(args[0])

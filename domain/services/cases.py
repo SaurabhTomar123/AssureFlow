@@ -28,6 +28,7 @@ from domain.models import (
     Shop,
     utcnow,
 )
+from domain.services import compensation
 from domain.services import messages as msg
 from domain.services.base import UNASSIGNED, bump_period, case_event, post, room_for_shop
 from domain.workflow import CaseWorkflow, Command, Event
@@ -67,6 +68,10 @@ class Exec:
 
     def _supersede_current_revision(self, c: Command) -> None:
         rev = current_revision(self.s, self.case)
+        if rev is not None and rev.status == "confirmed":
+            compensation.confirmation_invalidated(
+                self.s, self.case, rev, c.args["reason"], self.correlation_id
+            )
         if rev is not None and rev.status != "superseded":
             rev.status = "superseded"
             rev.superseded_at = utcnow()
@@ -75,6 +80,7 @@ class Exec:
         release_duplicate_key(self.s, self.case)
 
     def _supersede_open_issues(self, c: Command) -> None:
+        compensation.review_requests_withdrawn(self.s, self.case, c.args["reason"], self.correlation_id)
         self.s.execute(
             update(Issue)
             .where(
@@ -89,11 +95,14 @@ class Exec:
         )
 
     def _invalidate_decisions(self, c: Command) -> None:
-        decided = self.s.execute(select(Decision.id).where(Decision.invoice_id == self.case.id)).scalars()
+        decided = list(self.s.execute(select(Decision).where(Decision.invoice_id == self.case.id)).scalars())
         already = set(self.s.execute(select(DecisionInvalidation.decision_id)).scalars())
-        for decision_id in decided:
-            if decision_id not in already:
-                self.s.add(DecisionInvalidation(decision_id=decision_id, reason=c.args["reason"]))
+        for decision in decided:
+            if decision.id not in already:
+                self.s.add(DecisionInvalidation(decision_id=decision.id, reason=c.args["reason"]))
+                compensation.decision_invalidated(
+                    self.s, self.case, decision, c.args["reason"], self.correlation_id
+                )
 
     def _enqueue_extraction(self, _: Command) -> None:
         grant = issue_grant(
