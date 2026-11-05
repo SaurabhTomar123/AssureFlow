@@ -1,0 +1,258 @@
+{
+ "cess_total": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "cgst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 1,
+  "value": "0"
+ },
+ "currency": {
+  "confidence": 0.97,
+  "excerpt": "INR",
+  "page": 1,
+  "value": "INR"
+ },
+ "document_type": {
+  "confidence": 0.97,
+  "excerpt": "TAX INVOICE",
+  "page": 1,
+  "value": "tax_invoice"
+ },
+ "igst_total": {
+  "confidence": 0.97,
+  "excerpt": "1368.00",
+  "page": 1,
+  "value": "1368.00"
+ },
+ "invoice_date": {
+  "confidence": 0.97,
+  "excerpt": "2026-11-04",
+  "page": 1,
+  "value": "2026-11-04"
+ },
+ "invoice_number": {
+  "confidence": 0.97,
+  "excerpt": "PEL/26/0457",
+  "page": 1,
+  "value": "PEL/26/0457"
+ },
+ "invoice_total": {
+  "confidence": 0.97,
+  "excerpt": "8968.00",
+  "page": 1,
+  "value": "8968.00"
+ },
+ "lines": [
+  {
+   "cgst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "cgst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "LED bulb 9W",
+    "page": 1,
+    "value": "LED bulb 9W"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "8539",
+    "page": 1,
+    "value": "8539"
+   },
+   "igst_amount": {
+    "confidence": 0.97,
+    "excerpt": "801.00",
+    "page": 1,
+    "value": "801.00"
+   },
+   "igst_rate": {
+    "confidence": 0.97,
+    "excerpt": "18",
+    "page": 1,
+    "value": "18"
+   },
+   "line_no": 1,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "50",
+    "page": 1,
+    "value": "50"
+   },
+   "sgst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "sgst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "4450.00",
+    "page": 1,
+    "value": "4450.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "89.00",
+    "page": 1,
+    "value": "89.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "cgst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Extension board",
+    "page": 1,
+    "value": "Extension board"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "8536",
+    "page": 1,
+    "value": "8536"
+   },
+   "igst_amount": {
+    "confidence": 0.97,
+    "excerpt": "567.00",
+    "page": 1,
+    "value": "567.00"
+   },
+   "igst_rate": {
+    "confidence": 0.97,
+    "excerpt": "18",
+    "page": 1,
+    "value": "18"
+   },
+   "line_no": 2,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "10",
+    "page": 1,
+    "value": "10"
+   },
+   "sgst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "sgst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "3150.00",
+    "page": 1,
+    "value": "3150.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "315.00",
+    "page": 1,
+    "value": "315.00"
+   }
+  }
+ ],
+ "multiple_invoices": false,
+ "place_of_supply": {
+  "confidence": 0.97,
+  "excerpt": "07",
+  "page": 1,
+  "value": "07"
+ },
+ "recipient_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07SHARM9999K1ZU",
+  "page": 1,
+  "value": "07SHARM9999K1ZU"
+ },
+ "round_off": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "sgst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 1,
+  "value": "0"
+ },
+ "supplier_gstin": {
+  "confidence": 0.97,
+  "excerpt": "27PUNEE3333C1Z7",
+  "page": 1,
+  "value": "27PUNEE3333C1Z7"
+ },
+ "supplier_name": {
+  "confidence": 0.97,
+  "excerpt": "Pune Electricals LLP",
+  "page": 1,
+  "value": "Pune Electricals LLP"
+ },
+ "tax_printed_per_line": true,
+ "taxable_total": {
+  "confidence": 0.97,
+  "excerpt": "7600.00",
+  "page": 1,
+  "value": "7600.00"
+ }
+}

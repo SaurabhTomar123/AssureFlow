@@ -1,0 +1,332 @@
+{
+ "F01_clean_intrastate_5pct": {
+  "expected_non_pass": {},
+  "file": "F01_clean_intrastate_5pct.pdf",
+  "kind": "pdf",
+  "note": "clean, text PDF",
+  "sha256": "04e3e98c7f4be5dcce145e02c761efa5e44f12a1a09084234c3b9357ce4cf7d2",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "185.00",
+   "igst": "0",
+   "sgst": "185.00",
+   "taxable": "7400.00",
+   "total": "7770.00"
+  }
+ },
+ "F02_clean_scan_12pct": {
+  "expected_non_pass": {},
+  "file": "F02_clean_scan_12pct.pdf",
+  "kind": "scan",
+  "note": "scanned PDF with a small digital header: vision fallback",
+  "sha256": "161bafb7fadb72b1402faae367fafbf7aae538f60b904246d93e97de10660878",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "262.65",
+   "igst": "0",
+   "sgst": "262.65",
+   "taxable": "4377.50",
+   "total": "4902.80"
+  }
+ },
+ "F03_clean_mixed_rates": {
+  "expected_non_pass": {},
+  "file": "F03_clean_mixed_rates.pdf",
+  "kind": "pdf",
+  "note": "tax printed per rate group",
+  "sha256": "3ff80bdc8ac74118b2c4f21479986636be036ec74b04ae741d096c5abf211180",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "238.20",
+   "igst": "0.00",
+   "sgst": "238.20",
+   "taxable": "3270.00",
+   "total": "3746.40"
+  }
+ },
+ "F04_clean_interstate_18pct": {
+  "expected_non_pass": {},
+  "file": "F04_clean_interstate_18pct.pdf",
+  "kind": "pdf",
+  "note": "interstate, IGST only",
+  "sha256": "35f127c585f681671198665c87899b5c6f3008139bab95ac458955e33b98fe75",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "0",
+   "igst": "1368.00",
+   "sgst": "0",
+   "taxable": "7600.00",
+   "total": "8968.00"
+  }
+ },
+ "F05_clean_round_off": {
+  "expected_non_pass": {},
+  "file": "F05_clean_round_off.pdf",
+  "kind": "pdf",
+  "note": "explicit round-off",
+  "sha256": "185ecc23c64063216a72bb2a01f98bb4da88556980d4e1a92639d29bcad09e0b",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "255.97",
+   "igst": "0",
+   "sgst": "255.97",
+   "taxable": "5094.90",
+   "total": "5607.19"
+  }
+ },
+ "F06_invalid_gstin": {
+  "expected_non_pass": {
+   "R-GSTIN-01": "fail"
+  },
+  "file": "F06_invalid_gstin.pdf",
+  "kind": "pdf",
+  "note": "check character wrong",
+  "sha256": "e2643630426ccbe6de03fad3db4d51618b608e91be1c4d696e0230c1a6707bc6",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "69.00",
+   "igst": "0",
+   "sgst": "69.00",
+   "taxable": "2760.00",
+   "total": "2898.00"
+  }
+ },
+ "F07_missing_gstin": {
+  "expected_non_pass": {
+   "R-GSTIN-01": "needs_evidence",
+   "R-TAX-01": "needs_evidence"
+  },
+  "file": "F07_missing_gstin.pdf",
+  "kind": "pdf",
+  "note": "supplier GSTIN not printed",
+  "sha256": "2e7ab2e78985087f497a3a86362e8aaa77ca1f87f91a75b030e7bc32372d2d24",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "66.00",
+   "igst": "0",
+   "sgst": "66.00",
+   "taxable": "2640.00",
+   "total": "2772.00"
+  }
+ },
+ "F08_wrong_tax_type": {
+  "expected_non_pass": {
+   "R-TAX-01": "fail"
+  },
+  "file": "F08_wrong_tax_type.pdf",
+  "kind": "pdf",
+  "note": "interstate supply charged CGST+SGST",
+  "sha256": "0b80850178090b18c0ecc689f6f3532bb04593a8e76a45402b2f0ece76463184",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "666.00",
+   "igst": "0",
+   "sgst": "666.00",
+   "taxable": "7400.00",
+   "total": "8732.00"
+  }
+ },
+ "F09_total_mismatch": {
+  "expected_non_pass": {
+   "R-AMT-03": "fail"
+  },
+  "file": "F09_total_mismatch.pdf",
+  "kind": "pdf",
+  "note": "printed total wrong by 100",
+  "sha256": "b4fcfdcb7583b656e1d5419d078bc1076dc22f629e51257f8f61b30c1b4b0292",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "216.00",
+   "igst": "0",
+   "sgst": "216.00",
+   "taxable": "2400.00",
+   "total": "2932.00"
+  }
+ },
+ "F10_duplicate_original": {
+  "expected_non_pass": {},
+  "file": "F10_duplicate_original.pdf",
+  "kind": "pdf",
+  "note": "clean original",
+  "sha256": "865687fd9e7b4a32864e1deda81f26f92112eba835326686bfd4af0582d7321d",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "318.00",
+   "igst": "0",
+   "sgst": "318.00",
+   "taxable": "5300.00",
+   "total": "5936.00"
+  }
+ },
+ "F11_duplicate_copy": {
+  "expected_non_pass": {
+   "R-DUP-01": "fail",
+   "R-DUP-02": "fail"
+  },
+  "file": "F11_duplicate_copy.pdf",
+  "kind": "pdf",
+  "note": "same invoice number, different file",
+  "sha256": "ff00f110978a7bf2078d2603e20a3015ade49561f3977d0cb9c300be7dc3d973",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "318.00",
+   "igst": "0",
+   "sgst": "318.00",
+   "taxable": "5300.00",
+   "total": "5936.00"
+  }
+ },
+ "F12_multipage": {
+  "expected_non_pass": {},
+  "file": "F12_multipage.pdf",
+  "kind": "pdf",
+  "note": "two pages",
+  "sha256": "05a98626623fa2de542d76773d32c20e2b6357c6c2b365a38ccccbe9ba086dd1",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "218.28",
+   "igst": "0",
+   "sgst": "218.28",
+   "taxable": "8730.00",
+   "total": "9166.56"
+  }
+ },
+ "F13_blurry_photo": {
+  "expected_non_pass": {},
+  "file": "F13_blurry_photo.png",
+  "kind": "blurry",
+  "note": "blurry photo; total misread 1780 vs printed 1180, owner corrects",
+  "sha256": "d4bbfc03a2dd7f9e57edc60c31d7d929056d952b6c61f141e598ded49de90d27",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "90.00",
+   "igst": "0",
+   "sgst": "90.00",
+   "taxable": "1000.00",
+   "total": "1180.00"
+  }
+ },
+ "F14_combined_rate_only": {
+  "expected_non_pass": {
+   "R-AMT-02": "needs_evidence",
+   "R-AMT-03": "fail"
+  },
+  "file": "F14_combined_rate_only.pdf",
+  "kind": "pdf",
+  "note": "only GST 5% printed; component split not inferred",
+  "sha256": "95a69262d4e1ff378d563e7c80f04df119ad388b3ebbd4c43148fa1e1d74d821",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "40.00",
+   "igst": "0",
+   "sgst": "40.00",
+   "taxable": "1600.00",
+   "total": "1680.00"
+  }
+ },
+ "F15_credit_note": {
+  "expected_non_pass": {
+   "R-DOC-01": "unsupported"
+  },
+  "file": "F15_credit_note.pdf",
+  "kind": "pdf",
+  "note": "credit note held",
+  "sha256": "fa025bbfdc5d7cda93a591cef09f1aa5b10b041006c5ded88cfdfd4e02c55b46",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "9.50",
+   "igst": "0",
+   "sgst": "9.50",
+   "taxable": "380.00",
+   "total": "399.00"
+  }
+ },
+ "F16_replacement_for_F08": {
+  "expected_non_pass": {},
+  "file": "F16_replacement_for_F08.pdf",
+  "kind": "pdf",
+  "note": "supplier's corrected invoice, IGST",
+  "sha256": "aff5f286d248774c428731795bb8dec4defa73ef9e6182a3b04f825435ec2e18",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "0",
+   "igst": "1332.00",
+   "sgst": "0",
+   "taxable": "7400.00",
+   "total": "8732.00"
+  }
+ },
+ "F17_wrong_recipient": {
+  "expected_non_pass": {
+   "R-GSTIN-02": "fail"
+  },
+  "file": "F17_wrong_recipient.pdf",
+  "kind": "pdf",
+  "note": "billed to another business",
+  "sha256": "4de598fa27428e7ed00781e31d095afba41f6fa3315e85c4158211504101feca",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "184.50",
+   "igst": "0",
+   "sgst": "184.50",
+   "taxable": "2050.00",
+   "total": "2419.00"
+  }
+ },
+ "F18_gupta_photo_clean": {
+  "expected_non_pass": {},
+  "file": "F18_gupta_photo_clean.png",
+  "kind": "png",
+  "note": "clear phone photo",
+  "sha256": "895b60f8cf5f21100d385149fe04d86890b8d412181a4ac138ca5645bca01875",
+  "shop": "gupta",
+  "totals": {
+   "cgst": "774.00",
+   "igst": "0",
+   "sgst": "774.00",
+   "taxable": "8600.00",
+   "total": "10148.00"
+  }
+ },
+ "F19_gupta_interstate": {
+  "expected_non_pass": {},
+  "file": "F19_gupta_interstate.pdf",
+  "kind": "pdf",
+  "note": "interstate to Maharashtra",
+  "sha256": "c4f8146237105fe314fa7c5f2e95dc9b3c190a7dccdba00daeaec13a4568fe59",
+  "shop": "gupta",
+  "totals": {
+   "cgst": "0",
+   "igst": "1176.00",
+   "sgst": "0",
+   "taxable": "9800.00",
+   "total": "10976.00"
+  }
+ },
+ "F20_gupta_missing_hsn": {
+  "expected_non_pass": {
+   "R-PART-01": "fail"
+  },
+  "file": "F20_gupta_missing_hsn.pdf",
+  "kind": "pdf",
+  "note": "HSN not printed (resolvable by CA)",
+  "sha256": "7928a0f263878e4154dac2f4a4e3599e712f2d7d2ba411a0b4b0d2bb496ae0f0",
+  "shop": "gupta",
+  "totals": {
+   "cgst": "135.00",
+   "igst": "0",
+   "sgst": "135.00",
+   "taxable": "1500.00",
+   "total": "1770.00"
+  }
+ },
+ "F21_two_invoices": {
+  "expected_non_pass": {},
+  "file": "F21_two_invoices.pdf",
+  "kind": "pdf",
+  "note": "two invoices in one file: split per page",
+  "sha256": "fd5b8b57f8aa0e8d54cf58ae244fdeea6c92c643efae9d8e784c5768127535c9",
+  "shop": "sharma",
+  "totals": {}
+ }
+}

@@ -1,0 +1,177 @@
+{
+ "cess_total": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "cgst_total": {
+  "confidence": 0.97,
+  "excerpt": "9.50",
+  "page": 1,
+  "value": "9.50"
+ },
+ "currency": {
+  "confidence": 0.97,
+  "excerpt": "INR",
+  "page": 1,
+  "value": "INR"
+ },
+ "document_type": {
+  "confidence": 0.97,
+  "excerpt": "CREDIT NOTE",
+  "page": 1,
+  "value": "credit_note"
+ },
+ "igst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 1,
+  "value": "0"
+ },
+ "invoice_date": {
+  "confidence": 0.97,
+  "excerpt": "2026-11-15",
+  "page": 1,
+  "value": "2026-11-15"
+ },
+ "invoice_number": {
+  "confidence": 0.97,
+  "excerpt": "MAS-CN-12",
+  "page": 1,
+  "value": "MAS-CN-12"
+ },
+ "invoice_total": {
+  "confidence": 0.97,
+  "excerpt": "399.00",
+  "page": 1,
+  "value": "399.00"
+ },
+ "lines": [
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "9.50",
+    "page": 1,
+    "value": "9.50"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Return: wheat atta 10kg",
+    "page": 1,
+    "value": "Return: wheat atta 10kg"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "1101",
+    "page": 1,
+    "value": "1101"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 1,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "1",
+    "page": 1,
+    "value": "1"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "9.50",
+    "page": 1,
+    "value": "9.50"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "380.00",
+    "page": 1,
+    "value": "380.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "380.00",
+    "page": 1,
+    "value": "380.00"
+   }
+  }
+ ],
+ "multiple_invoices": false,
+ "place_of_supply": {
+  "confidence": 0.97,
+  "excerpt": "07",
+  "page": 1,
+  "value": "07"
+ },
+ "recipient_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07SHARM9999K1ZU",
+  "page": 1,
+  "value": "07SHARM9999K1ZU"
+ },
+ "round_off": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "sgst_total": {
+  "confidence": 0.97,
+  "excerpt": "9.50",
+  "page": 1,
+  "value": "9.50"
+ },
+ "supplier_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07MODER1111A1Z1",
+  "page": 1,
+  "value": "07MODER1111A1Z1"
+ },
+ "supplier_name": {
+  "confidence": 0.97,
+  "excerpt": "Modern Agro Staples Pvt Ltd",
+  "page": 1,
+  "value": "Modern Agro Staples Pvt Ltd"
+ },
+ "tax_printed_per_line": true,
+ "taxable_total": {
+  "confidence": 0.97,
+  "excerpt": "380.00",
+  "page": 1,
+  "value": "380.00"
+ }
+}

@@ -1,0 +1,1068 @@
+{
+ "cess_total": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "cgst_total": {
+  "confidence": 0.97,
+  "excerpt": "218.28",
+  "page": 2,
+  "value": "218.28"
+ },
+ "currency": {
+  "confidence": 0.97,
+  "excerpt": "INR",
+  "page": 2,
+  "value": "INR"
+ },
+ "document_type": {
+  "confidence": 0.97,
+  "excerpt": "TAX INVOICE",
+  "page": 1,
+  "value": "tax_invoice"
+ },
+ "igst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 2,
+  "value": "0"
+ },
+ "invoice_date": {
+  "confidence": 0.97,
+  "excerpt": "2026-11-12",
+  "page": 1,
+  "value": "2026-11-12"
+ },
+ "invoice_number": {
+  "confidence": 0.97,
+  "excerpt": "MAS-2026-150",
+  "page": 1,
+  "value": "MAS-2026-150"
+ },
+ "invoice_total": {
+  "confidence": 0.97,
+  "excerpt": "9166.56",
+  "page": 2,
+  "value": "9166.56"
+ },
+ "lines": [
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "13.38",
+    "page": 1,
+    "value": "13.38"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 1",
+    "page": 1,
+    "value": "Pulses lot 1"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 1,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "13.38",
+    "page": 1,
+    "value": "13.38"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "535.00",
+    "page": 1,
+    "value": "535.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "107.00",
+    "page": 1,
+    "value": "107.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "14.25",
+    "page": 1,
+    "value": "14.25"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 2",
+    "page": 1,
+    "value": "Pulses lot 2"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 2,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "14.25",
+    "page": 1,
+    "value": "14.25"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "570.00",
+    "page": 1,
+    "value": "570.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "114.00",
+    "page": 1,
+    "value": "114.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "15.13",
+    "page": 1,
+    "value": "15.13"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 3",
+    "page": 1,
+    "value": "Pulses lot 3"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 3,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "15.13",
+    "page": 1,
+    "value": "15.13"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "605.00",
+    "page": 1,
+    "value": "605.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "121.00",
+    "page": 1,
+    "value": "121.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "16.00",
+    "page": 1,
+    "value": "16.00"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 4",
+    "page": 1,
+    "value": "Pulses lot 4"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 4,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "16.00",
+    "page": 1,
+    "value": "16.00"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "640.00",
+    "page": 1,
+    "value": "640.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "128.00",
+    "page": 1,
+    "value": "128.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "16.88",
+    "page": 1,
+    "value": "16.88"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 5",
+    "page": 1,
+    "value": "Pulses lot 5"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 5,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "16.88",
+    "page": 1,
+    "value": "16.88"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "675.00",
+    "page": 1,
+    "value": "675.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "135.00",
+    "page": 1,
+    "value": "135.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "17.75",
+    "page": 1,
+    "value": "17.75"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 6",
+    "page": 1,
+    "value": "Pulses lot 6"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 6,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "17.75",
+    "page": 1,
+    "value": "17.75"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "710.00",
+    "page": 1,
+    "value": "710.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "142.00",
+    "page": 1,
+    "value": "142.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "18.63",
+    "page": 1,
+    "value": "18.63"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 7",
+    "page": 1,
+    "value": "Pulses lot 7"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 7,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "18.63",
+    "page": 1,
+    "value": "18.63"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "745.00",
+    "page": 1,
+    "value": "745.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "149.00",
+    "page": 1,
+    "value": "149.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "19.50",
+    "page": 1,
+    "value": "19.50"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 8",
+    "page": 1,
+    "value": "Pulses lot 8"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 1,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 8,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "19.50",
+    "page": 1,
+    "value": "19.50"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "780.00",
+    "page": 1,
+    "value": "780.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "156.00",
+    "page": 1,
+    "value": "156.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "20.38",
+    "page": 2,
+    "value": "20.38"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 9",
+    "page": 2,
+    "value": "Pulses lot 9"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 2,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 9,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 2,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "20.38",
+    "page": 2,
+    "value": "20.38"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "815.00",
+    "page": 2,
+    "value": "815.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "163.00",
+    "page": 2,
+    "value": "163.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "21.25",
+    "page": 2,
+    "value": "21.25"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 10",
+    "page": 2,
+    "value": "Pulses lot 10"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 2,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 10,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 2,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "21.25",
+    "page": 2,
+    "value": "21.25"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "850.00",
+    "page": 2,
+    "value": "850.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "170.00",
+    "page": 2,
+    "value": "170.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "22.13",
+    "page": 2,
+    "value": "22.13"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 11",
+    "page": 2,
+    "value": "Pulses lot 11"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 2,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 11,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 2,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "22.13",
+    "page": 2,
+    "value": "22.13"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "885.00",
+    "page": 2,
+    "value": "885.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "177.00",
+    "page": 2,
+    "value": "177.00"
+   }
+  },
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "23.00",
+    "page": 2,
+    "value": "23.00"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Pulses lot 12",
+    "page": 2,
+    "value": "Pulses lot 12"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0713",
+    "page": 2,
+    "value": "0713"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 12,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 2,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "23.00",
+    "page": 2,
+    "value": "23.00"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 2,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "920.00",
+    "page": 2,
+    "value": "920.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "184.00",
+    "page": 2,
+    "value": "184.00"
+   }
+  }
+ ],
+ "multiple_invoices": false,
+ "place_of_supply": {
+  "confidence": 0.97,
+  "excerpt": "07",
+  "page": 1,
+  "value": "07"
+ },
+ "recipient_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07SHARM9999K1ZU",
+  "page": 1,
+  "value": "07SHARM9999K1ZU"
+ },
+ "round_off": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "sgst_total": {
+  "confidence": 0.97,
+  "excerpt": "218.28",
+  "page": 2,
+  "value": "218.28"
+ },
+ "supplier_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07MODER1111A1Z1",
+  "page": 1,
+  "value": "07MODER1111A1Z1"
+ },
+ "supplier_name": {
+  "confidence": 0.97,
+  "excerpt": "Modern Agro Staples Pvt Ltd",
+  "page": 1,
+  "value": "Modern Agro Staples Pvt Ltd"
+ },
+ "tax_printed_per_line": true,
+ "taxable_total": {
+  "confidence": 0.97,
+  "excerpt": "8730.00",
+  "page": 2,
+  "value": "8730.00"
+ }
+}

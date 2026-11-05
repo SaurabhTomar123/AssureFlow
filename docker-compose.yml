@@ -1,37 +1,69 @@
-version: "3.8"
+# Assure Flow: API, worker (3 lanes + outbox), Switch adapter and PostgreSQL 16.
+# The Switch server itself runs from Switch's own standalone stack (see README, "Run with Switch").
+x-app: &app
+  build: .
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql+psycopg://af:af@db:5432/assureflow
+    FILE_STORAGE_ROOT: /data/files
+    SWITCH_CREDENTIALS_FILE: /data/switch_credentials.json
+    BUSINESS_MCP_TOKENS_FILE: /data/business_tokens.json
+  volumes:
+    - files:/data
+  depends_on:
+    db:
+      condition: service_healthy
 
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
-    container_name: munimji_postgres
     environment:
-      POSTGRES_USER: munimji_user
-      POSTGRES_PASSWORD: munimji_password
-      POSTGRES_DB: munimji
+      POSTGRES_USER: af
+      POSTGRES_PASSWORD: af
+      POSTGRES_DB: assureflow
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
-      - munimji_pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U munimji_user -d munimji"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U af -d assureflow"]
+      interval: 3s
+      retries: 20
 
-  backend:
-    build: .
-    container_name: munimji_api
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://munimji_user:munimji_password@postgres:5432/munimji
-      ENVIRONMENT: production
-      API_HOST: 0.0.0.0
-      API_PORT: 8000
+  migrate:
+    <<: *app
+    command: ["sh", "-c", "alembic upgrade head"]
+    restart: "no"
+
+  api:
+    <<: *app
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "workers.runner"]
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  adapter:
+    <<: *app
+    command: ["python", "-m", "adapters.run"]
+    profiles: ["switch"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
-  munimji_pgdata:
-
+  pgdata:
+  files:

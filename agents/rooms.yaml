@@ -1,0 +1,66 @@
+# Declarative room configuration (spec section 7). Applied by `make seed` and bound to real Switch rooms
+# by `make bootstrap`, which matches the Switch room name. Bindings never grant access: authorization
+# reads only shop_memberships and ca_assignments.
+config_version: "1"
+agent: assure-flow            # the Assure Flow integration identity in Switch (code, not an LLM)
+
+rooms:
+  - name: af-shop-sharma
+    purpose: shop_intake
+    shops: [sharma]
+    members: [owner.sharma]
+    provision: true
+    agents:
+      assure-flow: {role: intake, tools: [get_request_context, get_receipt_status, get_case, get_status,
+                                          request_clarification, get_check_results, explain_issue,
+                                          draft_supplier_request]}
+    failure_routing: "Extraction failure -> owner message naming the case; operations alert without invoice content."
+
+  - name: af-shop-gupta
+    purpose: shop_intake
+    shops: [gupta]
+    members: [owner.gupta]
+    provision: true
+    agents:
+      assure-flow: {role: intake, tools: [get_request_context, get_receipt_status, get_case, get_status,
+                                          request_clarification, get_check_results, explain_issue,
+                                          draft_supplier_request]}
+    failure_routing: "Extraction failure -> owner message naming the case; operations alert without invoice content."
+
+  - name: af-ca-review
+    purpose: ca_review
+    shops: [sharma, gupta]          # combined only because every member is assigned to both shops
+    members: [ca.mehta]
+    provision: true
+    agents:
+      assure-flow: {role: resolution+close, tools: [get_case, get_check_results, explain_issue, list_pending_handoffs,
+                                                     get_period_readiness,
+                                                     request_snapshot, get_snapshot_manifest]}
+    failure_routing: "Denied or stale decision -> refusal with reason."
+
+  - name: af-practice-home
+    purpose: practice_home
+    shops: [sharma, gupta]        # CAs and practice staff only; owners never join
+    members: [ca.mehta]
+    provision: true
+    agents:
+      assure-flow: {role: close, tools: [list_directory, get_period_readiness]}
+    failure_routing: "Tool or permission error -> reply with correlation id; repeated failure -> operations room."
+
+  - name: af-operations
+    purpose: operations
+    shops: []
+    members: [ops.rao]
+    provision: true
+    agents:
+      assure-flow: {role: ops, tools: [get_health, list_failed_jobs, describe_job]}
+    failure_routing: "Alerts carry ids and metadata only."
+
+  - name: af-synthetic-testing
+    purpose: synthetic_testing
+    shops: []
+    members: [dev.iyer]
+    provision: true                 # tools refuse outside the test and demo environments
+    agents:
+      assure-flow: {role: test-runner, tools: [run_acceptance_suite, reset_fixtures, get_test_report]}
+    failure_routing: "Failed run -> report with run id, failed assertions and artifacts; never silently retried."

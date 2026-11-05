@@ -1,0 +1,177 @@
+{
+ "cess_total": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "cgst_total": {
+  "confidence": 0.97,
+  "excerpt": "42.00",
+  "page": 1,
+  "value": "42.00"
+ },
+ "currency": {
+  "confidence": 0.97,
+  "excerpt": "INR",
+  "page": 1,
+  "value": "INR"
+ },
+ "document_type": {
+  "confidence": 0.97,
+  "excerpt": "TAX INVOICE",
+  "page": 1,
+  "value": "tax_invoice"
+ },
+ "igst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 1,
+  "value": "0"
+ },
+ "invoice_date": {
+  "confidence": 0.97,
+  "excerpt": "2026-11-18",
+  "page": 1,
+  "value": "2026-11-18"
+ },
+ "invoice_number": {
+  "confidence": 0.97,
+  "excerpt": "RSC-2026-260",
+  "page": 1,
+  "value": "RSC-2026-260"
+ },
+ "invoice_total": {
+  "confidence": 0.97,
+  "excerpt": "1764.00",
+  "page": 1,
+  "value": "1764.00"
+ },
+ "lines": [
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "42.00",
+    "page": 1,
+    "value": "42.00"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Black pepper 250g",
+    "page": 1,
+    "value": "Black pepper 250g"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0904",
+    "page": 1,
+    "value": "0904"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 1,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "12",
+    "page": 1,
+    "value": "12"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "42.00",
+    "page": 1,
+    "value": "42.00"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "2.5",
+    "page": 1,
+    "value": "2.5"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "1680.00",
+    "page": 1,
+    "value": "1680.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "140.00",
+    "page": 1,
+    "value": "140.00"
+   }
+  }
+ ],
+ "multiple_invoices": true,
+ "place_of_supply": {
+  "confidence": 0.97,
+  "excerpt": "07",
+  "page": 1,
+  "value": "07"
+ },
+ "recipient_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07SHARM9999K1ZU",
+  "page": 1,
+  "value": "07SHARM9999K1ZU"
+ },
+ "round_off": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "sgst_total": {
+  "confidence": 0.97,
+  "excerpt": "42.00",
+  "page": 1,
+  "value": "42.00"
+ },
+ "supplier_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07ROYAL2222B1ZH",
+  "page": 1,
+  "value": "07ROYAL2222B1ZH"
+ },
+ "supplier_name": {
+  "confidence": 0.97,
+  "excerpt": "Royal Spices and Condiments",
+  "page": 1,
+  "value": "Royal Spices and Condiments"
+ },
+ "tax_printed_per_line": true,
+ "taxable_total": {
+  "confidence": 0.97,
+  "excerpt": "1680.00",
+  "page": 1,
+  "value": "1680.00"
+ }
+}
