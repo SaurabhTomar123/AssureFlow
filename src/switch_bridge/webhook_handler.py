@@ -240,6 +240,131 @@ class SwitchWebhookRouter:
                         "text": "\n".join(lines),
                     })
 
+                elif text.strip().startswith("/financials"):
+                    from src.accounts.double_entry import get_trial_balance, get_profit_and_loss, get_balance_sheet
+                    tb = get_trial_balance(shop.id, db)
+                    pl = get_profit_and_loss(shop.id, db)
+                    bs = get_balance_sheet(shop.id, db)
+                    lines = [
+                        f"Double-Entry Financial Statements for {shop.name}:",
+                        "----------------------------------------",
+                        f"Trial Balance: {'BALANCED' if tb['is_balanced'] else 'UNBALANCED'} (Debits: INR {tb['total_debits']:,.2f} = Credits: INR {tb['total_credits']:,.2f})",
+                        f"Monthly P&L: Revenue INR {pl['total_revenue']:,.2f} | Expenses INR {pl['total_expenses']:,.2f} | Net Profit: INR {pl['net_profit']:,.2f}",
+                        f"Balance Sheet: Assets INR {bs['total_assets']:,.2f} = Liabilities INR {bs['total_liabilities']:,.2f} + Equity INR {bs['total_equity']:,.2f}",
+                        "----------------------------------------",
+                    ]
+                    responses.append({
+                        "room": room_name,
+                        "sender": "junior-ca",
+                        "text": "\n".join(lines),
+                    })
+
+                elif text.strip().startswith("/runway"):
+                    from src.accounts.double_entry import get_cash_flow_forecast
+                    rf = get_cash_flow_forecast(shop.id, db=db)
+                    lines = [
+                        f"30-Day Cash Flow Runway & Liquidity for {shop.name}:",
+                        "----------------------------------------",
+                        f"Liquidity Status: {rf['safety_index']} (Runway: {rf['net_cash_runway_days']} Days)",
+                        f"Starting Liquid Bank Balance: INR {rf['liquid_cash_balance']:,.2f}",
+                        f"30-Day Inflow Projection: INR {rf['projected_inflows_30d']:,.2f}",
+                        f"30-Day Outflow Obligations: INR {rf['total_projected_outflows_30d']:,.2f}",
+                        f"Recommendation: {rf['treasury_advisory']}",
+                        "----------------------------------------",
+                    ]
+                    responses.append({
+                        "room": room_name,
+                        "sender": "junior-ca",
+                        "text": "\n".join(lines),
+                    })
+
+                elif text.strip().startswith("/fefo_expiry_check"):
+                    from src.inventory.service import get_fefo_expiry_report, generate_rtv_debit_note
+                    rep = get_fefo_expiry_report(shop.id, db=db)
+                    lines = [
+                        f"FEFO Shelf-Life Horizon Report for {shop.name}:",
+                        "----------------------------------------",
+                        f"Batches Evaluated: {rep['total_batches']} | Expired: {rep['expired_batches']} | Critical: {rep['critical_batches']}",
+                    ]
+                    for b in rep["batches"]:
+                        if b["status"] in ["CRITICAL", "EXPIRED"]:
+                            lines.append(f"- [{b['status']}]: {b['item_name']} (Batch {b['batch_number']}) - {b['quantity']} units ({b['days_remaining']} days left).")
+                        if b["status"] == "EXPIRED":
+                            dn = generate_rtv_debit_note(shop_id=shop.id, batch_id=b["batch_id"], reason="Expired on shelf", db=db)
+                            if dn:
+                                lines.append(f"- [RTV CLAIM]: Generated Debit Note #{dn['debit_note_number']} (Claim: INR {dn['total_debit_amount']:,.2f} with 18% GST reversal).")
+                    if not rep["batches"]:
+                        lines.append("All batches healthy. No critical or expired stock on shelf.")
+                    lines.append("----------------------------------------")
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": "\n".join(lines),
+                    })
+
+                elif text.strip().startswith("/audit_stock"):
+                    from src.inventory.service import audit_physical_stock
+                    parts = text.strip().split()
+                    sku = parts[1] if len(parts) > 1 else "SKU-DEF"
+                    cnt = float(parts[2]) if len(parts) > 2 else 0.0
+                    audit_res = audit_physical_stock(shop.id, sku=sku, physical_count=cnt, reason="Floor Audit", db=db)
+                    if audit_res:
+                        msg = f"Physical Stock Audit for {sku}:\nBook Stock: {audit_res['expected_stock']} | Physical Count: {audit_res['physical_count']}\nDiscrepancy: {audit_res['discrepancy']} ({audit_res['discrepancy_pct']:.1f}%)\nStatus: {audit_res['audit_status']}"
+                    else:
+                        msg = f"Physical Stock Audit: Item with SKU {sku} not found."
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": msg,
+                    })
+
+                elif text.strip().startswith("/crew_checkin"):
+                    from src.staff.service import crew_checkin
+                    all_blue = db.query(Employee).filter(Employee.shop_id == shop.id, Employee.tier == "BLUE_COLLAR").all()
+                    present_ids = [e.id for e in all_blue]
+                    today_str = date.today().isoformat()
+                    res = crew_checkin(shop_id=shop.id, date_str=today_str, present_employee_ids=present_ids, db=db)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": f"1-Click Crew Checkin Complete for {today_str}:\nChecked In: {res['present_count']} / {res['crew_size']} floor workers.\nAbsent: {res['absent_count']} ({', '.join(res['absent_staff']) if res['absent_staff'] else 'None'})",
+                    })
+
+                elif text.strip().startswith("/advance"):
+                    from src.staff.service import issue_staff_advance
+                    parts = text.strip().split()
+                    target_name = parts[1] if len(parts) > 1 else ""
+                    amt = float(parts[2]) if len(parts) > 2 else 1000.0
+                    employees = db.query(Employee).filter(Employee.shop_id == shop.id).all()
+                    matched = None
+                    for e in employees:
+                        if target_name.lower() in e.name.lower():
+                            matched = e
+                            break
+                    if not matched and employees:
+                        matched = employees[0]
+                    if matched:
+                        adv = issue_staff_advance(shop_id=shop.id, employee_id=matched.id, amount=amt, notes="Advance via command", db=db)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "store-manager",
+                            "text": f"Udhari Advance Logged: INR {amt:,.2f} cash advance issued to {matched.name}.\nScheduled for payroll recovery. Advance ID: {adv.id}",
+                        })
+
+                elif text.strip().startswith("/approve_payout"):
+                    from src.staff.service import approve_payout_batch
+                    from src.db.models import PayoutBatch
+                    parts = text.strip().split()
+                    batch_id = parts[1] if len(parts) > 1 else ""
+                    pbatch = db.query(PayoutBatch).filter((PayoutBatch.id == batch_id) | (PayoutBatch.batch_number == batch_id)).first()
+                    if pbatch:
+                        approved = approve_payout_batch(pbatch.id, approved_by=user_name, db=db)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "store-manager",
+                            "text": f"Payout Batch #{approved.batch_number} Approved:\nTotal Disbursed: INR {approved.total_net_payable:,.2f}\nJournal Entry recorded: Debited 5030 Wages, Credited 1020 Bank.",
+                        })
+
                 else:
                     low_text = text.strip().lower()
                     lang = "hi" if any(w in low_text for w in ["namaste", "bhai", "karo", "yeh", "dekho", "kya", "kaise", "dikhao", "batao", "aaj", "kitna"]) else "en"
@@ -389,6 +514,28 @@ class SwitchWebhookRouter:
                             "room": "ca-office",
                             "sender": "return-preparer",
                             "text": summary_text,
+                        })
+
+                elif cleaned_text.startswith("/priority_queue"):
+                    from src.accounts.double_entry import get_vendor_payment_priority_queue
+                    parts = cleaned_text.split()
+                    target_shop_id = parts[1] if len(parts) > 1 else "shop-sharma-kirana"
+                    q_shop = db.query(Shop).filter(Shop.id == target_shop_id).first() or db.query(Shop).first()
+                    if q_shop:
+                        q_res = get_vendor_payment_priority_queue(q_shop.id, db=db)
+                        tot_payable = sum(x["total_amount"] for x in q_res)
+                        q_lines = [
+                            f"Vendor Payment Priority Queue for {q_shop.name}:",
+                            "----------------------------------------",
+                            f"Total Unpaid Bills: {len(q_res)} | Sum Payable: INR {tot_payable:,.2f}",
+                        ]
+                        for rank_idx, vb in enumerate(q_res[:4], start=1):
+                            q_lines.append(f"- [Rank {rank_idx}]: {vb['supplier_name']} (#{vb['bill_number']}) - INR {vb['total_amount']:,.2f} -> {vb['recommended_action']} ({vb['reason']})")
+                        q_lines.append("----------------------------------------")
+                        responses.append({
+                            "room": "ca-office",
+                            "sender": "return-preparer",
+                            "text": "\n".join(q_lines),
                         })
 
             return responses

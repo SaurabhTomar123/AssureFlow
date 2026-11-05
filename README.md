@@ -458,13 +458,14 @@ AssureFlow/
 |       |-- whatsapp_webhook.py         # Meta WhatsApp Cloud API webhook receiver & buttons
 |       `-- telegram_bot.py             # Standalone long-polling Telegram daemon
 |
-`-- tests/                              # Comprehensive Automated Test Suite (138 Tests Passed across 35 Test Suites)
+`-- tests/                              # Comprehensive Automated Test Suite (143 Tests Passed across 35 Test Suites)
     |-- __init__.py
     |-- conftest.py                     # Database initialization test fixtures
     |-- test_smart_inventory.py         # FEFO expiry, RTV debit notes, dynamic POs, shrinkage audits (5 tests)
     |-- test_double_entry_accounting.py # Balanced journaling, Trial Balance, P&L, Cashflow runway (5 tests)
     |-- test_smart_attendance_and_hr.py # White/blue collar attendance, late marks, overtime, udhari, payout (6 tests)
     |-- test_api_advisory.py            # Financial statements & treasury API endpoint tests (4 tests)
+    |-- test_telegram_bot.py            # Telegram runner, voice note ingestion & enterprise commands (10 tests)
     |-- test_kacha_pakka_sieve.py       # "Kacha-Pakka" Smart Sieve & quarantine tests
     |-- test_vendor_concierge.py        # Autonomous Vendor Dispute Concierge tests
     |-- test_audit_radar.py             # DGGI Audit Radar & Supplier Scorecard tests
@@ -494,8 +495,7 @@ AssureFlow/
     |-- test_api_manager_suite.py       # Manager REST API endpoints test suite
     |-- test_natural_language_queries.py# Freeform Hindi & English NL query routing
     |-- test_notifications.py           # Proactive deadline and stock alerts engine tests
-    |-- test_gstr3b_export.py           # Official government GSTR-3B schema export tests
-    `-- test_telegram_bot.py            # Telegram runner command and mock tests
+    `-- test_gstr3b_export.py           # Official government GSTR-3B schema export tests
 ```
 
 ---
@@ -617,7 +617,7 @@ python scripts/seed_database.py
 # 5. Run full automated end-to-end demo dry run
 python scripts/test_e2e_flow.py
 
-# 6. Run complete test suite (138 automated unit and integration tests across 35 test suites)
+# 6. Run complete test suite (143 automated unit and integration tests across 35 test suites)
 pytest
 
 # 7. Run 1-Click Interactive Terminal War-Room Playback (All 15 beats with colorized agent handoffs)
@@ -635,8 +635,14 @@ uvicorn src.api.main:app --reload --port 8000
 3. Observe the 3-column split view (`shop-sharma-kirana`, `ca-office`, `vendor-dispute-desk`).
 4. Click the interactive simulation beats (Beats 1 through 8) to see real-time cross-room messaging, dispute resolution, voice notes, FEFO expiry debit notes, double-entry financial statements, and crew payout approvals.
 
-### Option C: Live Telegram Bot Deployment
-To connect live Telegram groups for smartphone photo drops:
+### Option C: Live Telegram Bot Deployment (Primary Zero-Friction Client for Switch)
+Telegram serves as the primary floor collaboration interface for real-time mobile interaction with zero setup friction:
+- **Zero-Barrier Setup:** Creating a bot with `@BotFather` takes 30 seconds with no domain verification or tunneling.
+- **Smartphone Floor Drops:** Take photos of bills or upload PDFs directly from Android/iOS.
+- **Wispr Voice Notes:** Record and send native voice notes in Hindi or English (e.g. *"10 bori Atta delivery aayi"*, *"Chandan ko 1500 advance diya"*); the bot transcribes via Wispr and updates store ledgers instantly.
+- **Full Operational Commands:** Run `/financials`, `/runway`, `/fefo_expiry_check`, `/audit_stock`, `/crew_checkin`, `/advance`, `/payroll`, `/priority_queue`, and `/approve_payout`.
+
+Setup Steps:
 1. Message `@BotFather` on Telegram to generate a Bot Token.
 2. Add your token to `.env`:
    ```env

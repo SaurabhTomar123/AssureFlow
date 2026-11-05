@@ -65,3 +65,112 @@ def test_telegram_bot_process_tax_savings_command():
     assert len(events) >= 1
     assert any("Section 32" in e["text"] for e in events)
 
+
+def test_telegram_bot_process_voice_message():
+    bot = TelegramBotRunner(token=None)
+    update = {
+        "update_id": 104,
+        "message": {
+            "chat": {"id": -1001234567891, "title": "Sharma Kirana"},
+            "from": {"first_name": "Harsh"},
+            "voice": {"file_id": "mock_voice_file_123", "mime_type": "audio/ogg"},
+            "caption": "Bhai 10 bori Aashirvaad Atta delivery aayi hai",
+        },
+    }
+    events = bot.process_update(update)
+    assert len(events) >= 1
+    assert events[0]["sender"] == "store-manager"
+    assert "Voice Delivery Processed" in events[0]["text"]
+
+
+def test_telegram_bot_process_voice_advance():
+    bot = TelegramBotRunner(token=None)
+    update = {
+        "update_id": 105,
+        "message": {
+            "chat": {"id": -1001234567891, "title": "Sharma Kirana"},
+            "from": {"first_name": "Harsh"},
+            "voice": {"file_id": "mock_voice_advance_456", "mime_type": "audio/ogg"},
+            "caption": "Chandan ko 1500 advance diya",
+        },
+    }
+    events = bot.process_update(update)
+    assert len(events) >= 1
+    assert events[0]["sender"] == "store-manager"
+    assert "Udhari Advance Logged" in events[0]["text"]
+
+
+def test_telegram_bot_process_financials_and_runway():
+    bot = TelegramBotRunner(token=None)
+    
+    # Financials
+    update_fin = {
+        "update_id": 106,
+        "message": {
+            "chat": {"id": -1001234567891, "title": "Sharma Kirana"},
+            "from": {"first_name": "Harsh"},
+            "text": "/financials",
+        },
+    }
+    ev_fin = bot.process_update(update_fin)
+    assert len(ev_fin) >= 1
+    assert any("Trial Balance" in e["text"] for e in ev_fin)
+
+    # Runway
+    update_run = {
+        "update_id": 107,
+        "message": {
+            "chat": {"id": -1001234567891, "title": "Sharma Kirana"},
+            "from": {"first_name": "Harsh"},
+            "text": "/runway",
+        },
+    }
+    ev_run = bot.process_update(update_run)
+    assert len(ev_run) >= 1
+    assert any("Liquidity Status" in e["text"] for e in ev_run)
+
+
+def test_telegram_bot_process_fefo_and_operations():
+    bot = TelegramBotRunner(token=None)
+
+    # FEFO check
+    update_fefo = {
+        "update_id": 108,
+        "message": {
+            "chat": {"id": -1001234567891, "title": "Sharma Kirana"},
+            "from": {"first_name": "Harsh"},
+            "text": "/fefo_expiry_check",
+        },
+    }
+    ev_fefo = bot.process_update(update_fefo)
+    assert len(ev_fefo) >= 1
+    assert any("FEFO Shelf-Life Horizon Report" in e["text"] for e in ev_fefo)
+
+    # Crew checkin
+    update_crew = {
+        "update_id": 109,
+        "message": {
+            "chat": {"id": -1001234567891, "title": "Sharma Kirana"},
+            "from": {"first_name": "Harsh"},
+            "text": "/crew_checkin",
+        },
+    }
+    ev_crew = bot.process_update(update_crew)
+    assert len(ev_crew) >= 1
+    assert any("1-Click Crew Checkin Complete" in e["text"] for e in ev_crew)
+
+
+def test_telegram_bot_process_ca_priority_queue():
+    bot = TelegramBotRunner(token=None)
+    update_pq = {
+        "update_id": 110,
+        "message": {
+            "chat": {"id": 9999, "title": "CA Central Office"},
+            "from": {"first_name": "Mehta"},
+            "text": "/priority_queue",
+        },
+    }
+    ev_pq = bot.process_update(update_pq)
+    assert len(ev_pq) >= 1
+    assert any("Vendor Payment Priority Queue" in e["text"] for e in ev_pq)
+

@@ -63,7 +63,58 @@ def route_voice_intent(transcript: str, shop_id: str, db: Session) -> Dict[str, 
             ),
         }
 
-    # Intent 2: Staff attendance via voice
+    # Intent 2: Staff advance / udhari via voice
+    if any(k in text_lower for k in ["advance", "udhari"]):
+        amt_match = re.search(r"(\d+)\s*(?:rupaye|rs|inr|advance|udhari)?", transcript, re.IGNORECASE)
+        amt = float(amt_match.group(1)) if amt_match else 1000.0
+        employees = db.query(Employee).filter(Employee.shop_id == shop_id).all()
+        matched_emp = None
+        for emp in employees:
+            if emp.name.split()[0].lower() in text_lower:
+                matched_emp = emp
+                break
+        if not matched_emp and employees:
+            matched_emp = employees[0]
+
+        if matched_emp:
+            from src.staff.service import issue_staff_advance
+            adv = issue_staff_advance(
+                shop_id=shop_id,
+                employee_id=matched_emp.id,
+                amount=amt,
+                notes=f"Voice advance: '{transcript}'",
+                db=db,
+            )
+            return {
+                "intent": "STAFF_ADVANCE",
+                "transcript": transcript,
+                "advance_id": adv.id,
+                "agent": "store-manager",
+                "reply_message": f"Udhari Advance Logged: INR {amt:.2f} cash advance issued to {matched_emp.name}. Scheduled for payroll recovery.",
+            }
+
+    # Intent 3: Crew checkin via voice
+    if any(k in text_lower for k in ["poori loading team", "crew checkin", "saari team", "all loading present", "loading team present"]):
+        employees = db.query(Employee).filter(Employee.shop_id == shop_id, Employee.tier == "BLUE_COLLAR").all()
+        present_ids = []
+        for emp in employees:
+            first_name = emp.name.split()[0].lower()
+            if f"siwaye {first_name}" in text_lower or f"bina {first_name}" in text_lower:
+                continue
+            present_ids.append(emp.id)
+
+        from src.staff.service import crew_checkin
+        today_str = date.today().isoformat()
+        crew_res = crew_checkin(shop_id=shop_id, date_str=today_str, present_employee_ids=present_ids, db=db)
+        return {
+            "intent": "CREW_CHECKIN",
+            "transcript": transcript,
+            "crew_result": crew_res,
+            "agent": "store-manager",
+            "reply_message": f"Crew Checkin Complete: {crew_res['present_count']} / {crew_res['crew_size']} crew members marked PRESENT for {today_str}.",
+        }
+
+    # Intent 4: Staff attendance via voice
     if any(k in text_lower for k in ["duty", "present", "absent", "chutti", "attendance", "aaj"]):
         employees = db.query(Employee).filter(Employee.shop_id == shop_id).all()
         marked = []

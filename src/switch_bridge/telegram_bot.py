@@ -107,6 +107,26 @@ class TelegramBotRunner:
             if downloaded:
                 attachment_path = str(downloaded)
 
+        elif "voice" in message or "audio" in message:
+            audio_obj = message.get("voice") or message.get("audio")
+            file_id = audio_obj.get("file_id") if audio_obj else None
+            downloaded = self.download_telegram_file(file_id, f"tg_{chat_id}_voice.ogg") if file_id else None
+            audio_bytes = b""
+            if downloaded and downloaded.exists():
+                with open(downloaded, "rb") as vf:
+                    audio_bytes = vf.read()
+
+            db = SessionLocal()
+            try:
+                from src.voice.voice_transcriber import transcribe_audio_note, route_voice_intent
+                transcript = text.strip() if text.strip() else transcribe_audio_note(audio_bytes, filename=downloaded.name if downloaded else "voice.ogg")
+                res = route_voice_intent(transcript=transcript, shop_id=room_name, db=db)
+                reply = f"[Wispr Voice Note Processed]:\n\"{transcript}\"\n\n[{res['agent']}]:\n{res['reply_message']}"
+                self.send_message(chat_id, reply)
+                return [{"room": room_name, "sender": res["agent"], "text": res["reply_message"]}]
+            finally:
+                db.close()
+
         if text.strip() in ["/start", "/help"]:
             help_text = (
                 f"Namaste {user_name}! I am MunimJi, your AI GST, Bookkeeping & Store Operations Assistant.\n\n"
@@ -114,19 +134,28 @@ class TelegramBotRunner:
                 f"- Drop any Bill Photo or PDF invoice to automatically read and audit GST compliance\n"
                 f"- 'OK': Confirm details of the latest uploaded bill & trigger automatic inventory restock\n"
                 f"- /status: View count of clean vs pending bills\n\n"
-                f"Bookkeeping & Tax Savings (Junior CA):\n"
+                f"Voice Intelligence (Wispr Flow):\n"
+                f"- Send any Voice Message in Hindi or English (e.g. '12 bori Atta delivery aayi', 'Chandan ko 1500 advance diya')\n\n"
+                f"Bookkeeping & Financial Statements (Junior CA):\n"
+                f"- /financials: View balanced Trial Balance, P&L Net Profit, and Balance Sheet\n"
+                f"- /runway: View 30-Day Liquidity Forecast and Safety Index\n"
                 f"- /khata: View your current month's Accounts Book (Mal Kharid & Expenses)\n"
                 f"- /tax_savings: Junior CA advice on Section 32 depreciation & personal tax savings\n"
                 f"- /presumptive [turnover]: Check Section 44AD presumptive tax savings\n\n"
                 f"Store Manager & Operations:\n"
+                f"- /fefo_expiry_check: FEFO shelf-life horizon audit & Return-to-Vendor (RTV) Debit Notes\n"
+                f"- /audit_stock [sku] [count]: Physical count audit & shrinkage classification\n"
                 f"- /stock: View real-time inventory levels and depleted items\n"
                 f"- /reorder: Generate automated supplier procurement reorder sheet\n"
                 f"- /attendance: View today's staff roster and shift briefing\n"
-                f"- /checkin [id] [present|absent]: Log employee daily attendance\n"
+                f"- /crew_checkin: 1-click morning roster punch-in for floor workers\n"
+                f"- /advance [name] [amount]: Log an udhari cash advance to an employee ledger\n"
                 f"- /payroll [YYYY-MM]: Calculate monthly staff wage disbursements\n"
-                f"- /shift_summary: Morning operational briefing and stock alerts\n\n"
+                f"- /approve_payout [batch_id]: Disburse approved wages & post balanced journal entry\n\n"
                 f"CA Office Commands (for CA Room):\n"
-                f"- /dashboard & /summary: Review cross-shop ITC and GSTR returns"
+                f"- /dashboard & /summary: Review cross-shop ITC and GSTR returns\n"
+                f"- /priority_queue: Ranked vendor payment queue based on GSTR-2B compliance\n"
+                f"- /approve [id] & /reject [id]: Review compliance defects"
             )
             self.send_message(chat_id, help_text)
             return [{"room": room_name, "text": help_text}]
