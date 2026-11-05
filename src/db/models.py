@@ -168,10 +168,53 @@ class InventoryItem(Base):
     cost_price = Column(Float, default=0.0)
     selling_price = Column(Float, default=0.0)
     hsn_code = Column(String(32), nullable=True)
+    batch_number = Column(String(64), nullable=True)
+    expiry_date = Column(String(32), nullable=True)
+    lead_time_days = Column(Integer, default=3)
+    min_cost_seen = Column(Float, default=0.0)
+    preferred_vendor_gstin = Column(String(15), nullable=True)
     last_restocked_at = Column(DateTime, nullable=True)
 
     shop = relationship("Shop")
     movements = relationship("StockMovement", back_populates="item", cascade="all, delete-orphan")
+    batches = relationship("ItemBatch", back_populates="item", cascade="all, delete-orphan")
+
+
+class ItemBatch(Base):
+    __tablename__ = "item_batches"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    item_id = Column(String(36), ForeignKey("inventory_items.id"), nullable=False)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    batch_number = Column(String(64), nullable=False)
+    quantity = Column(Float, default=0.0)
+    cost_price = Column(Float, default=0.0)
+    manufacture_date = Column(String(32), nullable=True)
+    expiry_date = Column(String(32), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    item = relationship("InventoryItem", back_populates="batches")
+    shop = relationship("Shop")
+
+
+class StockAdjustment(Base):
+    __tablename__ = "stock_adjustments"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    item_id = Column(String(36), ForeignKey("inventory_items.id"), nullable=False)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    expected_stock = Column(Float, nullable=False)
+    physical_count = Column(Float, nullable=False)
+    discrepancy = Column(Float, nullable=False)
+    discrepancy_pct = Column(Float, default=0.0)
+    discrepancy_value = Column(Float, default=0.0)
+    reason = Column(String(64), default="AUDIT_DISCREPANCY")
+    audited_by = Column(String(128), default="Store Manager")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    item = relationship("InventoryItem")
+    shop = relationship("Shop")
 
 
 class StockMovement(Base):
