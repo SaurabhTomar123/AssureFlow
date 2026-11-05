@@ -18,12 +18,13 @@ Simultaneously, retail shop owners struggle with daily store management, multi-p
 3. **Supplier Default & Disconnected Vendor Disputes (Rule 37A):** Physical bills paid to vendors are disallowed if the supplier fails to upload the invoice in GSTR-1, causing surprise ITC reversals and mandatory 18% Section 50 interest penalties with zero streamlined channel to dispute it.
 4. **Three-Way Cash Disconnect:** Accounting books, government GSTR-2B portal feeds, and bank account debit statements operate in silos, making vendor payment verification and tax audit preparation an excruciating manual task.
 5. **Absence of Real-Time Bookkeeping:** Small proprietors lack continuous bookkeeping, missing out on statutory tax deductions (Section 32 depreciation, Section 44AD presumptive taxation, and Section 80C/80D personal deductions).
-6. **Disconnected Inventory & Procurement:** Invoices are filed for taxes but never linked to inventory stock balances, leading to stockouts and manual reorder sheets.
-7. **Manual Staff Attendance & Payroll Calculation:** Store managers track staff attendance on paper registers, leading to wage calculation disputes and opaque shift handovers.
-8. **Hands-Busy Shop Environment:** Shopkeepers rarely have time to type commands into desktops while unloading crates or serving counter customers.
-9. **Lack of Enterprise Multi-Tenancy & RBAC:** Multi-store owners and CA practices need robust multi-tenancy with JWT authentication and strict access boundaries between store staff, managers, and accountants.
+6. **Perishable Goods & Inventory Expiry (FEFO):** FMCG retailers lose substantial margins to expired stock discovered too late on shelves without contractual return-to-vendor (RTV) debit claims.
+7. **Inventory Shrinkage & Unbalanced Stock:** Thefts, breakage, and unrecorded counter samples create massive discrepancies between recorded ledgers and physical stock.
+8. **Dual-Tier Workforce Disconnect:** Store owners manage both salaried white-collar staff (managers, cashiers) and blue-collar daily-wage workers (loaders, drivers) on manual paper registers with frequent cash advances ("udhari") and arbitrary overtime calculations.
+9. **Hands-Busy Floor Environment:** Shopkeepers rarely have time to type commands into desktops while unloading crates or serving counter customers.
+10. **Lack of Enterprise Multi-Tenancy & RBAC:** Multi-store owners and CA practices need robust multi-tenancy with JWT authentication and strict access boundaries between store staff, managers, and accountants.
 
-**MunimJi** solves this by establishing an autonomous, multi-agent enterprise workflow orchestrated across isolated rooms via **Switch** and **Meta WhatsApp Cloud API**, backed by deterministic verification engines, a "Kacha-Pakka" document classifier, an automated Vendor Dispute Concierge, a DGGI Audit Radar, Wispr Voice Ingestion, live GSTR-2B two-way reconciliation, Account Aggregator three-way bank matching, and a full Junior CA bookkeeping suite.
+**MunimJi** solves this by establishing an autonomous, multi-agent enterprise workflow orchestrated across isolated rooms via **Switch** and **Meta WhatsApp Cloud API**, backed by deterministic verification engines, a "Kacha-Pakka" document classifier, an automated Vendor Dispute Concierge, a DGGI Audit Radar, Wispr Voice Ingestion, a Smart Inventory Engine, an Autonomous Double-Entry General Ledger, a 30-Day Predictive Cash Flow Runway, and a Dual-Tier Smart Attendance and HR Disbursement System.
 
 ---
 
@@ -49,15 +50,37 @@ Simultaneously, retail shop owners struggle with daily store management, multi-p
   - **Supplier Compliance Scorecard:** Assigns compliance badges to vendors (`A+ Safe Partner`, `B Watchlist`, `C Chronic Defaulter`) with specific payment withholding recommendations.
   - **MSME Credit Solvency Score (300 to 900):** Synthesizes verified turnover, reconciled bank debits, and prompt filings to assess Mudra and MSME working capital loan readiness.
 
-### 4. Wispr Flow Voice Ingestion Subsystem (`src/voice/voice_transcriber.py`)
+### 4. Smart Autonomous Inventory Engine (`src/inventory/service.py`)
+- **FEFO (First-Expired, First-Out) & Batch Tracking:** Tracks batch numbers and expiry dates on every bill. Categorizes batches into `EXPIRED`, `CRITICAL` (<15 days), `WARNING` (15-45 days), and `HEALTHY`.
+- **Return-to-Vendor (RTV) Debit Notes:** Automatically issues formal debit notes (`DN-RTV`) for expired goods, claiming tax reversals (18% GST) and supplier refunds while auto-deducting stock.
+- **Dynamic Run-Rate Reordering:** Computes rolling Average Daily Velocity (ADV) and Days of Inventory Remaining (DIR). Generates pre-calculated Economic Order Quantity (EOQ) Purchase Order (PO) drafts.
+- **Physical Shrinkage & Leakage Audit:** Command `/audit_stock` compares physical counts against expected book stock (`Initial + Purchases - Billed Sales`), triaging discrepancies into `NORMAL_VARIANCE`, `SHRINKAGE_WARNING`, or `SEVERE_LEAKAGE`.
+- **Supplier Price Intelligence:** Analyzes historical purchase prices across vendors, alerting when another distributor previously offered identical SKUs at a lower price.
+
+### 5. Autonomous Double-Entry Ledger & Cash Flow Forecast (`src/accounts/double_entry.py`)
+- **Standard Chart of Accounts (COA):** Assets (`1000`), Liabilities (`2000`), Equity (`3000`), Revenue (`4000`), Expenses (`5000`).
+- **Autonomous Balanced Journal Entries:** Automatically posts balanced debits and credits upon bill confirmation, bank disbursement, stock shrinkage, and payroll.
+- **Real-Time Financial Statements:** Generates balanced Trial Balance, monthly Profit & Loss (P&L), and Balance Sheet.
+- **30-Day Predictive Cash Flow Runway:** Combines liquid cash, accounts payable due dates, salary obligations, fixed overheads, and net GST cash liability on the 20th against projected daily sales velocity to assign a Liquidity Safety Index (`SAFE`, `TIGHT`, `CRITICAL_DEFICIT`).
+- **GSTR-Optimized Vendor Payment Priority Queue:** Ranks unpaid bills by GSTR-2B match status, DGGI supplier scorecard, cash discounts, and aging. Recommends which suppliers to pay first to unlock maximum ITC while withholding payment from defaulting vendors.
+
+### 6. Smart Attendance & Dual-Tier HR Disbursement System (`src/staff/service.py`)
+- **Tier Modeling (White-Collar vs. Blue-Collar):**
+  - **White-Collar (Managers, Cashiers, Accountants):** Shift window with 15-minute grace period, automated late-mark penalty engine (**3 late marks = 0.5-day salary deduction**), leave balances (Casual Leave `CL`, Sick Leave `SL`, Paid Leave `PL`), and regularization workflows.
+  - **Blue-Collar (Loaders, Drivers, Floor Stockers):** Voice punch-in/out, worked-hour thresholding (`<4h` Absent, `4-7h` Half-Day, `7-9h` Full-Day, `>9h` Overtime), dynamic overtime calculation at **1.5x standard hourly rate**, and 1-click crew check-ins.
+- **Shift Understaffing Warning:** Automated alerts when critical floor personnel (loaders, delivery drivers) fail to punch in within 30 minutes of shift start.
+- **"Udhari" Cash Advances Ledger:** Tracks mid-month cash advances given to floor workers (`/advance [name] [amount]` or voice), automatically scheduling and deducting recoveries from payroll.
+- **Bulk Payout Advice Generator:** Prepares structured bulk payout batch files (standard Indian banking CSV/JSON for NEFT/RTGS/UPI batching) with dual-authorization approval (`Accountant Agent drafts -> Shop Owner approves -> Double-entry journal JE recorded`).
+
+### 7. Wispr Flow Voice Ingestion Subsystem (`src/voice/voice_transcriber.py`)
 - **The Problem:** Kirana owners and warehouse staff have dirty or busy hands while unloading trucks or attending counter patrons. Typing commands into a chat UI creates friction.
 - **The Autonomous Solution:** Targets the **Code with Wispr Voice Track**.
-  - Ingests natural spoken Hinglish and English voice notes (e.g., *"12 bori Aashirvaad Atta delivery aayi"*, *"Ramesh duty pe hai"*).
-  - Automatically parses voice transcriptions into structured operational actions: inventory restock, employee attendance check-ins, or tax/khata queries with zero manual typing.
+  - Ingests natural spoken Hinglish and English voice notes (e.g., *"12 bori Aashirvaad Atta delivery aayi"*, *"Poori loading team present hai siwaye Mukesh ke, aur Chandan ko 1500 advance diya"*).
+  - Automatically parses voice transcriptions into structured operational actions: inventory restock, crew attendance check-ins, udhari advances, or tax/khata queries with zero manual typing.
 
-### 5. 3-Room Switch War-Room Simulator & 1-Click Interactive CLI Runner
+### 8. 3-Room Switch War-Room Simulator & 15-Beat Interactive CLI Runner
 - **Live Web Simulator (`/switch-simulator`):** An interactive 3-column split view displaying isolated Switch rooms (`shop-sharma-kirana`, `ca-office`, `vendor-dispute-desk`) running multi-agent handoffs in real-time.
-- **1-Click Terminal Demo Runner (`scripts/demo_switch_live.py`):** High-speed colorized terminal playback running all 12 beats, demonstrating instant message propagation, automated disputes, voice ingestion, and CA decision overrides.
+- **1-Click Terminal Demo Runner (`scripts/demo_switch_live.py`):** High-speed colorized terminal playback running all 15 beats, demonstrating instant message propagation, automated disputes, voice ingestion, FEFO expiry, double-entry journaling, and bulk payout approvals.
 
 ---
 
@@ -75,8 +98,8 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 |  | - Store Manager Ramesh        |   | - Dispute Concierge Agent   |   | - GST Checker Agent   |  |
 |  | - Bill Reader Agent           |   |                             |   | - Return Preparer     |  |
 |  | - Store Manager Agent         |   | Broadcast Resolution Events |   | - Audit Radar Telemetry| |
-|  | - Junior CA Bookkeeper        |<------------------------------->|   +-----------+-----------+  |
-|  | - Wispr Voice Intake          |   | Tokenized Dispute Link      |               |              |
+|  | - Junior CA Bookkeeper        |<------------------------------->|   | - Double-Entry Auditor|  |
+|  | - Wispr Voice Intake          |   | Tokenized Dispute Link      |   +-----------+-----------+  |
 |  +---------------+---------------+   +-----------------------------+               |              |
 |                  |                                                                 |              |
 |                  +-----------------------------------+-----------------------------+              |
@@ -96,11 +119,12 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 |  +---------------------------+   +---------------------------+   +--------------v--------------+  |
 |  | Store Operations & Voice  |   | Junior CA & Audit Radar   |   | GSP & Bank Reconciliation   |  |
 |  | - Wispr Flow Audio Notes  |   | - Section 44AD Presumptive|   | - 2-Way GSTR-2B Auto-Recon  |  |
-|  | - Auto-Restock from Bill  |   | - Section 32 Depreciation |   | - Rule 37A Supplier Notices |  |
-|  | - Urgent Reorder Sheet    |   | - DGGI Audit Risk Index   |   | - 3-Way Bank Outflow Match  |  |
-|  | - Shift Briefing & Roster |   | - Supplier Scorecard      |   | - Dispute Concierge Webhook |  |
-|  | - Attendance & Payroll    |   | - MSME Credit Solvency    |   | - Account Aggregator Feeds  |  |
-|  +---------------------------+   +---------------------------+   +-----------------------------+  |
+|  | - FEFO Expiry & RTV Notes |   | - Double-Entry Ledger     |   | - Rule 37A Supplier Notices |  |
+|  | - Dynamic Run-Rate POs    |   | - 30-Day Cash Runway      |   | - 3-Way Bank Outflow Match  |  |
+|  | - Shrinkage & Leakage     |   | - Vendor Priority Queue   |   | - Dispute Concierge Webhook |  |
+|  | - Smart Dual-Tier HR      |   | - P&L & Balance Sheet     |   | - Account Aggregator Feeds  |  |
+|  | - Bulk Payout Advice Batch|   | - DGGI Audit Risk Index   |   +-----------------------------+  |
+|  +---------------------------+   +---------------------------+                                    |
 +---------------------------------------------------------------------------------|-----------------+
                                                                                   v
 +---------------------------------------------------------------------------------------------------+
@@ -110,9 +134,17 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 |      |                                                                                            |
 |      +-----------> [ shops ] <---- [ bills ] <---- [ bill_items ] <---- [ compliance_issues ]     |
 |                        |               |                                                          |
-|                        |               +-----------> [ stock_movements ] <--- [ items ]           |
+|                        |               +-----------> [ item_batches ] <--- [ items ]              |
+|                        |               |                                                          |
+|                        |               +-----------> [ stock_movements ] <--- [ stock_adjustments ]|
 |                        |                                                                          |
 |                        +-----------> [ employees ] <---- [ attendance ] <---- [ payroll ]         |
+|                        |               |                                                          |
+|                        |               +-----------> [ leave_balances ] <--- [ staff_advances ]   |
+|                        |               |                                                          |
+|                        |               +-----------> [ payout_batches ]                           |
+|                        |                                                                          |
+|                        +-----------> [ journal_entries ] <--- [ journal_entry_lines ]             |
 |                        |                                                                          |
 |                        +-----------> [ gstr2b_inward_records ] (Portal Feeds & Statuses)           |
 |                        |                                                                          |
@@ -121,13 +153,6 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 |                        +-----------> [ ledger_entries ] (Expense Categorization & Cashflows)       |
 +---------------------------------------------------------------------------------------------------+
 ```
-
-### Access Control & Privacy Guarantees
-- **Private Shop Rooms (`shop-sharma-kirana`, `shop-gupta-electronics`)**: Every merchant operates in an isolated room. Competitors never observe each other's purchase volumes, supplier identities, inventory counts, or financial margins.
-- **Vendor Dispute Desk (`vendor-dispute-desk`)**: Dedicated neutral space where defaulting suppliers view tokenized discrepancy summaries, submit amendments, or issue credit notes without viewing the buyer's internal ledger.
-- **Shared CA Office Room (`ca-office`)**: Central practice management cockpit for Chartered Accountants. Aggregates serious compliance flags, DGGI audit radar scores, and return preparation metrics across all client entities.
-- **Enterprise Multi-Tenancy**: Organization users are authenticated via JWT Bearer tokens with strict tenant scoping (`tenant_id`). User actions and audits are tracked in `audit_logs`.
-- **Role-Based Filtering (RBAC)**: The `/dashboard` interactive visual cockpit automatically filters data based on the user's role profile (`TENANT_ADMIN`, `STORE_MANAGER`, `JUNIOR_CA`, `SENIOR_CA`, `STORE_STAFF`). Staff never see sensitive profit margins or personal tax advice.
 
 ---
 
@@ -151,23 +176,23 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 - **Behavior:** Handles simple defects (blurry captures, missing supplier GSTIN). Translates regulatory errors into actionable business terms, explicitly calculating the **exact Rupee amount of Input Tax Credit at risk**. Sends automated countdown reminders approaching tax filing deadlines.
 
 ### 4. `store-manager` (Stationed in Shop Rooms)
-- **Role:** Inventory replenishment, staff attendance, shift briefings, and payroll.
+- **Role:** Inventory replenishment, FEFO tracking, staff attendance, shift briefings, and payroll.
 - **Behavior:**
-  - **Auto-Restock:** When a purchase bill or kacha slip is confirmed, automatically creates or increments inventory balances and records `IN_PURCHASE` stock movements.
-  - **Stock Health Overview (`/stock`):** Reports total catalog SKUs, healthy stock levels, low-stock alerts, and out-of-stock items.
-  - **Replenishment Reorder Sheet (`/reorder`):** Generates an itemized procurement sheet with suggested order quantities and estimated wholesale purchase costs.
-  - **Daily Shift Briefing (`/shift_summary` or `/attendance`):** Morning operational briefing showing staff on duty, absent staff, incoming deliveries, and low stock warnings.
-  - **Staff Check-in (`/checkin [name] [status]`):** Logs daily attendance (Present, Absent, Half-Day, Leave) with check-in timestamps.
-  - **Monthly Payroll (`/payroll [YYYY-MM]`):** Computes monthly pro-rata wage disbursements based on actual present days and monthly base salaries.
+  - **FEFO Expiry Audits:** Alerts on expiring batches; auto-generates Return-to-Vendor Debit Notes (`DN-RTV`).
+  - **Dynamic Run-Rate POs:** Calculates rolling ADV and generates replenishment PO drafts based on EOQ.
+  - **Shrinkage Audits:** Compares physical counts against expected stock, triaging discrepancies over 2%.
+  - **Smart Attendance:** Tracks white-collar late marks (3 lates = 0.5-day cut), blue-collar worked hours, and 1.5x overtime.
+  - **Udhari & Cash Advances:** Manages floor worker advances and recovers them from wages.
+  - **Bulk Payout Advice Batches:** Generates structured bank/UPI payout batches for owner approval.
 
 ### 5. `junior-ca` (Stationed in Shop Rooms)
-- **Role:** Real-time bookkeeping and proactive tax optimization.
+- **Role:** Double-entry bookkeeping and proactive tax optimization.
 - **Behavior:**
-  - Maintains the merchant's digital **Accounts Book (`/khata`)**, categorizing expenses into inventory purchases, operating expenses, capital assets, and logistics.
-  - Analyzes eligibility for **Section 44AD Presumptive Taxation** (deemed taxable profit of 6% for digital receipts / 8% for cash receipts), quantifying tax savings and statutory audit exemptions.
-  - Calculates **Section 32 Asset Depreciation** write-offs (40% for technology assets, 15% for commercial machinery).
-  - Identifies **Section 17(5) Blocked ITC** on food, catering, and personal expenses before GSTR-3B submission.
-  - Formulates personal tax optimization roadmaps (**Section 80C**, **80D**, and **NPS 80CCD(1B)**).
+  - Posts balanced double-entry journal entries (`Debit Inventory/Expense, Credit Accounts Payable/Bank`).
+  - Generates balanced Trial Balance, Profit & Loss (P&L), and Balance Sheet.
+  - Evaluates 30-day cash flow runway and provides Liquidity Safety Index.
+  - Ranks unpaid invoices in the GSTR-Optimized Payment Priority Queue.
+  - Analyzes eligibility for **Section 44AD Presumptive Taxation** and Section 32 Depreciation.
 
 ### 6. `return-preparer` (Stationed in CA Office Room)
 - **Role:** Practice management coordinator and GSTR aggregator.
@@ -186,11 +211,7 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 - **The Solution:**
   - `GSPClient` syncs live portal inward returns.
   - The matching engine compares physical purchase bills in books against portal records.
-  - Classifications:
-    - `RECON_MATCHED`: Taxable values and tax claims match within tolerance (+/- Rs 2).
-    - `RECON_TAX_MISMATCH`: Supplier filed return with lower tax than billed; flags tax difference at risk.
-    - `SUPPLIER_DEFAULT`: Physical invoice exists in books, but supplier never filed in GSTR-1.
-    - `UNRECORDED_PURCHASE`: Invoice filed by supplier in portal, but shop staff forgot to enter the bill in MunimJi (unclaimed ITC opportunity).
+  - Classifications: `RECON_MATCHED`, `RECON_TAX_MISMATCH`, `SUPPLIER_DEFAULT`, `UNRECORDED_PURCHASE`.
   - **Rule 37A Demand Notices:** Automatically drafts formal legal notices to defaulting vendors demanding return amendment before payment release.
 
 ### Three-Way Bank Reconciliation Engine
@@ -198,10 +219,7 @@ MunimJi decouples shop-level intake, store operations, external vendor disputes,
 - **The Solution:**
   - Connects to Account Aggregator (AA) feeds and bank statement records via `AccountAggregatorClient`.
   - Cross-reconciles: `Physical Bill` <-> `GSTR-2B Filing` <-> `Bank Payment Outflow`.
-  - Classifications:
-    - `THREE_WAY_MATCHED`: Billed in books, verified in GSTR-2B, and settled via bank. (Audit-proof).
-    - `UNPAID_PURCHASE_VERIFIED`: Confirmed in GSTR-2B, awaiting bank disbursement. (Safe Accounts Payable).
-    - `PAYMENT_WITHOUT_GSTR2B`: Payment disbursed to supplier, but vendor failed to file return. Generates critical CA alert and halts future disbursements.
+  - Classifications: `THREE_WAY_MATCHED`, `UNPAID_PURCHASE_VERIFIED`, `PAYMENT_WITHOUT_GSTR2B`.
 
 ---
 
@@ -218,12 +236,8 @@ A valid Indian GSTIN consists of 15 alphanumeric characters:
 - Digit 15: Check digit computed via weighted alternating factors (1 and 2) over the Base-36 alphabet (`0-9`, `A-Z`).
 
 ### 2. Place of Supply Rules (Section 7, 8, 10 of IGST Act)
-- **Intrastate Supply (`supplier_state == buyer_state`):**
-  - Requires Central GST (CGST) and State GST (SGST) in exactly equal amounts.
-  - Integrated GST (IGST) must be 0.00 INR. If IGST > 0, flagged as `WRONG_TAX_TYPE`.
-- **Interstate Supply (`supplier_state != buyer_state`):**
-  - Requires Integrated GST (IGST) only.
-  - CGST and SGST must be 0.00 INR. If CGST > 0 or SGST > 0, flagged as `WRONG_TAX_TYPE`.
+- **Intrastate Supply (`supplier_state == buyer_state`):** Requires equal 50/50 CGST+SGST with zero IGST.
+- **Interstate Supply (`supplier_state != buyer_state`):** Requires IGST only with zero CGST/SGST.
 
 ### 3. Arithmetic Totals Cross-Check
 - `sum(line_items.taxable_value) == taxable_amount` (tolerance: +/- 1.00 INR).
@@ -244,7 +258,7 @@ AssureFlow/
 |-- docker-compose.yml                  # PostgreSQL and API service orchestrator
 |-- requirements.txt                    # Python dependency manifest
 |-- switch.template.yaml                # Declarative Switch agent and 3-room topology
-|-- DEMO_SCRIPT.md                      # Complete 12-beat video recording script
+|-- DEMO_SCRIPT.md                      # Complete 15-beat video recording script
 |-- MUNIMJI_COMMERCIAL_ROADMAP.md       # Product roadmap & monetization strategy
 |-- MUNIMJI_ENTERPRISE_IMPLEMENTATION_PLAN.md # Enterprise architectural specification
 |-- README.md                           # Comprehensive architectural documentation
@@ -252,8 +266,8 @@ AssureFlow/
 |-- scripts/
 |   |-- generate_synthetic_bills.py     # Generates 18 realistic PDF & PNG invoices
 |   |-- seed_database.py                # Initializes tenants, shops, users, staff, and invoices
-|   |-- test_e2e_flow.py                # Automated dry run executing all 12 demo beats
-|   `-- demo_switch_live.py             # 1-Click interactive terminal war-room runner
+|   |-- test_e2e_flow.py                # Automated dry run executing demo beats
+|   `-- demo_switch_live.py             # 1-Click interactive terminal war-room runner (15 Beats)
 |
 |-- synthetic_data/
 |   |-- bills_pdf/                      # Generated synthetic PDF tax invoices
@@ -272,8 +286,9 @@ AssureFlow/
 |   |   |-- client.py                   # GSP client interface (Sandbox & Production)
 |   |   `-- reconciler.py               # 2-Way GSTR-2B reconciler & Rule 37A notice generator
 |   |
-|   |-- accounts/                       # Bookkeeping & Bank 3-Way Reconciliation
+|   |-- accounts/                       # Bookkeeping & Double-Entry Accounting
 |   |   |-- __init__.py
+|   |   |-- double_entry.py             # Double-entry ledger, P&L, balance sheet, cashflow runway
 |   |   |-- ledger.py                   # Automated expense categorizer and cashflow tracker
 |   |   |-- bank_client.py              # Account Aggregator (AA) & bank statement ingestion
 |   |   `-- three_way_recon.py          # Three-way cross-reconciliation (Bill <-> 2B <-> Bank)
@@ -301,11 +316,11 @@ AssureFlow/
 |   |
 |   |-- inventory/                      # Store Inventory & Auto-Restock Subsystem
 |   |   |-- __init__.py
-|   |   `-- service.py                  # Catalog tracking, stock-in/out, reorder sheet
+|   |   `-- service.py                  # FEFO expiry, RTV debit notes, dynamic POs, shrinkage audits
 |   |
 |   |-- staff/                          # Store Staff Attendance & Payroll Subsystem
 |   |   |-- __init__.py
-|   |   `-- service.py                  # Employee roster, check-in, shift summary, payroll
+|   |   `-- service.py                  # Dual-tier attendance, late marks, overtime, udhari, payout batches
 |   |
 |   |-- users/                          # User Profiles & RBAC Engine
 |   |   |-- __init__.py
@@ -314,7 +329,7 @@ AssureFlow/
 |   |
 |   |-- dashboard/                      # Visual Cockpit & 3-Room Switch Simulator
 |   |   |-- __init__.py
-|   |   `-- router.py                   # Cockpit & `/switch-simulator` 3-column war-room
+|   |   `-- router.py                   # Cockpit & `/switch-simulator` 3-column war-room (8 Interactive Beats)
 |   |
 |   |-- agents/                         # Multi-Agent Conversational Logic
 |   |   |-- __init__.py
@@ -337,9 +352,9 @@ AssureFlow/
 |   |   |-- routes_bills.py             # Multipart upload, audit, and confirmation
 |   |   |-- routes_issues.py            # Compliance issue triaging and CA actions
 |   |   |-- routes_summary.py           # GSTR reconciliation summaries & GSTR-3B JSON exports
-|   |   |-- routes_advisory.py          # Accounts ledger, tax savings, and DGGI audit radar
-|   |   |-- routes_inventory.py         # Inventory catalog and stock movement routes
-|   |   |-- routes_staff.py             # Employee roster, attendance and payroll routes
+|   |   |-- routes_advisory.py          # Double-entry ledger, P&L, balance sheet, cashflow runway
+|   |   |-- routes_inventory.py         # FEFO reports, RTV debit notes, dynamic POs, shrinkage audits
+|   |   |-- routes_staff.py             # Smart attendance, crew check-in, advances, payout batches
 |   |   |-- routes_notifications.py     # Proactive deadline and stock alerts endpoints
 |   |   `-- routes_users.py             # User profile and role lookup routes
 |   |
@@ -347,7 +362,7 @@ AssureFlow/
 |   |   |-- __init__.py
 |   |   |-- session.py                  # SQLAlchemy session lifecycle management
 |   |   |-- init_db.py                  # Schema creation and migration utilities
-|   |   `-- models.py                   # Relational models (Tenant, Shop, Bill, Bank, GSTR2B, etc.)
+|   |   `-- models.py                   # Relational models (Tenant, Shop, Bill, Bank, Journal, Batches, etc.)
 |   |
 |   |-- extraction/                     # Document Intake Pipeline
 |   |   |-- __init__.py
@@ -367,14 +382,17 @@ AssureFlow/
 |       |-- whatsapp_webhook.py         # Meta WhatsApp Cloud API webhook receiver & buttons
 |       `-- telegram_bot.py             # Standalone long-polling Telegram daemon
 |
-`-- tests/                              # Comprehensive Automated Test Suite (122 Tests Passed)
+`-- tests/                              # Comprehensive Automated Test Suite (138 Tests Passed across 34 Test Suites)
     |-- __init__.py
     |-- conftest.py                     # Database initialization test fixtures
+    |-- test_smart_inventory.py         # FEFO expiry, RTV debit notes, dynamic POs, shrinkage audits (5 tests)
+    |-- test_double_entry_accounting.py # Balanced journaling, Trial Balance, P&L, Cashflow runway (5 tests)
+    |-- test_smart_attendance_and_hr.py # White/blue collar attendance, late marks, overtime, udhari, payout (6 tests)
     |-- test_kacha_pakka_sieve.py       # "Kacha-Pakka" Smart Sieve & quarantine tests
     |-- test_vendor_concierge.py        # Autonomous Vendor Dispute Concierge tests
     |-- test_audit_radar.py             # DGGI Audit Radar & Supplier Scorecard tests
     |-- test_voice_workflow.py          # Wispr Hinglish voice ingestion & dispatch tests
-    |-- test_switch_simulator.py        # 3-Room Switch War-Room Simulator tests
+    |-- test_switch_simulator.py        # 3-Room Switch War-Room Simulator & Live Runner tests
     |-- test_enterprise_auth.py         # Tenant registration, JWT, bcrypt, and RBAC tests
     |-- test_two_way_reconciliation.py  # GSP client, GSTR-2B two-way match, Rule 37A notices
     |-- test_three_way_bank_recon.py    # Account Aggregator statement & 3-way match tests
@@ -410,50 +428,53 @@ AssureFlow/
 | Category | Method | Endpoint | Description | Key Parameters / Payload |
 | :--- | :--- | :--- | :--- | :--- |
 | **Switch & War-Room** | `GET` | `/switch-simulator` | Interactive 3-Room Switch War-Room Simulator | None |
+| **Smart Inventory** | `POST` | `/api/inventory/{shop_id}/batch` | Create or update item batch | `{ "sku": str, "batch_number": str, "quantity": float, "expiry_date": str }` |
+| | `GET` | `/api/inventory/{shop_id}/fefo-report` | FEFO horizon report & RTV alerts | Path: `shop_id` |
+| | `POST` | `/api/inventory/{shop_id}/rtv-debit-note` | Issue Return-to-Vendor Debit Note | `{ "batch_id": str, "reason": str }` |
+| | `GET` | `/api/inventory/{shop_id}/dynamic-reorder` | Dynamic run-rate replenishment POs | Path: `shop_id`, Query: `lookback_days` |
+| | `POST` | `/api/inventory/{shop_id}/audit-stock` | Physical stock audit & shrinkage check | `{ "sku": str, "physical_count": float, "reason": str }` |
+| | `GET` | `/api/inventory/{shop_id}/price-opportunity` | Supplier purchase price variance | Path: `shop_id`, Query: `sku`, `latest_cost` |
+| **Smart Accounting** | `POST` | `/api/advisory/double-entry/{shop_id}/sync-bills` | Auto-post purchase bills to journal | Path: `shop_id` |
+| | `GET` | `/api/advisory/double-entry/{shop_id}/trial-balance` | Balanced Trial Balance | Path: `shop_id` |
+| | `GET` | `/api/advisory/double-entry/{shop_id}/profit-loss` | Monthly Trading & P&L Statement | Path: `shop_id` |
+| | `GET` | `/api/advisory/double-entry/{shop_id}/balance-sheet` | Full Balance Sheet (Assets = Liab + Eq) | Path: `shop_id` |
+| | `GET` | `/api/advisory/treasury/{shop_id}/cash-flow-forecast` | 30-Day Cash Runway & Safety Index | Path: `shop_id` |
+| | `GET` | `/api/advisory/treasury/{shop_id}/vendor-payment-priority` | GSTR-Optimized Payment Priority Queue | Path: `shop_id` |
+| **Smart HR & Payroll** | `POST` | `/api/staff/{shop_id}/smart-attendance` | Smart check-in/out, late marks & OT | `{ "employee_id": str, "date": str, "check_in_time": str, "check_out_time": str }` |
+| | `POST` | `/api/staff/{shop_id}/crew-checkin` | 1-Click Blue-Collar Crew Check-in | `{ "date": str, "present_employee_ids": list[str] }` |
+| | `POST` | `/api/staff/{shop_id}/regularize` | Regularize missed punch-out | `{ "employee_id": str, "date": str, "reason": str }` |
+| | `GET` | `/api/staff/{shop_id}/shift-understaffing` | Shift understaffing alert check | Path: `shop_id`, Query: `date`, `shift_name` |
+| | `POST` | `/api/staff/{shop_id}/advances` | Issue cash advance / udhari | `{ "employee_id": str, "amount": float, "notes": str }` |
+| | `GET` | `/api/staff/{shop_id}/advances` | List active cash advances | Path: `shop_id` |
+| | `GET` | `/api/staff/{shop_id}/smart-payroll` | Dual-Tier Smart Payroll Breakdown | Path: `shop_id`, Query: `month`, `year` |
+| | `POST` | `/api/staff/{shop_id}/payout-batch` | Generate bulk bank payout batch | `{ "month": int, "year": int }` |
+| | `POST` | `/api/staff/payout-batch/{batch_id}/approve` | Approve payout batch & post journal | `{ "approved_by": str }` |
 | **Dispute Concierge** | `GET` | `/api/concierge/disputes/{shop_id}` | Fetch active supplier dispute records | Path: `shop_id` |
-| | `POST` | `/api/concierge/create-dispute` | Generate tokenized supplier dispute link | `{ "issue_id": str, "supplier_gstin": str, "supplier_name": str, "bill_number": str, "discrepancy_type": str, "amount_at_risk": float }` |
-| | `POST` | `/api/concierge/resolve` | Resolve dispute & broadcast to rooms | `{ "token": str, "action": "AMEND_GSTR1" \| "ISSUE_CREDIT_NOTE", "notes": Optional[str] }` |
-| **Wispr Voice Intake** | `POST` | `/api/voice/process-text` | Ingest voice transcription text | `{ "shop_id": str, "transcription": str, "speaker": Optional[str] }` |
+| | `POST` | `/api/concierge/create-dispute` | Generate tokenized supplier dispute link | `{ "issue_id": str, "supplier_gstin": str, "amount_at_risk": float }` |
+| | `POST` | `/api/concierge/resolve` | Resolve dispute & broadcast to rooms | `{ "token": str, "action": "AMEND_GSTR1" \| "ISSUE_CREDIT_NOTE" }` |
+| **Wispr Voice Intake** | `POST` | `/api/voice/process-text` | Ingest voice transcription text | `{ "shop_id": str, "transcription": str }` |
 | | `POST` | `/api/voice/upload-audio` | Ingest raw voice audio file | Form: `shop_id`, `file` (Multipart audio) |
 | **Audit Radar** | `GET` | `/api/advisory/audit-radar/{shop_id}` | DGGI Audit Risk Index & Supplier Scorecard | Path: `shop_id` |
-| **Auth & Multi-Tenancy** | `POST` | `/api/auth/register` | Register new tenant organization and admin | `{ "tenant_name": str, "admin_email": str, "admin_password": str, "admin_full_name": str }` |
+| **Auth & Multi-Tenancy** | `POST` | `/api/auth/register` | Register new tenant organization and admin | `{ "tenant_name": str, "admin_email": str, "admin_password": str }` |
 | | `POST` | `/api/auth/login` | Authenticate user and issue JWT bearer token | `{ "email": str, "password": str }` |
 | | `GET` | `/api/auth/me` | Fetch authenticated user profile & tenant info | Header: `Authorization: Bearer <token>` |
 | **GSP & 2-Way Recon** | `POST` | `/api/gsp/sync-gstr2b` | Ingest inward GSTR-2B portal records | `{ "shop_id": str, "return_period": str }` |
 | | `POST` | `/api/gsp/reconcile` | Run two-way match (Physical vs Portal) | `{ "shop_id": str, "return_period": str }` |
 | | `GET` | `/api/gsp/reconciliation-summary/{shop_id}` | Quantitative GSTR-2B reconciliation report | Path: `shop_id`, Query: `return_period` |
-| | `GET` | `/api/gsp/supplier-notices/{shop_id}` | Fetch generated Rule 37A supplier recovery notices | Path: `shop_id` |
-| **Bank & 3-Way Recon** | `POST` | `/api/bank/ingest-statement` | Ingest bank statement / Account Aggregator feed | `{ "shop_id": str, "transactions": Optional[list] }` |
+| | `GET` | `/api/gsp/supplier-notices/{shop_id}` | Fetch generated Rule 37A supplier notices | Path: `shop_id` |
+| **Bank & 3-Way Recon** | `POST` | `/api/bank/ingest-statement` | Ingest bank statement / AA feed | `{ "shop_id": str, "transactions": Optional[list] }` |
 | | `POST` | `/api/bank/three-way-reconcile` | Run three-way match (Bill <-> 2B <-> Bank) | `{ "shop_id": str }` |
 | | `GET` | `/api/bank/recon-status/{shop_id}` | Summary of settled vs unreconciled debits | Path: `shop_id` |
 | **WhatsApp Cloud API** | `GET` | `/api/whatsapp/webhook` | Meta Cloud API webhook verification handshake | Query: `hub.mode`, `hub.verify_token`, `hub.challenge` |
-| | `POST` | `/api/whatsapp/webhook` | Process WhatsApp receipts, buttons, and queries | Header: `X-Hub-Signature-256`, Payload: Meta JSON |
+| | `POST` | `/api/whatsapp/webhook` | Process WhatsApp receipts, buttons, queries | Header: `X-Hub-Signature-256`, Payload: Meta JSON |
 | **Cockpit & Dashboard** | `GET` | `/health` | Service health status | None |
 | | `GET` | `/dashboard` | Interactive HTML visual cockpit | Query: `shop_id`, `role` |
 | | `GET` | `/api/dashboard/metrics/{shop_id}` | Role-filtered cockpit telemetry | Path: `shop_id`, Query: `role` |
-| **Shop Management** | `GET` | `/api/shops` | List registered merchant entities | None |
-| | `POST` | `/api/shops` | Register a new merchant entity | `{ "name": str, "gstin": str, "telegram_chat_id": Optional[str] }` |
 | **Bill Processing** | `POST` | `/api/bills/upload` | Ingest bill photo/PDF, run checks | Form: `shop_id`, `file` (Multipart) |
-| | `GET` | `/api/bills` | List bills with filters | Query: `shop_id`, `status` |
-| | `GET` | `/api/bills/{bill_id}` | Retrieve bill details & issues | Path: `bill_id` |
 | | `POST` | `/api/bills/{bill_id}/confirm` | Confirm or correct extracted details | `{ "confirmed": bool, "corrected_total": Optional[float] }` |
 | **Compliance & CA** | `GET` | `/api/issues` | Query compliance defects | Query: `shop_id`, `severity`, `ca_action` |
-| | `POST` | `/api/issues/{issue_id}/decision` | Record CA review decision | `{ "action": "approve" \| "reject" \| "ask_supplier", "note": Optional[str] }` |
-| | `GET` | `/api/summary/{shop_id}` | Month-end GSTR reconciliation | Path: `shop_id` |
-| | `GET` | `/api/summary/{shop_id}/export` | Export GSTR JSON (Query: `format=gstr3b` or `summary`) | Path: `shop_id`, Query: `format` |
-| | `GET` | `/api/notifications/alerts/{shop_id}` | Proactive filing deadline and low stock alerts | Path: `shop_id` |
-| **Tax Advisory** | `GET` | `/api/advisory/accounts/{shop_id}/ledger` | Accounts Book (Khata) & breakdown | Path: `shop_id` |
-| | `GET` | `/api/advisory/tax-savings/{shop_id}` | Section 32 & 80C/80D tax plan | Path: `shop_id`, Query: `annual_income` |
-| | `GET` | `/api/advisory/presumptive-tax` | Section 44AD feasibility analysis | Query: `turnover`, `digital_pct`, `actual_margin_pct` |
-| | `GET` | `/api/advisory/blocked-itc/{shop_id}` | Ineligible Section 17(5) items | Path: `shop_id` |
-| **Store Operations** | `GET` | `/api/inventory/{shop_id}` | Complete inventory catalog | Path: `shop_id` |
-| | `GET` | `/api/inventory/{shop_id}/reorder-sheet` | Urgent stock replenishment sheet | Path: `shop_id` |
-| | `POST` | `/api/inventory/{shop_id}/stock-out` | Record item sale or stock out | `{ "sku": str, "quantity": float, "reason": str }` |
-| | `GET` | `/api/staff/{shop_id}/employees` | Staff roster with designations & wage | Path: `shop_id` |
-| | `POST` | `/api/staff/{shop_id}/attendance` | Log daily employee attendance | `{ "employee_id": str, "date": str, "status": str }` |
-| | `GET` | `/api/staff/{shop_id}/shift-summary` | Morning shift briefing & alerts | Path: `shop_id`, Query: `date` |
-| | `GET` | `/api/staff/{shop_id}/payroll` | Monthly payroll calculation sheet | Path: `shop_id`, Query: `month`, `year` |
-| | `GET` | `/api/users/profile/{user_id}` | User profile and RBAC permissions | Path: `user_id` |
+| | `POST` | `/api/issues/{issue_id}/decision` | Record CA review decision | `{ "action": "approve" \| "reject" \| "ask_supplier" }` |
+| | `GET` | `/api/summary/{shop_id}/export` | Export GSTR JSON (`format=gstr3b` or `summary`) | Path: `shop_id`, Query: `format` |
 
 ---
 
@@ -462,19 +483,23 @@ AssureFlow/
 ### In Private Shop Rooms (`shop-sharma-kirana` or WhatsApp)
 - **Upload File:** Drop any bill photo, PDF, or kacha estimate slip. `bill-reader` classifies the document, extracts data, and displays confirmation previews.
 - **`OK`**: Confirms invoice details into the filing queue **AND automatically triggers auto-restock** via `store-manager`.
+- **`/fefo_expiry_check`**: `store-manager` displays FEFO batch shelf life, flags expiring items, and issues Return-to-Vendor Debit Notes (`DN-RTV`).
+- **`/audit_stock [sku] [count]`**: `store-manager` audits physical counts against book inventory, triaging shrinkage discrepancies.
+- **`/financials`**: `junior-ca` outputs the balanced Trial Balance, P&L Net Profit, and Balance Sheet.
+- **`/runway`**: `junior-ca` reports the 30-day Cash Flow Runway and Liquidity Safety Index.
 - **`/stock`**: `store-manager` displays real-time inventory health (total SKUs, low-stock warnings, depleted items).
 - **`/reorder`**: `store-manager` generates an automated procurement reorder sheet with suggested quantities and estimated costs.
 - **`/attendance`**: `store-manager` displays today's staff roster, attendance summary, and shift briefing.
 - **`/checkin [name] [status]`**: `store-manager` logs employee check-in (Present, Absent, Half-Day, Leave).
+- **`/crew_checkin`**: 1-click roster check-in for the entire blue-collar floor team.
+- **`/advance [name] [amount]`**: Logs an udhari cash advance to an employee ledger.
 - **`/payroll [YYYY-MM]`**: `store-manager` calculates monthly staff payroll wage disbursal based on actual attendance days.
 - **`/shift_summary`**: `store-manager` outputs the morning operational briefing and procurement alerts.
 - **`/khata` or `/accounts`**: `junior-ca` displays the current month's Accounts Book (Mal Kharid, Operating Expenses, Capital Assets, Total Outflow).
 - **`/tax_savings`**: `junior-ca` suggests Section 32 asset depreciation and proprietor personal tax deductions (80C, 80D, NPS).
 - **`/presumptive [turnover] [digital_pct]`**: `junior-ca` computes Section 44AD deemed profit and estimated tax savings.
 - **`/alerts`**: `follow-up` reports pending GST filing deadlines (countdown to the 20th), disputed ITC at risk, and depleted stock warnings.
-- **Wispr Voice Notes:** Send conversational Hinglish or English audio notes (e.g., *"12 bori Aashirvaad Atta delivery aayi"*, *"Ramesh duty pe hai"*). The voice transcriber dispatches stock updates or logs attendance immediately.
-- **Natural Language ("Ask MunimJi"):** Send conversational questions in Hindi or English (e.g., *"Aaj ka stock kaisa hai"*, *"Tax kaise bacha sakte hain"*, *"Mera khata dikhao"*, *"Staff ki attendance"*). The system classifies intent and returns operational or tax insights.
-- **`/status`**: `follow-up` returns clean vs pending bill totals.
+- **Wispr Voice Notes:** Send conversational Hinglish or English audio notes (e.g., *"12 bori Aashirvaad Atta delivery aayi"*, *"Poori loading team present hai siwaye Mukesh ke, aur Chandan ko 1500 advance diya"*). The voice transcriber dispatches stock updates, attendance, or advances immediately.
 
 ### In CA Office Room (`ca-office`)
 - **`/dashboard`**: `return-preparer` lists high-level compliance status across all client shops.
@@ -482,6 +507,7 @@ AssureFlow/
 - **`/approve [bill_id]`**: Overrides compliance defect, retaining invoice in the filing pool.
 - **`/reject [bill_id]`**: Disallows invoice, excluding it from GSTR-3B tax credit pool.
 - **`/ask_supplier [bill_id]`**: Generates Section 16(2) compliance notice and opens a dispute in the Vendor Dispute Desk.
+- **`/priority_queue`**: Lists suppliers ranked by GSTR-2B compliance status for payment authorization.
 
 ### In Vendor Dispute Desk (`vendor-dispute-desk`)
 - **Interactive Dispute Resolution:** Defaulting suppliers receive tokenized links and resolve compliance discrepancies with single clicks:
@@ -511,13 +537,13 @@ pip install -r requirements.txt
 python scripts/generate_synthetic_bills.py
 python scripts/seed_database.py
 
-# 5. Run full automated end-to-end demo dry run (All 12 beats)
+# 5. Run full automated end-to-end demo dry run
 python scripts/test_e2e_flow.py
 
-# 6. Run complete test suite (122 automated unit and integration tests across 32 test suites)
+# 6. Run complete test suite (138 automated unit and integration tests across 34 test suites)
 pytest
 
-# 7. Run 1-Click Interactive Terminal War-Room Playback (All 12 beats with colorized agent handoffs)
+# 7. Run 1-Click Interactive Terminal War-Room Playback (All 15 beats with colorized agent handoffs)
 python scripts/demo_switch_live.py
 
 # 8. Launch FastAPI server and view interactive Visual Cockpit and 3-Room Switch Simulator
@@ -530,7 +556,7 @@ uvicorn src.api.main:app --reload --port 8000
 1. Start the server: `uvicorn src.api.main:app --reload --port 8000`
 2. Open `http://localhost:8000/switch-simulator` in any browser.
 3. Observe the 3-column split view (`shop-sharma-kirana`, `ca-office`, `vendor-dispute-desk`).
-4. Click the interactive simulation beats to see real-time cross-room messaging, dispute resolution, and voice note ingestion.
+4. Click the interactive simulation beats (Beats 1 through 8) to see real-time cross-room messaging, dispute resolution, voice notes, FEFO expiry debit notes, double-entry financial statements, and crew payout approvals.
 
 ### Option C: Live Telegram Bot Deployment
 To connect live Telegram groups for smartphone photo drops:
