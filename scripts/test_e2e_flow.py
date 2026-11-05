@@ -17,9 +17,9 @@ IMG_DIR = BASE_DIR / "synthetic_data" / "bills_img"
 
 def run_e2e_demo():
     print("=" * 65)
-    print("MUNIMJI - FULL END-TO-END DEMO EXECUTION (7 BEATS)")
+    print("MUNIMJI - FULL END-TO-END DEMO EXECUTION (12 BEATS)")
     print("Hackathon: Flip the Switch | Track 1: Best Business Workflow")
-    print("Core Rule: AI reads, code checks, human decides")
+    print("Core Rule: AI reads and advises, code checks, human decides")
     print("=" * 65)
 
     print("\n[BEAT 1] The Problem Statement:")
@@ -144,9 +144,62 @@ def run_e2e_demo():
     for evt in presump_events:
         print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
 
+    print("\n[BEAT 10] Store Manager Inventory Overview & Reorder Sheet:")
+    stock_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Shop Owner Sharma",
+        text="/stock",
+    )
+    for evt in stock_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
+    reorder_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Shop Owner Sharma",
+        text="/reorder",
+    )
+    for evt in reorder_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
+    print("\n[BEAT 11] Staff Check-in & Morning Shift Briefing:")
+    checkin_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Ramesh Manager",
+        text="/checkin Ramesh present",
+    )
+    for evt in checkin_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
+    attendance_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Ramesh Manager",
+        text="/attendance",
+    )
+    for evt in attendance_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
+    print("\n[BEAT 12] Monthly Payroll Calculation & Interactive Web Cockpit Metrics:")
+    payroll_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Shop Owner Sharma",
+        text="/payroll 2026-11",
+    )
+    for evt in payroll_events:
+        print(f"[{evt['room']}] <{evt['sender']}>:\n{evt['text']}\n")
+
+    cockpit_res = client.get("/api/dashboard/metrics/shop-sharma-kirana?role=OWNER")
+    assert cockpit_res.status_code == 200
+    metrics = cockpit_res.json()
+    print("Owner Cockpit Telemetry Verified:")
+    print(f"- Shop: {metrics['shop_name']}")
+    print(f"- Total Bills: {metrics['gst_compliance']['total_bills']}")
+    print(f"- Eligible ITC: INR {metrics['gst_compliance']['eligible_itc']}")
+    print(f"- Inventory SKUs: {metrics['inventory_status']['total_skus']}")
+    print(f"- Staff Present Today: {metrics['staff_attendance']['present_today']} / {metrics['staff_attendance']['total_employees']}")
+
     print("=" * 65)
-    print("ALL 9 DEMO BEATS PASSED PERFECTLY!")
-    print("AI reads & advises, code checks, CA files.")
+    print("ALL 12 DEMO BEATS PASSED PERFECTLY!")
+    print("AI reads and advises, code checks, human decides.")
     print("=" * 65)
 
 

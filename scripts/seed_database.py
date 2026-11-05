@@ -8,9 +8,19 @@ if str(BASE_DIR) not in sys.path:
 
 from src.db.session import SessionLocal
 from src.db.init_db import reset_db
-from src.db.models import Shop, Bill, BillItem, ComplianceIssueModel
+from src.db.models import (
+    Shop,
+    Bill,
+    BillItem,
+    ComplianceIssueModel,
+    UserProfile,
+    InventoryItem,
+    Employee,
+    AttendanceRecord,
+)
 from src.gst_engine.checksum import generate_valid_gstin
 from src.gst_engine.validator import validate_bill_compliance
+from src.inventory.service import restock_inventory_from_bill
 
 
 def seed_database():
@@ -137,7 +147,82 @@ def seed_database():
             })
 
         db.commit()
-        print(f"Seeded 2 shops and {len(records)} bills with compliance audit trails.")
+
+        # Seed User Profiles
+        owner = UserProfile(
+            shop_id=shop1.id,
+            name="Harsh Gupta",
+            role="OWNER",
+            telegram_user_id="tg_owner_harsh",
+            phone="9811122233",
+        )
+        manager = UserProfile(
+            shop_id=shop1.id,
+            name="Ramesh Store Manager",
+            role="MANAGER",
+            telegram_user_id="tg_manager_ramesh",
+            phone="9822233344",
+        )
+        staff = UserProfile(
+            shop_id=shop1.id,
+            name="Vikram Cashier",
+            role="STAFF",
+            telegram_user_id="tg_staff_vikram",
+            phone="9833344455",
+        )
+        ca_profile = UserProfile(
+            shop_id=shop1.id,
+            name="CA Sanjay Verma",
+            role="CA",
+            telegram_user_id="tg_ca_sanjay",
+            phone="9844455566",
+        )
+        db.add_all([owner, manager, staff, ca_profile])
+
+        # Seed Employees and initial Attendance
+        emp1 = Employee(
+            shop_id=shop1.id,
+            name="Ramesh Store Manager",
+            designation="Store Manager",
+            wage_type="MONTHLY",
+            base_rate=30000.0,
+        )
+        emp2 = Employee(
+            shop_id=shop1.id,
+            name="Vikram Cashier",
+            designation="Head Cashier",
+            wage_type="MONTHLY",
+            base_rate=20000.0,
+        )
+        emp3 = Employee(
+            shop_id=shop1.id,
+            name="Sunil Helper",
+            designation="Floor Helper",
+            wage_type="MONTHLY",
+            base_rate=15000.0,
+        )
+        db.add_all([emp1, emp2, emp3])
+        db.commit()
+
+        for emp in [emp1, emp2, emp3]:
+            for day in range(1, 6):
+                att = AttendanceRecord(
+                    shop_id=shop1.id,
+                    employee_id=emp.id,
+                    date=f"2026-11-{day:02d}",
+                    status="PRESENT",
+                    check_in_time="09:15 AM",
+                    check_out_time="08:30 PM",
+                )
+                db.add(att)
+
+        # Auto-restock inventory from first 5 clean bills
+        clean_bills = db.query(Bill).filter(Bill.shop_id == shop1.id, Bill.status == "clean").all()
+        for b in clean_bills[:5]:
+            restock_inventory_from_bill(b.id, db)
+
+        db.commit()
+        print(f"Seeded 2 shops, {len(records)} bills, 4 user profiles, 3 employees, and inventory.")
     finally:
         db.close()
 

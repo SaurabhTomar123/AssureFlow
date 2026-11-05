@@ -81,6 +81,19 @@ agents:
     tools:
       - "http"
 
+  - id: store-manager
+    name: "MunimJi Store Manager"
+    role: "Inventory, Shift Briefing & Payroll Operations Agent"
+    instructions: |
+      You operate inside private shop rooms as the dedicated Store Operations Manager.
+      1. Automatically restock inventory items when purchase bills are confirmed by the owner.
+      2. Track current stock levels (/stock) and generate procurement reorder sheets (/reorder) for depleted goods.
+      3. Track employee roster, daily attendance (/checkin, /attendance), and morning shift briefings (/shift_summary).
+      4. Calculate monthly staff payroll and wage disbursement summaries (/payroll).
+      Support natural conversational commands in English and Hindi/Hinglish.
+    tools:
+      - "http"
+
 rooms:
   - name: "shop-sharma-kirana"
     topic: "Private Shop Room - Sharma Kirana Store (07AAAPS1234K1Z2)"
@@ -90,6 +103,7 @@ rooms:
       - "bill-reader"
       - "follow-up"
       - "junior-ca"
+      - "store-manager"
     rules:
       shared_context: false
       privacy_isolated: true
@@ -102,6 +116,7 @@ rooms:
       - "bill-reader"
       - "follow-up"
       - "junior-ca"
+      - "store-manager"
     rules:
       shared_context: false
       privacy_isolated: true

@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     String,
     Float,
+    Integer,
     Boolean,
     DateTime,
     ForeignKey,
@@ -118,4 +119,109 @@ class LedgerEntry(Base):
 
     shop = relationship("Shop")
     bill = relationship("Bill")
+
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    telegram_user_id = Column(String(64), nullable=True)
+    name = Column(String(128), nullable=False)
+    phone = Column(String(32), nullable=True)
+    role = Column(String(32), nullable=False, default="STAFF")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shop = relationship("Shop")
+
+
+class InventoryItem(Base):
+    __tablename__ = "inventory_items"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    sku = Column(String(64), nullable=False)
+    name = Column(String(255), nullable=False)
+    category = Column(String(64), nullable=False, default="General")
+    unit = Column(String(32), nullable=False, default="units")
+    current_stock = Column(Float, default=0.0)
+    reorder_level = Column(Float, default=10.0)
+    cost_price = Column(Float, default=0.0)
+    selling_price = Column(Float, default=0.0)
+    hsn_code = Column(String(32), nullable=True)
+    last_restocked_at = Column(DateTime, nullable=True)
+
+    shop = relationship("Shop")
+    movements = relationship("StockMovement", back_populates="item", cascade="all, delete-orphan")
+
+
+class StockMovement(Base):
+    __tablename__ = "stock_movements"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    item_id = Column(String(36), ForeignKey("inventory_items.id"), nullable=False)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    movement_type = Column(String(32), nullable=False)
+    quantity = Column(Float, nullable=False)
+    reference_bill_id = Column(String(36), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    item = relationship("InventoryItem", back_populates="movements")
+
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    name = Column(String(128), nullable=False)
+    designation = Column(String(64), nullable=False, default="Staff")
+    wage_type = Column(String(32), nullable=False, default="MONTHLY")
+    base_rate = Column(Float, default=15000.0)
+    joining_date = Column(String(32), nullable=False, default="2026-01-01")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shop = relationship("Shop")
+    attendance = relationship("AttendanceRecord", back_populates="employee", cascade="all, delete-orphan")
+    payroll = relationship("PayrollRecord", back_populates="employee", cascade="all, delete-orphan")
+
+
+class AttendanceRecord(Base):
+    __tablename__ = "attendance_records"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    employee_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    date = Column(String(32), nullable=False)
+    status = Column(String(32), nullable=False, default="PRESENT")
+    check_in_time = Column(String(32), nullable=True)
+    check_out_time = Column(String(32), nullable=True)
+    overtime_hours = Column(Float, default=0.0)
+    notes = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee", back_populates="attendance")
+
+
+class PayrollRecord(Base):
+    __tablename__ = "payroll_records"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    employee_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    month = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=False)
+    working_days_in_month = Column(Integer, default=30)
+    days_present = Column(Float, default=0.0)
+    days_absent = Column(Float, default=0.0)
+    gross_salary = Column(Float, default=0.0)
+    advances_deducted = Column(Float, default=0.0)
+    net_payable = Column(Float, default=0.0)
+    is_paid = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee", back_populates="payroll")
 

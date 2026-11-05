@@ -68,3 +68,55 @@ def test_switch_ca_commands():
     assert len(events_ask) == 1
     assert "Supplier Inquiry Notice Drafted" in events_ask[0]["text"]
 
+
+def test_switch_store_manager_commands():
+    router = SwitchWebhookRouter()
+
+    stock_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Harsh Owner",
+        text="/stock",
+    )
+    assert len(stock_events) == 1
+    assert stock_events[0]["sender"] == "store-manager"
+    assert "Inventory Health Report" in stock_events[0]["text"]
+
+    reorder_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Harsh Owner",
+        text="/reorder",
+    )
+    assert len(reorder_events) == 1
+    assert reorder_events[0]["sender"] == "store-manager"
+
+    att_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Ramesh Manager",
+        text="/attendance",
+    )
+    assert len(att_events) == 1
+    assert att_events[0]["sender"] == "store-manager"
+    assert "Daily Shift Briefing" in att_events[0]["text"]
+
+    payroll_events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Harsh Owner",
+        text="/payroll 2026-11",
+    )
+    assert len(payroll_events) == 1
+    assert payroll_events[0]["sender"] == "store-manager"
+    assert "Monthly Payroll Sheet" in payroll_events[0]["text"]
+
+
+def test_switch_auto_restock_on_ok():
+    router = SwitchWebhookRouter()
+
+    events = router.handle_message(
+        room_name="shop-sharma-kirana",
+        user_name="Harsh Owner",
+        text="OK",
+    )
+    assert len(events) >= 2
+    assert any(e["sender"] == "bill-reader" and "confirmed" in e["text"] for e in events)
+    assert any(e["sender"] == "store-manager" and "Auto-Restock" in e["text"] for e in events)
+

@@ -1,11 +1,15 @@
+from datetime import date
 from typing import Any
 from src.db.session import SessionLocal
-from src.db.models import Shop, Bill, ComplianceIssueModel
+from src.db.models import Shop, Bill, ComplianceIssueModel, Employee
 from src.agents.bill_reader import BillReaderAgent
 from src.agents.gst_checker import GSTCheckerAgent
 from src.agents.follow_up import FollowUpAgent
 from src.agents.return_preparer import ReturnPreparerAgent
 from src.agents.junior_ca import JuniorCAAgent
+from src.agents.store_manager import StoreManagerAgent
+from src.inventory.service import restock_inventory_from_bill
+from src.staff.service import mark_attendance
 
 
 class SwitchWebhookRouter:
@@ -15,6 +19,7 @@ class SwitchWebhookRouter:
         self.follow_up = FollowUpAgent()
         self.return_preparer = ReturnPreparerAgent()
         self.junior_ca = JuniorCAAgent()
+        self.store_manager = StoreManagerAgent()
 
     def handle_message(
         self,
@@ -88,6 +93,19 @@ class SwitchWebhookRouter:
                             "text": f"Invoice #{latest_bill.bill_number} confirmed and added to GST processing queue.",
                         })
 
+                        restock_res = restock_inventory_from_bill(latest_bill.id, db)
+                        if restock_res:
+                            announcement = self.store_manager.format_auto_restock_announcement(
+                                restocked_items=restock_res,
+                                invoice_number=latest_bill.bill_number,
+                                supplier_name=latest_bill.supplier_name,
+                            )
+                            responses.append({
+                                "room": room_name,
+                                "sender": "store-manager",
+                                "text": announcement,
+                            })
+
                 elif text.strip().startswith("/status"):
                     bills = db.query(Bill).filter(Bill.shop_id == shop.id).all()
                     clean_c = sum(1 for b in bills if b.status == "clean")
@@ -128,6 +146,75 @@ class SwitchWebhookRouter:
                         "room": room_name,
                         "sender": "junior-ca",
                         "text": presump_text,
+                    })
+
+                elif text.strip().startswith("/stock"):
+                    stock_text = self.store_manager.format_stock_overview(shop.id, db)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": stock_text,
+                    })
+
+                elif text.strip().startswith("/reorder"):
+                    reorder_text = self.store_manager.format_reorder_alert(shop.id, db)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": reorder_text,
+                    })
+
+                elif text.strip().startswith("/attendance"):
+                    today = date.today().isoformat()
+                    att_text = self.store_manager.format_shift_summary(shop.id, today, db)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": att_text,
+                    })
+
+                elif text.strip().startswith("/checkin"):
+                    parts = text.strip().split()
+                    today = date.today().isoformat()
+                    staff_name = parts[1] if len(parts) > 1 else "Ramesh"
+                    checkin_msg = self.store_manager.handle_checkin_command(
+                        shop_id=shop.id,
+                        staff_name=staff_name,
+                        date_str=today,
+                        db=db,
+                    )
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": checkin_msg,
+                    })
+
+                elif text.strip().startswith("/payroll"):
+                    parts = text.strip().split()
+                    today = date.today()
+                    year = today.year
+                    month = today.month
+                    if len(parts) > 1 and "-" in parts[1]:
+                        y_str, m_str = parts[1].split("-")[:2]
+                        try:
+                            year = int(y_str)
+                            month = int(m_str)
+                        except ValueError:
+                            pass
+                    payroll_text = self.store_manager.format_payroll_report(shop.id, month, year, db)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": payroll_text,
+                    })
+
+                elif text.strip().startswith("/shift_summary"):
+                    today = date.today().isoformat()
+                    shift_text = self.store_manager.format_shift_summary(shop.id, today, db)
+                    responses.append({
+                        "room": room_name,
+                        "sender": "store-manager",
+                        "text": shift_text,
                     })
 
             elif room_name == "ca-office":

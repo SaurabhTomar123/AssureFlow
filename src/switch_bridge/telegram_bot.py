@@ -109,15 +109,24 @@ class TelegramBotRunner:
 
         if text.strip() in ["/start", "/help"]:
             help_text = (
-                f"Namaste {user_name}! I am MunimJi, your AI GST & Bookkeeping Assistant.\n\n"
-                f"Available Commands:\n"
+                f"Namaste {user_name}! I am MunimJi, your AI GST, Bookkeeping & Store Operations Assistant.\n\n"
+                f"GST & Document Intelligence:\n"
                 f"- Drop any Bill Photo or PDF invoice to automatically read and audit GST compliance\n"
-                f"- 'OK': Confirm details of the latest uploaded bill\n"
+                f"- 'OK': Confirm details of the latest uploaded bill & trigger automatic inventory restock\n"
+                f"- /status: View count of clean vs pending bills\n\n"
+                f"Bookkeeping & Tax Savings (Junior CA):\n"
                 f"- /khata: View your current month's Accounts Book (Mal Kharid & Expenses)\n"
                 f"- /tax_savings: Junior CA advice on Section 32 depreciation & personal tax savings\n"
-                f"- /presumptive [turnover]: Check Section 44AD presumptive tax savings\n"
-                f"- /status: View count of clean vs pending bills\n"
-                f"- /dashboard & /summary (for CA room): Review cross-shop ITC and GSTR returns"
+                f"- /presumptive [turnover]: Check Section 44AD presumptive tax savings\n\n"
+                f"Store Manager & Operations:\n"
+                f"- /stock: View real-time inventory levels and depleted items\n"
+                f"- /reorder: Generate automated supplier procurement reorder sheet\n"
+                f"- /attendance: View today's staff roster and shift briefing\n"
+                f"- /checkin [id] [present|absent]: Log employee daily attendance\n"
+                f"- /payroll [YYYY-MM]: Calculate monthly staff wage disbursements\n"
+                f"- /shift_summary: Morning operational briefing and stock alerts\n\n"
+                f"CA Office Commands (for CA Room):\n"
+                f"- /dashboard & /summary: Review cross-shop ITC and GSTR returns"
             )
             self.send_message(chat_id, help_text)
             return [{"room": room_name, "text": help_text}]

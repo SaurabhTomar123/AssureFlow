@@ -6,11 +6,15 @@ from src.api.routes_bills import router as bills_router
 from src.api.routes_issues import router as issues_router
 from src.api.routes_summary import router as summary_router
 from src.api.routes_advisory import router as advisory_router
+from src.api.routes_users import router as users_router
+from src.api.routes_inventory import router as inventory_router
+from src.api.routes_staff import router as staff_router
+from src.dashboard.router import router as dashboard_router
 
 app = FastAPI(
     title="MunimJi Core API",
-    description="Automated GST Accounting, Bookkeeping & Junior CA Advisory for Indian MSMEs & CAs",
-    version="1.1.0",
+    description="Automated GST Accounting, Store Operations & Manager Suite for Indian MSMEs & CAs",
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -26,6 +30,10 @@ app.include_router(bills_router)
 app.include_router(issues_router)
 app.include_router(summary_router)
 app.include_router(advisory_router)
+app.include_router(users_router)
+app.include_router(inventory_router)
+app.include_router(staff_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/health")
