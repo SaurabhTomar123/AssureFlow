@@ -346,3 +346,4 @@ def test_smart_attendance_api_endpoints(db_session):
     )
     assert resp_approve.status_code == 200
     assert resp_approve.json()["status"] == "APPROVED"
+

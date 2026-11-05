@@ -246,6 +246,62 @@ A valid Indian GSTIN consists of 15 alphanumeric characters:
 ### 4. Duplicate Invoice Guard
 - Verifies that `(supplier_gstin, bill_number)` has not previously been recorded for the shop entity.
 
+### 5. Double-Entry Balanced Ledger Engine
+- Every transaction enforces exact mathematical parity: `abs(sum(debits) - sum(credits)) <= 0.01`.
+- Standard Chart of Accounts (COA) ranges:
+  - Assets: `1000 - 1999` (e.g., `1010 Cash`, `1020 Operating Bank Account`, `1030 Input Tax Credit Receivable`, `1040 Inventory`)
+  - Liabilities: `2000 - 2999` (e.g., `2010 Accounts Payable`, `2020 GST Output Liability Payable`, `2030 Salary Payable`, `2040 Staff Advance Recovered`)
+  - Equity: `3000 - 3999` (e.g., `3010 Owner Equity / Capital`, `3020 Retained Earnings`)
+  - Revenue: `4000 - 4999` (e.g., `4010 Counter Sales Revenue`)
+  - Expenses: `5000 - 5999` (e.g., `5010 Cost of Goods Sold`, `5020 Shop Rent`, `5030 Wages & Salaries`, `5040 Inventory Shrinkage Loss`)
+
+### 6. FEFO Shelf-Life Horizon & RTV Debit Note Calculations
+- Evaluates days to expiry: `days_remaining = (batch.expiry_date - today).days`.
+  - `days_remaining < 0`: Status `EXPIRED` (immediate shelf pull).
+  - `0 <= days_remaining <= 15`: Status `CRITICAL` (promotional clearance or urgent RTV).
+  - `15 < days_remaining <= 45`: Status `WARNING` (prioritize in dispatch).
+  - `days_remaining > 45`: Status `HEALTHY`.
+- Return-to-Vendor Debit Note formula:
+  - `Taxable Return Value = batch.quantity * unit_cost_price`
+  - `Reversed GST (18%) = Taxable Return Value * 0.18`
+  - `Total Debit Claim = Taxable Return Value + Reversed GST`
+  - Auto-deducts returned batch units from book inventory immediately upon generation.
+
+### 7. Dynamic Run-Rate Reordering Formulas
+- `Average Daily Velocity (ADV) = sum(sales_quantities_over_lookback) / lookback_days`
+- `Days Inventory Remaining (DIR) = current_stock / ADV`
+- `Economic Order Quantity (EOQ) = sqrt((2 * annual_demand * order_cost) / holding_cost_per_unit)`
+- Generates proactive PO drafts when `DIR < lead_time_days + safety_buffer_days`.
+
+### 8. Physical Stock Shrinkage Sieve
+- Discrepancy calculation: `discrepancy = physical_count - book_stock`.
+- Triaging thresholds:
+  - `discrepancy == 0`: `EXACT_MATCH`.
+  - `abs(discrepancy) / book_stock <= 0.02`: `NORMAL_VARIANCE` (minor handling loss).
+  - `0.02 < abs(discrepancy) / book_stock <= 0.08`: `SHRINKAGE_WARNING` (counter alert).
+  - `abs(discrepancy) / book_stock > 0.08`: `SEVERE_LEAKAGE` (triggers mandatory supervisor investigation and posts loss to Account `5040 Inventory Shrinkage Loss`).
+
+### 9. Dual-Tier Smart Attendance & Statutory Payroll Formulas
+- **White-Collar Tier:**
+  - Standard shift with 15-minute grace period (`check_in <= shift_start + 15m`).
+  - Late-mark penalty rule: `penalty_days = floor(total_late_marks / 3) * 0.5`.
+  - Leave balance debit waterfall: `Casual Leave (CL) -> Sick Leave (SL) -> Paid Leave (PL) -> Loss of Pay (LOP)`.
+- **Blue-Collar Tier:**
+  - Worked-hour rule:
+    - `hours < 4.0`: `ABSENT` (0.0 day pay).
+    - `4.0 <= hours < 7.0`: `HALF_DAY` (0.5 day pay).
+    - `7.0 <= hours <= 9.0`: `FULL_DAY` (1.0 day pay).
+    - `hours > 9.0`: `FULL_DAY` + Overtime hours at `1.5 * overtime_hourly_rate`.
+- **Statutory Deductions & Advance Recoveries:**
+  - `EPF Employee Share (12%)` on Basic Pay (if EPF eligible).
+  - `ESIC Employee Share (0.75%)` on Gross Pay (if ESIC eligible).
+  - `Udhari Recovery = min(active_advance_balance, net_payable_after_statutory)`.
+- **Disbursement Balanced Journal Entry:**
+  - `DR 5030 Wages & Salaries` = Gross Wages
+  - `CR 1020 Operating Bank Account` = Total Net Payable Disbursed
+  - `CR 2040 Staff Advance Recovered` = Total Advances Recovered
+  - `CR 2050 Statutory EPF/ESIC Payable` = Total Employee Statutory Withholdings
+
 ---
 
 ## 7. Repository File Structure & Architecture Map
@@ -382,12 +438,13 @@ AssureFlow/
 |       |-- whatsapp_webhook.py         # Meta WhatsApp Cloud API webhook receiver & buttons
 |       `-- telegram_bot.py             # Standalone long-polling Telegram daemon
 |
-`-- tests/                              # Comprehensive Automated Test Suite (138 Tests Passed across 34 Test Suites)
+`-- tests/                              # Comprehensive Automated Test Suite (138 Tests Passed across 35 Test Suites)
     |-- __init__.py
     |-- conftest.py                     # Database initialization test fixtures
     |-- test_smart_inventory.py         # FEFO expiry, RTV debit notes, dynamic POs, shrinkage audits (5 tests)
     |-- test_double_entry_accounting.py # Balanced journaling, Trial Balance, P&L, Cashflow runway (5 tests)
     |-- test_smart_attendance_and_hr.py # White/blue collar attendance, late marks, overtime, udhari, payout (6 tests)
+    |-- test_api_advisory.py            # Financial statements & treasury API endpoint tests (4 tests)
     |-- test_kacha_pakka_sieve.py       # "Kacha-Pakka" Smart Sieve & quarantine tests
     |-- test_vendor_concierge.py        # Autonomous Vendor Dispute Concierge tests
     |-- test_audit_radar.py             # DGGI Audit Radar & Supplier Scorecard tests
