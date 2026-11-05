@@ -274,6 +274,17 @@ class Employee(Base):
     wage_type = Column(String(32), nullable=False, default="MONTHLY")
     base_rate = Column(Float, default=15000.0)
     joining_date = Column(String(32), nullable=False, default="2026-01-01")
+    tier = Column(String(32), default="WHITE_COLLAR")
+    daily_rate = Column(Float, default=500.0)
+    overtime_hourly_rate = Column(Float, default=95.0)
+    shift_start_time = Column(String(16), default="09:30")
+    shift_end_time = Column(String(16), default="18:30")
+    epf_eligible = Column(Boolean, default=False)
+    esic_eligible = Column(Boolean, default=False)
+    pan = Column(String(16), nullable=True)
+    bank_account_number = Column(String(32), nullable=True)
+    ifsc_code = Column(String(16), nullable=True)
+    upi_id = Column(String(64), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -292,11 +303,67 @@ class AttendanceRecord(Base):
     status = Column(String(32), nullable=False, default="PRESENT")
     check_in_time = Column(String(32), nullable=True)
     check_out_time = Column(String(32), nullable=True)
+    worked_hours = Column(Float, default=8.0)
     overtime_hours = Column(Float, default=0.0)
+    is_late = Column(Boolean, default=False)
+    shift_name = Column(String(32), default="GENERAL")
+    regularized = Column(Boolean, default=False)
+    regularization_notes = Column(String(255), nullable=True)
     notes = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     employee = relationship("Employee", back_populates="attendance")
+
+
+class LeaveBalance(Base):
+    __tablename__ = "leave_balances"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    employee_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
+    casual_leave = Column(Float, default=12.0)
+    sick_leave = Column(Float, default=6.0)
+    paid_leave = Column(Float, default=15.0)
+    year = Column(Integer, default=2026)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee")
+
+
+class StaffAdvance(Base):
+    __tablename__ = "staff_advances"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    employee_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    date_given = Column(String(32), nullable=False)
+    repaid_amount = Column(Float, default=0.0)
+    status = Column(String(32), default="ACTIVE")
+    notes = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee")
+    shop = relationship("Shop")
+
+
+class PayoutBatch(Base):
+    __tablename__ = "payout_batches"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    batch_number = Column(String(64), nullable=False)
+    period = Column(String(16), nullable=False)
+    batch_type = Column(String(32), default="STAFF_PAYROLL")
+    total_gross = Column(Float, default=0.0)
+    total_deductions = Column(Float, default=0.0)
+    total_net_payable = Column(Float, default=0.0)
+    employee_count = Column(Integer, default=0)
+    status = Column(String(32), default="DRAFT")
+    approved_by = Column(String(128), nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shop = relationship("Shop")
 
 
 class PayrollRecord(Base):
