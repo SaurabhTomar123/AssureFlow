@@ -42,3 +42,4 @@ def test_audit_radar_api_endpoint():
     assert "audit_risk_score" in data
     assert "credit_solvency_score" in data
     assert "supplier_scorecard" in data
+

@@ -109,3 +109,4 @@ def compute_shop_audit_risk(shop_id: str, db: Session) -> Dict[str, Any]:
         "top_recommendations": recommendations,
         "supplier_scorecard": supplier_scorecard,
     }
+

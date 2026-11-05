@@ -32,3 +32,4 @@ async def upload_audio_note(
     transcript = transcribe_audio_note(audio_bytes, file.filename or "voice.ogg")
     res = route_voice_intent(transcript, shop_id, db)
     return res
+

@@ -119,3 +119,4 @@ def test_concierge_api_endpoints():
         assert data["resolution_type"] == "CREDIT_NOTE_ISSUED"
     finally:
         db.close()
+

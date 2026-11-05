@@ -115,3 +115,4 @@ def test_triage_kacha_slip_execution():
 
     finally:
         db.close()
+

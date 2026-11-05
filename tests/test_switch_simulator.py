@@ -29,3 +29,4 @@ def test_demo_switch_live_script_execution():
     assert "BEAT 1/12" in output
     assert "BEAT 12/12" in output
     assert "ALL 12 DEMO BEATS COMPLETED SUCCESSFULLY" in output
+
