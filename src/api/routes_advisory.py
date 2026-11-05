@@ -10,6 +10,7 @@ from src.advisory.tax_advisor import (
     generate_proprietor_tax_savings_plan,
     detect_blocked_itc_section_17_5,
 )
+from src.advisory.audit_radar import compute_shop_audit_risk
 
 router = APIRouter(prefix="/api/advisory", tags=["Junior CA & Accounts"])
 
@@ -71,4 +72,14 @@ def get_blocked_itc_warnings(shop_id: str, db: Session = Depends(get_db)):
         "shop_id": shop_id,
         "blocked_itc_items": detect_blocked_itc_section_17_5(shop_id, db),
     }
+
+
+@router.get("/audit-radar/{shop_id}")
+def get_shop_audit_radar(shop_id: str, db: Session = Depends(get_db)):
+    try:
+        radar_report = compute_shop_audit_risk(shop_id, db)
+        return radar_report
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 

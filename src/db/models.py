@@ -70,6 +70,7 @@ class Bill(Base):
     total_amount = Column(Float, default=0.0)
 
     is_confirmed_by_owner = Column(Boolean, default=False)
+    document_category = Column(String(32), default="PAKKA_TAX_INVOICE")
     status = Column(String(32), default="pending_review")
     created_at = Column(DateTime, default=datetime.utcnow)
 

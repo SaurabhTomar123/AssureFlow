@@ -15,6 +15,8 @@ from src.api.routes_auth import router as auth_router
 from src.api.routes_gsp import router as gsp_router
 from src.api.routes_bank import router as bank_router
 from src.switch_bridge.whatsapp_webhook import router as whatsapp_router
+from src.api.routes_concierge import router as concierge_router
+from src.api.routes_voice import router as voice_router
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
@@ -53,6 +55,8 @@ app.include_router(auth_router)
 app.include_router(gsp_router)
 app.include_router(bank_router)
 app.include_router(whatsapp_router)
+app.include_router(concierge_router)
+app.include_router(voice_router)
 
 
 @app.get("/health")
