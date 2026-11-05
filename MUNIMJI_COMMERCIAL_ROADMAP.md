@@ -176,3 +176,4 @@ Phase 5: CA Practice Portal & Multi-Shop Scale (Weeks 10-12)
    - **Pro Store Tier (INR 1,299/mo):** Multi-counter billing, payroll calculator, Section 44AD optimization, reorder procurement sheets.
    - **CA Practice Partner Tier (INR 4,999/mo):** Unlimited client shops, GSTR-2B automated 2-way recon, bulk filing exports, supplier discrepancy notice drafts.
 3. **Enterprise Defense:** The unique combination of Switch multi-room privacy isolation with deterministic tax verification ensures data confidentiality between rival shops while giving CAs centralized practice oversight.
+
