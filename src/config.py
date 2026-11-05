@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     SWITCH_GATEWAY_URL: str = "http://localhost:9000"
     SWITCH_SHARED_SECRET: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
+    JWT_SECRET_KEY: str = "munimji_enterprise_jwt_super_secret_key_2026_production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    GSP_ENVIRONMENT: str = "sandbox"
+    WHATSAPP_VERIFY_TOKEN: str = "munimji_meta_verify_token_2026"
+    WHATSAPP_ACCESS_TOKEN: Optional[str] = None
+    WHATSAPP_APP_SECRET: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

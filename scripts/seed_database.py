@@ -9,6 +9,8 @@ if str(BASE_DIR) not in sys.path:
 from src.db.session import SessionLocal
 from src.db.init_db import reset_db
 from src.db.models import (
+    Tenant,
+    OrganizationUser,
     Shop,
     Bill,
     BillItem,
@@ -18,6 +20,7 @@ from src.db.models import (
     Employee,
     AttendanceRecord,
 )
+from src.auth.jwt_handler import get_password_hash
 from src.gst_engine.checksum import generate_valid_gstin
 from src.gst_engine.validator import validate_bill_compliance
 from src.inventory.service import restock_inventory_from_bill
@@ -28,11 +31,32 @@ def seed_database():
     db = SessionLocal()
 
     try:
+        tenant = Tenant(
+            id="tenant-sharma-group",
+            name="Sharma Commercial Enterprise",
+            pan="SHARM9999K",
+            gstin=generate_valid_gstin("07", "SHARM9999K", "1"),
+            tier="ENTERPRISE",
+        )
+        db.add(tenant)
+        db.flush()
+
+        admin_user = OrganizationUser(
+            id="user-admin-sharma",
+            tenant_id=tenant.id,
+            email="admin@munimji.ai",
+            hashed_password=get_password_hash("MunimJi@2026"),
+            full_name="Rajesh Sharma",
+            role="TENANT_ADMIN",
+        )
+        db.add(admin_user)
+
         shop1_gstin = generate_valid_gstin("07", "SHARM9999K", "1")
         shop2_gstin = generate_valid_gstin("07", "GUPTA8888E", "1")
 
         shop1 = Shop(
             id="shop-sharma-kirana",
+            tenant_id=tenant.id,
             name="Sharma Kirana Store",
             gstin=shop1_gstin,
             state_code="07",
@@ -40,6 +64,7 @@ def seed_database():
         )
         shop2 = Shop(
             id="shop-gupta-electronics",
+            tenant_id=tenant.id,
             name="Gupta Electronics",
             gstin=shop2_gstin,
             state_code="07",

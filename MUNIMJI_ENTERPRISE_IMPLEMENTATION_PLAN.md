@@ -352,3 +352,4 @@ CREATE TABLE compliance_audit_log (
 4. **Legal Compliance:**
    - Strict adherence to Rule 36(4) and Section 16(2) of the CGST Act.
    - Audit trail formatted for Section 65B Indian Evidence Act admissibility in tax dispute hearings.
+

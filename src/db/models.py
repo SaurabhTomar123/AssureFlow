@@ -18,16 +18,33 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
+class Tenant(Base):
+    __tablename__ = "tenants"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    name = Column(String(255), nullable=False)
+    pan = Column(String(10), nullable=True)
+    gstin = Column(String(15), nullable=True)
+    tier = Column(String(32), default="GROWTH")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shops = relationship("Shop", back_populates="tenant")
+    users = relationship("OrganizationUser", back_populates="tenant", cascade="all, delete-orphan")
+
+
 class Shop(Base):
     __tablename__ = "shops"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)
     name = Column(String(255), nullable=False)
     gstin = Column(String(15), nullable=False, unique=True)
     state_code = Column(String(2), nullable=False)
     telegram_chat_id = Column(String(64), nullable=True, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    tenant = relationship("Tenant", back_populates="shops")
     bills = relationship("Bill", back_populates="shop", cascade="all, delete-orphan")
     issues = relationship("ComplianceIssueModel", back_populates="shop", cascade="all, delete-orphan")
 
@@ -224,4 +241,84 @@ class PayrollRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     employee = relationship("Employee", back_populates="payroll")
+
+
+class OrganizationUser(Base):
+    __tablename__ = "organization_users"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=True)
+    email = Column(String(255), unique=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    role = Column(String(32), default="STORE_MANAGER")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    tenant = relationship("Tenant", back_populates="users")
+    shop = relationship("Shop")
+
+
+class GSTR2BInwardRecord(Base):
+    __tablename__ = "gstr2b_inward_records"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=True)
+    supplier_gstin = Column(String(15), nullable=False)
+    supplier_trade_name = Column(String(255), nullable=True)
+    invoice_number = Column(String(64), nullable=False)
+    invoice_date = Column(String(32), nullable=False)
+    invoice_value = Column(Float, default=0.0)
+    taxable_value = Column(Float, default=0.0)
+    igst = Column(Float, default=0.0)
+    cgst = Column(Float, default=0.0)
+    sgst = Column(Float, default=0.0)
+    cess = Column(Float, default=0.0)
+    filing_period = Column(String(16), nullable=False)
+    filing_date = Column(String(32), nullable=True)
+    itc_eligibility = Column(String(32), default="Y")
+    match_status = Column(String(32), default="UNMATCHED")
+    matched_bill_id = Column(String(36), ForeignKey("bills.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shop = relationship("Shop")
+    matched_bill = relationship("Bill")
+
+
+class BankTransaction(Base):
+    __tablename__ = "bank_transactions"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    account_number = Column(String(32), nullable=False)
+    txn_date = Column(String(32), nullable=False)
+    narration = Column(String(512), nullable=False)
+    txn_type = Column(String(16), nullable=False)
+    amount = Column(Float, default=0.0)
+    mode = Column(String(32), default="UPI")
+    reference_no = Column(String(64), nullable=True)
+    recon_status = Column(String(32), default="UNRECONCILED")
+    matched_bill_id = Column(String(36), ForeignKey("bills.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shop = relationship("Shop")
+    matched_bill = relationship("Bill")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)
+    user_id = Column(String(36), nullable=True)
+    action = Column(String(64), nullable=False)
+    resource_type = Column(String(64), nullable=False)
+    resource_id = Column(String(64), nullable=True)
+    details = Column(Text, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
 

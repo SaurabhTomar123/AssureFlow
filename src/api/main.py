@@ -11,6 +11,10 @@ from src.api.routes_inventory import router as inventory_router
 from src.api.routes_staff import router as staff_router
 from src.api.routes_notifications import router as notifications_router
 from src.dashboard.router import router as dashboard_router
+from src.api.routes_auth import router as auth_router
+from src.api.routes_gsp import router as gsp_router
+from src.api.routes_bank import router as bank_router
+from src.switch_bridge.whatsapp_webhook import router as whatsapp_router
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
@@ -45,6 +49,10 @@ app.include_router(inventory_router)
 app.include_router(staff_router)
 app.include_router(notifications_router)
 app.include_router(dashboard_router)
+app.include_router(auth_router)
+app.include_router(gsp_router)
+app.include_router(bank_router)
+app.include_router(whatsapp_router)
 
 
 @app.get("/health")
