@@ -1,0 +1,637 @@
+[
+  {
+    "id": "BILL-001",
+    "filename": "bill_01_clean_kirana_5pct.pdf",
+    "supplier_name": "Modern Agro Staples Ltd",
+    "supplier_state": "07",
+    "supplier_pan": "MODER1111A",
+    "invoice_number": "MAS-2026-101",
+    "invoice_date": "2026-11-01",
+    "items": [
+      {
+        "description": "Aashirvaad Atta 10kg",
+        "hsn": "1101",
+        "qty": 10,
+        "rate": 380.0,
+        "taxable_value": 3800.0,
+        "tax_rate": 5.0,
+        "total": 3990.0
+      },
+      {
+        "description": "Fortune Basmati Rice 5kg",
+        "hsn": "1006",
+        "qty": 8,
+        "rate": 450.0,
+        "taxable_value": 3600.0,
+        "tax_rate": 5.0,
+        "total": 3780.0
+      }
+    ],
+    "taxable_amount": 7400.0,
+    "cgst": 185.0,
+    "sgst": 185.0,
+    "igst": 0.0,
+    "total_amount": 7770.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07MODER1111A1Z1",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_01_clean_kirana_5pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_01_clean_kirana_5pct.png"
+  },
+  {
+    "id": "BILL-002",
+    "filename": "bill_02_clean_spices_12pct.pdf",
+    "supplier_name": "Royal Spices & Condiments",
+    "supplier_state": "07",
+    "supplier_pan": "ROYAL2222B",
+    "invoice_number": "RSC-2026-202",
+    "invoice_date": "2026-11-02",
+    "items": [
+      {
+        "description": "MDH Deggi Mirch 500g",
+        "hsn": "0904",
+        "qty": 20,
+        "rate": 180.0,
+        "taxable_value": 3600.0,
+        "tax_rate": 12.0,
+        "total": 4032.0
+      },
+      {
+        "description": "Everest Garam Masala 200g",
+        "hsn": "0910",
+        "qty": 25,
+        "rate": 96.0,
+        "taxable_value": 2400.0,
+        "tax_rate": 12.0,
+        "total": 2688.0
+      }
+    ],
+    "taxable_amount": 6000.0,
+    "cgst": 360.0,
+    "sgst": 360.0,
+    "igst": 0.0,
+    "total_amount": 6720.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07ROYAL2222B1ZH",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_02_clean_spices_12pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_02_clean_spices_12pct.png"
+  },
+  {
+    "id": "BILL-003",
+    "filename": "bill_03_clean_electronics_18pct.pdf",
+    "supplier_name": "Apex Electronic Hub",
+    "supplier_state": "07",
+    "supplier_pan": "APELE3333C",
+    "invoice_number": "AEH-2026-303",
+    "invoice_date": "2026-11-02",
+    "items": [
+      {
+        "description": "Syska LED Bulb 12W Pack",
+        "hsn": "8539",
+        "qty": 40,
+        "rate": 120.0,
+        "taxable_value": 4800.0,
+        "tax_rate": 18.0,
+        "total": 5664.0
+      },
+      {
+        "description": "Anchor Extension Cord 4-Way",
+        "hsn": "8536",
+        "qty": 10,
+        "rate": 320.0,
+        "taxable_value": 3200.0,
+        "tax_rate": 18.0,
+        "total": 3776.0
+      }
+    ],
+    "taxable_amount": 8000.0,
+    "cgst": 720.0,
+    "sgst": 720.0,
+    "igst": 0.0,
+    "total_amount": 9440.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07APELE3333C1ZS",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_03_clean_electronics_18pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_03_clean_electronics_18pct.png"
+  },
+  {
+    "id": "BILL-004",
+    "filename": "bill_04_clean_beverages_28pct.pdf",
+    "supplier_name": "Delhi Cold Beverages Dist",
+    "supplier_state": "07",
+    "supplier_pan": "DELBE4444D",
+    "invoice_number": "DCB-2026-404",
+    "invoice_date": "2026-11-03",
+    "items": [
+      {
+        "description": "Aerated Soft Drinks 2L Crates",
+        "hsn": "2202",
+        "qty": 15,
+        "rate": 600.0,
+        "taxable_value": 9000.0,
+        "tax_rate": 28.0,
+        "total": 11520.0
+      }
+    ],
+    "taxable_amount": 9000.0,
+    "cgst": 1260.0,
+    "sgst": 1260.0,
+    "igst": 0.0,
+    "total_amount": 11520.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07DELBE4444D1ZI",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_04_clean_beverages_28pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_04_clean_beverages_28pct.png"
+  },
+  {
+    "id": "BILL-005",
+    "filename": "bill_05_clean_interstate_18pct.pdf",
+    "supplier_name": "Maharashtra Goods Syndicate",
+    "supplier_state": "27",
+    "supplier_pan": "MAHGS5555E",
+    "invoice_number": "MGS-2026-505",
+    "invoice_date": "2026-11-03",
+    "items": [
+      {
+        "description": "Commercial Kitchen Blender",
+        "hsn": "8509",
+        "qty": 2,
+        "rate": 4500.0,
+        "taxable_value": 9000.0,
+        "tax_rate": 18.0,
+        "total": 10620.0
+      }
+    ],
+    "taxable_amount": 9000.0,
+    "cgst": 0.0,
+    "sgst": 0.0,
+    "igst": 1620.0,
+    "total_amount": 10620.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "27MAHGS5555E1ZN",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_05_clean_interstate_18pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_05_clean_interstate_18pct.png"
+  },
+  {
+    "id": "BILL-006",
+    "filename": "bill_06_clean_hardware_18pct.pdf",
+    "supplier_name": "Metro Hardware Depot",
+    "supplier_state": "07",
+    "supplier_pan": "METHW6666F",
+    "invoice_number": "MHD-2026-606",
+    "invoice_date": "2026-11-03",
+    "items": [
+      {
+        "description": "Heavy Duty Padlocks 65mm",
+        "hsn": "8301",
+        "qty": 12,
+        "rate": 250.0,
+        "taxable_value": 3000.0,
+        "tax_rate": 18.0,
+        "total": 3540.0
+      }
+    ],
+    "taxable_amount": 3000.0,
+    "cgst": 270.0,
+    "sgst": 270.0,
+    "igst": 0.0,
+    "total_amount": 3540.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07METHW6666F1ZR",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_06_clean_hardware_18pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_06_clean_hardware_18pct.png"
+  },
+  {
+    "id": "BILL-007",
+    "filename": "bill_07_clean_packaging_12pct.pdf",
+    "supplier_name": "Craft Corrugated Boxes Ltd",
+    "supplier_state": "07",
+    "supplier_pan": "CRAFT7777G",
+    "invoice_number": "CCB-2026-707",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Shipping Cartons 12x10x8",
+        "hsn": "4819",
+        "qty": 100,
+        "rate": 25.0,
+        "taxable_value": 2500.0,
+        "tax_rate": 12.0,
+        "total": 2800.0
+      }
+    ],
+    "taxable_amount": 2500.0,
+    "cgst": 150.0,
+    "sgst": 150.0,
+    "igst": 0.0,
+    "total_amount": 2800.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07CRAFT7777G1ZS",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_07_clean_packaging_12pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_07_clean_packaging_12pct.png"
+  },
+  {
+    "id": "BILL-008",
+    "filename": "bill_08_clean_stationery_12pct.pdf",
+    "supplier_name": "National Office Supplies",
+    "supplier_state": "07",
+    "supplier_pan": "NATOF8888H",
+    "invoice_number": "NOS-2026-808",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "A4 Copier Paper 75GSM Ream",
+        "hsn": "4802",
+        "qty": 10,
+        "rate": 280.0,
+        "taxable_value": 2800.0,
+        "tax_rate": 12.0,
+        "total": 3136.0
+      }
+    ],
+    "taxable_amount": 2800.0,
+    "cgst": 168.0,
+    "sgst": 168.0,
+    "igst": 0.0,
+    "total_amount": 3136.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07NATOF8888H1ZK",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_08_clean_stationery_12pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_08_clean_stationery_12pct.png"
+  },
+  {
+    "id": "BILL-009",
+    "filename": "bill_09_clean_dairy_5pct.pdf",
+    "supplier_name": "Verma Dairy Products",
+    "supplier_state": "07",
+    "supplier_pan": "VERMA9999I",
+    "invoice_number": "VDP-2026-909",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Pure Ghee 1L Tins",
+        "hsn": "0405",
+        "qty": 10,
+        "rate": 550.0,
+        "taxable_value": 5500.0,
+        "tax_rate": 5.0,
+        "total": 5775.0
+      }
+    ],
+    "taxable_amount": 5500.0,
+    "cgst": 137.5,
+    "sgst": 137.5,
+    "igst": 0.0,
+    "total_amount": 5775.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07VERMA9999I1Z6",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_09_clean_dairy_5pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_09_clean_dairy_5pct.png"
+  },
+  {
+    "id": "BILL-010",
+    "filename": "bill_10_clean_medicines_12pct.pdf",
+    "supplier_name": "Careway Pharma Agency",
+    "supplier_state": "07",
+    "supplier_pan": "CAREP1010J",
+    "invoice_number": "CPA-2026-010",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Multivitamin Syrups 200ml",
+        "hsn": "3004",
+        "qty": 50,
+        "rate": 90.0,
+        "taxable_value": 4500.0,
+        "tax_rate": 12.0,
+        "total": 5040.0
+      }
+    ],
+    "taxable_amount": 4500.0,
+    "cgst": 270.0,
+    "sgst": 270.0,
+    "igst": 0.0,
+    "total_amount": 5040.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07CAREP1010J1ZB",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_10_clean_medicines_12pct.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_10_clean_medicines_12pct.png"
+  },
+  {
+    "id": "BILL-011",
+    "filename": "bill_11_invalid_gstin_checksum.pdf",
+    "supplier_name": "Shady Wholesalers Co",
+    "supplier_state": "07",
+    "supplier_pan": "SHADY1111K",
+    "corrupt_checksum": true,
+    "invoice_number": "SWC-2026-111",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Commercial Kitchen Towels",
+        "hsn": "6307",
+        "qty": 20,
+        "rate": 150.0,
+        "taxable_value": 3000.0,
+        "tax_rate": 12.0,
+        "total": 3360.0
+      }
+    ],
+    "taxable_amount": 3000.0,
+    "cgst": 180.0,
+    "sgst": 180.0,
+    "igst": 0.0,
+    "total_amount": 3360.0,
+    "expected_status": "flagged_issue",
+    "expected_issues": [
+      "INVALID_GSTIN_CHECKSUM"
+    ],
+    "supplier_gstin": "07SHADY1111K1Z0",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_11_invalid_gstin_checksum.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_11_invalid_gstin_checksum.png"
+  },
+  {
+    "id": "BILL-012",
+    "filename": "bill_12_missing_gstin.pdf",
+    "supplier_name": "Local Cash Vendor",
+    "omit_gstin": true,
+    "invoice_number": "LCV-2026-112",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Handmade Packaging Bags",
+        "hsn": "4202",
+        "qty": 50,
+        "rate": 40.0,
+        "taxable_value": 2000.0,
+        "tax_rate": 18.0,
+        "total": 2360.0
+      }
+    ],
+    "taxable_amount": 2000.0,
+    "cgst": 180.0,
+    "sgst": 180.0,
+    "igst": 0.0,
+    "total_amount": 2360.0,
+    "expected_status": "flagged_issue",
+    "expected_issues": [
+      "MISSING_MANDATORY_FIELD"
+    ],
+    "supplier_gstin": "",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_12_missing_gstin.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_12_missing_gstin.png"
+  },
+  {
+    "id": "BILL-013",
+    "filename": "bill_13_wrong_tax_type_interstate_charged_cgst.pdf",
+    "supplier_name": "Gujarat Ceramic Tiles",
+    "supplier_state": "24",
+    "supplier_pan": "GUJCT1313L",
+    "invoice_number": "GCT-2026-113",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Vitrified Floor Tiles Box",
+        "hsn": "6907",
+        "qty": 20,
+        "rate": 400.0,
+        "taxable_value": 8000.0,
+        "tax_rate": 18.0,
+        "total": 9440.0
+      }
+    ],
+    "taxable_amount": 8000.0,
+    "cgst": 720.0,
+    "sgst": 720.0,
+    "igst": 0.0,
+    "total_amount": 9440.0,
+    "expected_status": "flagged_issue",
+    "expected_issues": [
+      "WRONG_TAX_TYPE"
+    ],
+    "supplier_gstin": "24GUJCT1313L1Z4",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_13_wrong_tax_type_interstate_charged_cgst.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_13_wrong_tax_type_interstate_charged_cgst.png"
+  },
+  {
+    "id": "BILL-014",
+    "filename": "bill_14_math_mismatch_wrong_total.pdf",
+    "supplier_name": "Delhi Electrical Accessories",
+    "supplier_state": "07",
+    "supplier_pan": "DELEA1414M",
+    "invoice_number": "DEA-2026-114",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Copper Wires 2.5sqmm Coil",
+        "hsn": "8544",
+        "qty": 4,
+        "rate": 1250.0,
+        "taxable_value": 5000.0,
+        "tax_rate": 18.0,
+        "total": 5900.0
+      }
+    ],
+    "taxable_amount": 5000.0,
+    "cgst": 450.0,
+    "sgst": 450.0,
+    "igst": 0.0,
+    "total_amount": 6800.0,
+    "expected_status": "flagged_issue",
+    "expected_issues": [
+      "TAX_CALCULATION_MISMATCH"
+    ],
+    "supplier_gstin": "07DELEA1414M1Z9",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_14_math_mismatch_wrong_total.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_14_math_mismatch_wrong_total.png"
+  },
+  {
+    "id": "BILL-015",
+    "filename": "bill_15_duplicate_original.pdf",
+    "supplier_name": "Gupta Packaging Works",
+    "supplier_state": "07",
+    "supplier_pan": "GUPTA1515N",
+    "invoice_number": "GPW-2026-999",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Bubble Wrap Roll 100m",
+        "hsn": "3923",
+        "qty": 5,
+        "rate": 600.0,
+        "taxable_value": 3000.0,
+        "tax_rate": 18.0,
+        "total": 3540.0
+      }
+    ],
+    "taxable_amount": 3000.0,
+    "cgst": 270.0,
+    "sgst": 270.0,
+    "igst": 0.0,
+    "total_amount": 3540.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07GUPTA1515N1Z6",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_15_duplicate_original.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_15_duplicate_original.png"
+  },
+  {
+    "id": "BILL-016",
+    "filename": "bill_16_duplicate_copy.pdf",
+    "supplier_name": "Gupta Packaging Works",
+    "supplier_state": "07",
+    "supplier_pan": "GUPTA1515N",
+    "invoice_number": "GPW-2026-999",
+    "invoice_date": "2026-11-04",
+    "items": [
+      {
+        "description": "Bubble Wrap Roll 100m",
+        "hsn": "3923",
+        "qty": 5,
+        "rate": 600.0,
+        "taxable_value": 3000.0,
+        "tax_rate": 18.0,
+        "total": 3540.0
+      }
+    ],
+    "taxable_amount": 3000.0,
+    "cgst": 270.0,
+    "sgst": 270.0,
+    "igst": 0.0,
+    "total_amount": 3540.0,
+    "expected_status": "flagged_issue",
+    "expected_issues": [
+      "DUPLICATE_INVOICE"
+    ],
+    "supplier_gstin": "07GUPTA1515N1Z6",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_16_duplicate_copy.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_16_duplicate_copy.png"
+  },
+  {
+    "id": "BILL-017",
+    "filename": "bill_17_multipage_clean.pdf",
+    "supplier_name": "Mega Wholesale Depot",
+    "supplier_state": "07",
+    "supplier_pan": "MEGAW1717O",
+    "invoice_number": "MWD-2026-117",
+    "invoice_date": "2026-11-05",
+    "multipage": true,
+    "items": [
+      {
+        "description": "Refined Sunflower Oil 15L Tin",
+        "hsn": "1512",
+        "qty": 5,
+        "rate": 1800.0,
+        "taxable_value": 9000.0,
+        "tax_rate": 5.0,
+        "total": 9450.0
+      },
+      {
+        "description": "Premium Basmati Rice 25kg Bag",
+        "hsn": "1006",
+        "qty": 4,
+        "rate": 2200.0,
+        "taxable_value": 8800.0,
+        "tax_rate": 5.0,
+        "total": 9240.0
+      },
+      {
+        "description": "Tata Salt 1kg Pack Carton",
+        "hsn": "2501",
+        "qty": 10,
+        "rate": 450.0,
+        "taxable_value": 4500.0,
+        "tax_rate": 5.0,
+        "total": 4725.0
+      }
+    ],
+    "taxable_amount": 22300.0,
+    "cgst": 557.5,
+    "sgst": 557.5,
+    "igst": 0.0,
+    "total_amount": 23415.0,
+    "expected_status": "clean",
+    "expected_issues": [],
+    "supplier_gstin": "07MEGAW1717O1ZH",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_17_multipage_clean.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_17_multipage_clean.png"
+  },
+  {
+    "id": "BILL-018",
+    "filename": "bill_18_blurry_receipt.png",
+    "is_image_only": true,
+    "supplier_name": "Sharma Tea Stall Supplies",
+    "supplier_state": "07",
+    "supplier_pan": "SHARM1818P",
+    "invoice_number": "STS-2026-118",
+    "invoice_date": "2026-11-05",
+    "items": [
+      {
+        "description": "Wagh Bakri Tea Leaves 1kg",
+        "hsn": "0902",
+        "qty": 4,
+        "rate": 450.0,
+        "taxable_value": 1800.0,
+        "tax_rate": 5.0,
+        "total": 1890.0
+      }
+    ],
+    "taxable_amount": 1800.0,
+    "cgst": 45.0,
+    "sgst": 45.0,
+    "igst": 0.0,
+    "total_amount": 1890.0,
+    "expected_status": "flagged_issue",
+    "expected_issues": [
+      "BLURRY_IMAGE"
+    ],
+    "supplier_gstin": "07SHARM1818P1ZI",
+    "buyer_gstin": "07SHARM9999K1ZU",
+    "buyer_name": "Sharma Kirana Store",
+    "pdf_path": "synthetic_data\\bills_pdf\\bill_18_blurry_receipt.pdf",
+    "img_path": "synthetic_data\\bills_img\\bill_18_blurry_receipt.png"
+  }
+]
