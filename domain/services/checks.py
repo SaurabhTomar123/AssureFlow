@@ -292,6 +292,11 @@ def open_review_request(s: Session, case: Invoice, correlation_id: str) -> Revie
     s.flush()
     ca_issues = [i for i in open_issues(s, case) if i.owner_role == "ca"]
     blocking = any(i.blocking for i in open_issues(s, case))
+    overridable = sorted(
+        i.rule_id
+        for i in open_issues(s, case)
+        if i.blocking and i.rule_id in registry.BY_ID and registry.BY_ID[i.rule_id].overridable
+    )
     shop = s.get(Shop, case.shop_id)
     assert shop is not None
     summary_lines = [issue_message(s, i) for i in ca_issues] or ["All required checks passed."]
@@ -328,6 +333,11 @@ def open_review_request(s: Session, case: Invoice, correlation_id: str) -> Revie
                 "Reply "
                 + (
                     f"`{rr.public_ref} resolve <RULE-ID> <reason>`"
+                    + (
+                        f", `{rr.public_ref} override {','.join(overridable)} <reason>`"
+                        if overridable
+                        else ""
+                    )
                     if blocking
                     else f"`{rr.public_ref} include`"
                 )

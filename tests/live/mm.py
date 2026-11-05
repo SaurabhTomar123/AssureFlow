@@ -59,7 +59,12 @@ def read(room: str, n: int = 12, as_user: str = "mehta") -> list[str]:
     h = login(
         as_user
         if room == "af-ca-review"
-        else {"af-shop-sharma": "sharma", "af-shop-gupta": "gupta"}.get(room, as_user)
+        else {
+            "af-shop-sharma": "sharma",
+            "af-shop-gupta": "gupta",
+            "af-operations": "rao",
+            "af-synthetic-testing": "iyer",
+        }.get(room, as_user)
     )
     ch = channel(h, room)
     data = httpx.get(f"{MM}/channels/{ch['id']}/posts", headers=h, params={"per_page": n}).json()

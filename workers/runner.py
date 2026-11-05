@@ -19,6 +19,7 @@ from workers.queue import LeasedJob, fail, heartbeat, lease_one
 log = get_logger("runner")
 IDLE_SLEEP = 0.5
 DIGEST_CHECK_SECONDS = 60
+ERROR_BACKOFF_SECONDS = 5
 
 
 def run_job(job: LeasedJob) -> str:
@@ -52,7 +53,12 @@ def run_job(job: LeasedJob) -> str:
 def lane_loop(lane: str, slot: int, stop: threading.Event) -> None:
     owner = f"{socket.gethostname()}:{os.getpid()}:{lane}:{slot}"
     while not stop.is_set():
-        job = lease_one(lane, owner)
+        try:
+            job = lease_one(lane, owner)
+        except Exception as exc:  # noqa: BLE001 - a lane must survive database hiccups; it retries
+            log.error("lane.lease_failed", lane=lane, error=type(exc).__name__)
+            stop.wait(ERROR_BACKOFF_SECONDS)
+            continue
         if job is None:
             stop.wait(IDLE_SLEEP)
             continue
@@ -65,14 +71,23 @@ def digest_loop(stop: threading.Event) -> None:
     from domain.services.digests import schedule_due
 
     while not stop.is_set():
-        with transaction() as s:
-            schedule_due(s)
+        try:
+            with transaction() as s:
+                schedule_due(s)
+        except Exception as exc:  # noqa: BLE001 - scheduling retries next minute
+            log.error("digest.schedule_failed", error=type(exc).__name__)
         stop.wait(DIGEST_CHECK_SECONDS)
 
 
 def outbox_loop(stop: threading.Event) -> None:
     while not stop.is_set():
-        if dispatch_once() == 0:
+        try:
+            sent = dispatch_once()
+        except Exception as exc:  # noqa: BLE001 - delivery retries; the loop must not die
+            log.error("outbox.dispatch_failed", error=type(exc).__name__)
+            stop.wait(ERROR_BACKOFF_SECONDS)
+            continue
+        if sent == 0:
             stop.wait(IDLE_SLEEP)
 
 

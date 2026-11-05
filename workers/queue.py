@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import CursorResult, select, text
+from sqlalchemy import CursorResult, func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -97,7 +97,7 @@ def lease_one(lane: str, owner: str, url: str | None = None) -> LeasedJob | None
         job.lease_owner = owner
         job.lease_expires_at = now + timedelta(seconds=settings.JOB_LEASE_SECONDS)
         job.attempts += 1
-        job.started_at = now
+        job.started_at = func.now()
         return LeasedJob(
             id=job.id,
             type=job.type,

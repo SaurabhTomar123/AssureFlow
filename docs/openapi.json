@@ -1,6 +1,20 @@
 {
  "components": {
   "schemas": {
+   "ClarificationRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "question": {
+      "title": "Question",
+      "type": "string"
+     }
+    },
+    "required": [
+     "question"
+    ],
+    "title": "ClarificationRequest",
+    "type": "object"
+   },
    "DecisionRequest": {
     "additionalProperties": false,
     "properties": {
@@ -204,6 +218,110 @@
     "summary": "Get Request Context"
    }
   },
+  "/directory": {
+   "get": {
+    "operationId": "list_directory_directory_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Directory Directory Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Directory"
+   }
+  },
+  "/handoffs/pending": {
+   "get": {
+    "operationId": "list_pending_handoffs_handoffs_pending_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Pending Handoffs Handoffs Pending Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Pending Handoffs"
+   }
+  },
   "/healthz": {
    "get": {
     "operationId": "healthz_healthz_get",
@@ -348,6 +466,210 @@
     "summary": "Get Check Results"
    }
   },
+  "/invoices/{ref}/clarifications": {
+   "post": {
+    "description": "Ask the owner one focused question about a case in its shop room. Changes no case state.",
+    "operationId": "request_clarification_invoices__ref__clarifications_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ref",
+      "required": true,
+      "schema": {
+       "title": "Ref",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ClarificationRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Request Clarification Invoices  Ref  Clarifications Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Request Clarification"
+   }
+  },
+  "/invoices/{ref}/issues/{rule_id}": {
+   "get": {
+    "operationId": "explain_issue_invoices__ref__issues__rule_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ref",
+      "required": true,
+      "schema": {
+       "title": "Ref",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "rule_id",
+      "required": true,
+      "schema": {
+       "title": "Rule Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Explain Issue Invoices  Ref  Issues  Rule Id  Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Explain Issue"
+   }
+  },
+  "/invoices/{ref}/supplier-draft": {
+   "get": {
+    "description": "A draft only: an authorized owner sends it; agents never message suppliers.",
+    "operationId": "draft_supplier_request_invoices__ref__supplier_draft_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ref",
+      "required": true,
+      "schema": {
+       "title": "Ref",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Draft Supplier Request Invoices  Ref  Supplier Draft Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Draft Supplier Request"
+   }
+  },
   "/jobs/{job_id}": {
    "get": {
     "operationId": "get_job_jobs__job_id__get",
@@ -408,6 +730,171 @@
      }
     },
     "summary": "Get Job"
+   }
+  },
+  "/ops/failed-jobs": {
+   "get": {
+    "operationId": "list_failed_jobs_ops_failed_jobs_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Failed Jobs Ops Failed Jobs Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Failed Jobs"
+   }
+  },
+  "/ops/health": {
+   "get": {
+    "operationId": "get_health_ops_health_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Get Health Ops Health Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Health"
+   }
+  },
+  "/ops/jobs/{prefix}": {
+   "get": {
+    "operationId": "describe_job_ops_jobs__prefix__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "prefix",
+      "required": true,
+      "schema": {
+       "title": "Prefix",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Describe Job Ops Jobs  Prefix  Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Describe Job"
    }
   },
   "/readyz": {
@@ -768,6 +1255,59 @@
      }
     },
     "summary": "Get Snapshot Manifest"
+   }
+  },
+  "/status": {
+   "get": {
+    "description": "Status of the shop this room covers (shop intake rooms only).",
+    "operationId": "get_status_status_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Authorization",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-request-context",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "X-Request-Context",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Get Status Status Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Status"
    }
   }
  }

@@ -1,0 +1,19 @@
+{
+ "app_commit": "7fdac4d52f8e6e5eadbf23793d52ea96b07b2460",
+ "artifacts": [
+  "docs\\release\\junit-898fdd4ba058.xml"
+ ],
+ "assertions": {
+  "failed": 0,
+  "passed": 85,
+  "tests": 85
+ },
+ "environment": "test",
+ "failures": [],
+ "fixture_version": "3f95ea74a095",
+ "mode": "offline",
+ "report_hash": "be16988ea50d4156bb385978767c935c18d38130d6fdcf703c84da9b3a341047",
+ "run_id": "898fdd4ba058",
+ "started_at": "2026-11-05T12:15:18+00:00",
+ "switch_server_version": "n/a (offline: mocked bridge)"
+}
