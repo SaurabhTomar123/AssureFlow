@@ -16,6 +16,9 @@ def test_switch_simulator_html_endpoint():
     assert "vendor-dispute-desk" in html
     assert "Kacha Counter Slip" in html
     assert "Wispr Voice Note" in html
+    assert "Smart Inventory" in html
+    assert "Smart Accounting" in html
+    assert "Smart HR" in html
 
 
 def test_demo_switch_live_script_execution():
@@ -26,7 +29,7 @@ def test_demo_switch_live_script_execution():
     )
     assert result.returncode == 0
     output = result.stdout
-    assert "BEAT 1/12" in output
-    assert "BEAT 12/12" in output
-    assert "ALL 12 DEMO BEATS COMPLETED SUCCESSFULLY" in output
+    assert "BEAT 1/15" in output
+    assert "BEAT 15/15" in output
+    assert "ALL 15 DEMO BEATS COMPLETED SUCCESSFULLY" in output
 

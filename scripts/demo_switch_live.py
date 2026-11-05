@@ -22,7 +22,7 @@ RESET = "\033[0m"
 
 def print_step(beat_num, title):
     print(f"\n{BOLD}{'=' * 80}{RESET}")
-    print(f"{BOLD}[BEAT {beat_num}/12] {title}{RESET}")
+    print(f"{BOLD}[BEAT {beat_num}/15] {title}{RESET}")
     print(f"{BOLD}{'=' * 80}{RESET}")
     time.sleep(0.4)
 
@@ -166,8 +166,65 @@ def run_live_demo():
         "  - Download: munimji_gstr3b_export_shop-sharma-kirana.json",
     )
 
+    # Beat 13
+    print_step(13, "Smart Inventory FEFO Expiry & Return-to-Vendor Debit Note")
+    room_shop("Shop Owner Sharma", "/fefo_expiry_check")
+    room_shop(
+        "@store-manager",
+        "FEFO Horizon Audit Triggered:\n"
+        "  - Batch BAT-EXP-001 (Amul Butter 500g): Expired 5 days ago (5 units at risk: INR 1,200.00).\n"
+        "  - Auto-generated Debit Note #DN-RTV-20261105-EXP001.\n"
+        "  - Claim: INR 1,416.00 (INR 1,200 taxable + INR 216 18% GST reversal).\n"
+        "  - Auto-deducted 5 units from store stock. Supplier return dispatch confirmed.",
+    )
+    system_log("Dynamic Reorder PO Draft: Tata Salt 1kg ADV 2.0 units/day (4 days remaining). Optimal PO: 22 units (INR 484.00).")
+
+    # Beat 14
+    print_step(14, "Autonomous Double-Entry Ledger, P&L & 30-Day Cash Flow Runway")
+    room_shop("Shop Owner Sharma", "/financials")
+    room_shop(
+        "@junior-ca",
+        "Autonomous Double-Entry Financial Cockpit:\n"
+        "  - Trial Balance: BALANCED (INR 121,000.00 Debits = INR 121,000.00 Credits)\n"
+        "  - P&L: Revenue INR 25,000.00 | Operating Expenses INR 4,000.00 | Net Profit: INR 21,000.00\n"
+        "  - Balance Sheet: Assets INR 121,000.00 = Liabilities INR 0.00 + Equity INR 121,000.00",
+    )
+    room_ca(
+        "@return-preparer",
+        "Treasury 30-Day Liquidity Forecast & Payment Prioritization:\n"
+        "  - Working Capital: SAFE (Liquid Bank Reserves INR 125,000.00 vs Outflows INR 104,200.00)\n"
+        "  - GST Liability due on 20th: INR 14,200.00 | Scheduled Payroll: INR 45,000.00\n"
+        "  - Priority Queue: PAY Reliable Distributor (INR 23,600.00) immediately (2B verified).\n"
+        "  - HOLD Defaulting Wholesaler (INR 17,700.00) under Rule 37A until GSTR-1 amendment.",
+    )
+
+    # Beat 15
+    print_step(15, "Smart Attendance, Udhari Cash Advances & Bulk Payout Advice Batch")
+    room_shop("Shop Owner Sharma", "[Voice Check-in]: 'Poori loading team present hai siwaye Mukesh ke, aur Chandan ko 1500 advance diya'")
+    room_shop(
+        "@store-manager",
+        "Smart Attendance & Advance Ledger Updated:\n"
+        "  - 1-Click Crew Checkin: 2/3 floor workers PRESENT, Mukesh Driver marked ABSENT.\n"
+        "  - Understaffing Warning: Morning shift needs 3 loaders, only 2 on duty!\n"
+        "  - Udhari Advance: Logged INR 1,500.00 cash advance to Chandan Helper.",
+    )
+    room_shop(
+        "@store-manager",
+        "Generated Bulk Payout Advice Batch #PAY-202611-SHAR:\n"
+        "  - Chandan Helper: 10 days worked (INR 5,000.00) - Advance (INR 1,500.00) = Net Payable INR 3,500.00 (UPI: chandan@upi)\n"
+        "  - Total Net Disbursement: INR 27,500.00 across 3 staff roster.\n"
+        "  - Awaiting owner authorization...",
+    )
+    room_shop("Shop Owner Sharma", "/approve_payout PAY-202611-SHAR")
+    room_ca(
+        "@return-preparer",
+        "Disbursement Settled: Payout Batch #PAY-202611-SHAR approved by Owner Sharma.\n"
+        "  - Double-Entry Journal JE-20261105-PAYR recorded:\n"
+        "    Debit 5030 Wages (INR 29,000.00), Credit 1020 Bank (INR 27,500.00), Credit 2040 Advance Recovered (INR 1,500.00).",
+    )
+
     print(f"\n{BOLD}{GREEN}{'=' * 80}{RESET}")
-    print(f"{BOLD}{GREEN}ALL 12 DEMO BEATS COMPLETED SUCCESSFULLY! SYSTEM 100% OPERATIONAL.{RESET}")
+    print(f"{BOLD}{GREEN}ALL 15 DEMO BEATS COMPLETED SUCCESSFULLY! SYSTEM 100% OPERATIONAL.{RESET}")
     print(f"{BOLD}{GREEN}{'=' * 80}{RESET}\n")
 
 

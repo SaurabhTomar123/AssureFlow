@@ -381,6 +381,9 @@ def get_switch_war_room_simulator():
     <button class="sim-btn" onclick="runBeatSeriousDefect()">3. Interstate Defect (CA Escalation)</button>
     <button class="sim-btn" onclick="runBeatVendorDispute()">4. Bot-to-Bot Vendor Dispute</button>
     <button class="sim-btn" onclick="runBeatVoiceNote()">5. Wispr Voice Note (Hinglish)</button>
+    <button class="sim-btn" onclick="runBeatSmartInventory()">6. Smart Inventory (FEFO & RTV)</button>
+    <button class="sim-btn" onclick="runBeatSmartAccounting()">7. Smart Accounting (P&L & Runway)</button>
+    <button class="sim-btn" onclick="runBeatSmartHR()">8. Smart HR (Crew Punch & Payout)</button>
     <button class="sim-btn" onclick="resetSimulator()" style="margin-left:auto; background:#334155;">Reset</button>
   </div>
 
@@ -535,6 +538,46 @@ def get_switch_war_room_simulator():
         addMsg('shop-messages', 'sender-store-manager', '@store-manager', '10:40 AM',
           'Voice Delivery Processed: Restocked 1 catalog item in inventory:\\n- Aashirvaad Atta: +10 units (New Total: 22.0 units).', 'highlight-success');
       }, 600);
+    }
+
+    function runBeatSmartInventory() {
+      addMsg('shop-messages', 'sender-user', 'Shop Owner Sharma', '11:00 AM', '/fefo_expiry_check');
+      setTimeout(() => {
+        addMsg('shop-messages', 'sender-store-manager', '@store-manager', '11:00 AM',
+          'FEFO Horizon Audit:\\n- Batch BAT-EXP-001 (Amul Butter): Expired 5 days ago! Value at risk: INR 1,200.00.\\n- Generating Return-to-Vendor Debit Note #DN-RTV-20261105-EXP001 (Claim: INR 1,416.00 incl 18% GST reversal).\\n- Stock auto-deducted (-5 units). Supplier return notice dispatched.');
+      }, 500);
+      setTimeout(() => {
+        addMsg('shop-messages', 'sender-store-manager', '@store-manager', '11:01 AM',
+          'Dynamic Reorder Sheet (ADV Run-Rate):\\n- Tata Salt 1kg: ADV 2.0 units/day (4 days remaining). Optimal PO Draft: 22 units (INR 484.00) from preferred distributor.');
+      }, 1200);
+    }
+
+    function runBeatSmartAccounting() {
+      addMsg('shop-messages', 'sender-user', 'Shop Owner Sharma', '11:15 AM', '/financials');
+      setTimeout(() => {
+        addMsg('shop-messages', 'sender-junior-ca', '@junior-ca', '11:15 AM',
+          'Autonomous Double-Entry Financial Cockpit:\\n- Trial Balance: BALANCED (INR 121,000.00 Debits = INR 121,000.00 Credits)\\n- P&L: Revenue INR 25,000 | Opex INR 4,000 | Net Profit: INR 21,000.00\\n- Balance Sheet: Assets INR 121,000 = Liabilities INR 0 + Equity INR 121,000');
+      }, 600);
+      setTimeout(() => {
+        addMsg('ca-messages', 'sender-return-preparer', '@return-preparer', '11:16 AM',
+          'Treasury 30-Day Runway & Priority Queue:\\n- Working Capital: SAFE (Liquid reserves INR 125,000 vs Outflows INR 104,200)\\n- GST on the 20th: INR 14,200 | Projected Payroll: INR 45,000\\n- Payment Priority: Pay Reliable Distributor (INR 23,600) immediately (2B verified). HOLD Defaulting Wholesaler (INR 17,700) under Rule 37A.');
+      }, 1400);
+    }
+
+    function runBeatSmartHR() {
+      addMsg('shop-messages', 'sender-user', 'Shop Owner Sharma', '11:30 AM', '[Voice Checkin]: "Poori loading team present hai siwaye Mukesh ke, aur Chandan ko 1500 advance diya"');
+      setTimeout(() => {
+        addMsg('shop-messages', 'sender-store-manager', '@store-manager', '11:30 AM',
+          'Smart Attendance & Advance Processed:\\n- 1-Click Crew Checkin: 2/3 floor workers PRESENT, Mukesh Driver marked ABSENT.\\n- Understaffing Alert: Morning shift needs 3 loaders, only 2 on duty!\\n- Udhari Advance: Logged INR 1,500.00 to Chandan Helper ledger.');
+      }, 600);
+      setTimeout(() => {
+        addMsg('shop-messages', 'sender-store-manager', '@store-manager', '11:31 AM',
+          'Bulk Payout Advice Batch #PAY-202611-SHAR generated:\\n- Chandan Helper: 10 days worked (INR 5,000) - Advance (INR 1,500) = Net Payable INR 3,500.00 (UPI: chandan@upi)\\n- Total Payroll Batch: INR 27,500.00 across 3 staff.\\n- Owner single-click approval required.');
+      }, 1400);
+      setTimeout(() => {
+        addMsg('ca-messages', 'sender-return-preparer', '@return-preparer', '11:32 AM',
+          'Dual-Authorization Sign-Off: Owner approved Payout Batch #PAY-202611-SHAR. Double-entry journal entry JE-20261105-PAYR recorded (Debit 5030 Wages INR 29,000, Credit 1020 Bank INR 27,500, Credit 2040 Advance INR 1,500).');
+      }, 2200);
     }
 
     function resetSimulator() {
