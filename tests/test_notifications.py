@@ -53,3 +53,4 @@ def test_switch_alerts_command():
     assert len(events) == 1
     assert events[0]["sender"] == "follow-up"
     assert "Proactive Store & Compliance Alerts" in events[0]["text"]
+

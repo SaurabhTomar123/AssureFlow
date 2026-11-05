@@ -138,3 +138,4 @@ def extract_bill_with_gemini_vision(file_path: str) -> Optional[dict[str, Any]]:
         return parsed
     except Exception:
         return None
+

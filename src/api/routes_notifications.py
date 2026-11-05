@@ -13,3 +13,4 @@ def get_store_alerts(shop_id: str, db: Session = Depends(get_db)):
     if not shop:
         raise HTTPException(status_code=404, detail="Shop not found")
     return get_proactive_store_alerts(shop_id, db)
+

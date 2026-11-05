@@ -20,3 +20,4 @@ def test_gemini_client_fallback_when_unconfigured():
 def test_gemini_vision_fallback_on_missing_file():
     res = extract_bill_with_gemini_vision("non_existent_file.pdf")
     assert res is None
+

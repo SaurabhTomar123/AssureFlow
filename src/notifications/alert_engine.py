@@ -79,3 +79,4 @@ def get_proactive_store_alerts(shop_id: str, db: Session) -> dict[str, Any]:
         "inventory_alerts": stock_alerts,
         "status": "ATTENTION_REQUIRED" if total_alerts > 0 else "ALL_SYSTEMS_OPTIMAL",
     }
+

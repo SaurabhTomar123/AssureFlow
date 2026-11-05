@@ -47,3 +47,4 @@ def test_nl_query_tax_savings_intent():
     assert len(events) == 1
     assert events[0]["sender"] == "junior-ca"
     assert "Section 32" in events[0]["text"] or "Tax" in events[0]["text"]
+

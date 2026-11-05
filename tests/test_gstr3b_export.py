@@ -24,3 +24,4 @@ def test_export_gstr3b_format():
     assert "itc_net" in data["itc_elg"]
     assert data["filing_status"] == "DRAFT_READY"
     assert "attachment; filename=gstr3b_shop-sharma-kirana.json" in res.headers.get("content-disposition", "")
+
