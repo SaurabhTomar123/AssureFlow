@@ -203,6 +203,14 @@ AssureFlow/
 |-- src/
 |   |-- config.py                       # Pydantic BaseSettings configuration loader
 |   |
+|   |-- ai/                             # Gemini AI Integration & Multimodal Vision
+|   |   |-- __init__.py
+|   |   `-- gemini_client.py            # Multimodal bill extractor & conversational advisor
+|   |
+|   |-- notifications/                  # Proactive Alerts & Deadline Subsystem
+|   |   |-- __init__.py
+|   |   `-- alert_engine.py             # GST 20th countdown & low stock alerts
+|   |
 |   |-- accounts/                       # Bookkeeping & Khata Ledger Engine
 |   |   |-- __init__.py
 |   |   `-- ledger.py                   # Automated expense categorizer and cashflow tracker
@@ -239,14 +247,15 @@ AssureFlow/
 |   |
 |   |-- api/                            # FastAPI REST Service Layer
 |   |   |-- __init__.py
-|   |   |-- main.py                     # Application entry point and router assembly
+|   |   |-- main.py                     # Application entry point, CORS & exception handler
 |   |   |-- routes_shops.py             # Shop registration and profile management
 |   |   |-- routes_bills.py             # Multipart upload, audit, and confirmation
 |   |   |-- routes_issues.py            # Compliance issue triaging and CA actions
-|   |   |-- routes_summary.py           # GSTR reconciliation summaries and JSON exports
+|   |   |-- routes_summary.py           # GSTR reconciliation summaries & GSTR-3B JSON exports
 |   |   |-- routes_advisory.py          # Accounts ledger and tax savings endpoints
 |   |   |-- routes_inventory.py         # Inventory catalog and stock movement routes
 |   |   |-- routes_staff.py             # Employee roster, attendance and payroll routes
+|   |   |-- routes_notifications.py     # Proactive deadline and stock alerts endpoints
 |   |   `-- routes_users.py             # User profile and role lookup routes
 |   |
 |   |-- db/                             # Persistence Layer
@@ -271,9 +280,10 @@ AssureFlow/
 |       |-- webhook_handler.py          # Multi-room event and command router
 |       `-- telegram_bot.py             # Standalone long-polling Telegram daemon
 |
-`-- tests/                              # Comprehensive Automated Test Suite (75 Tests)
+`-- tests/                              # Comprehensive Automated Test Suite (87 Tests)
     |-- __init__.py
     |-- conftest.py                     # Database initialization test fixtures
+    |-- test_ai_gemini.py               # Gemini client and fallback test cases
     |-- test_env.py                     # Environment and dependency verification
     |-- test_gst_checksum.py            # ISO 7064 Mod-36 algorithm test cases
     |-- test_gst_rules.py               # Place of supply and tax split verification
@@ -291,6 +301,9 @@ AssureFlow/
     |-- test_staff_attendance.py        # Staff roster, attendance, and payroll tests
     |-- test_store_manager_agent.py     # Store Manager agent response formatting tests
     |-- test_api_manager_suite.py       # Manager REST API endpoints test suite
+    |-- test_natural_language_queries.py# Freeform Hindi & English NL query routing
+    |-- test_notifications.py           # Proactive deadline and stock alerts engine tests
+    |-- test_gstr3b_export.py           # Official government GSTR-3B schema export tests
     `-- test_telegram_bot.py            # Telegram runner command and mock tests
 ```
 
@@ -312,7 +325,8 @@ AssureFlow/
 | `GET` | `/api/issues` | Query compliance defects | Query: `shop_id`, `severity`, `ca_action` |
 | `POST` | `/api/issues/{issue_id}/decision` | Record CA review decision | `{ "action": "approve" \| "reject" \| "ask_supplier", "note": Optional[str] }` |
 | `GET` | `/api/summary/{shop_id}` | Month-end GSTR reconciliation | Path: `shop_id` |
-| `GET` | `/api/summary/{shop_id}/export` | Export GSTR reconciliation JSON | Path: `shop_id` |
+| `GET` | `/api/summary/{shop_id}/export` | Export GSTR JSON (Query: `format=gstr3b` or `summary`) | Path: `shop_id`, Query: `format` |
+| `GET` | `/api/notifications/alerts/{shop_id}` | Proactive filing deadline and low stock alerts | Path: `shop_id` |
 | `GET` | `/api/advisory/accounts/{shop_id}/ledger` | Accounts Book (Khata) & breakdown | Path: `shop_id` |
 | `GET` | `/api/advisory/tax-savings/{shop_id}` | Section 32 & 80C/80D tax plan | Path: `shop_id`, Query: `annual_income` |
 | `GET` | `/api/advisory/presumptive-tax` | Section 44AD feasibility analysis | Query: `turnover`, `digital_pct`, `actual_margin_pct` |
@@ -342,6 +356,8 @@ AssureFlow/
 - **`/khata` or `/accounts`**: `junior-ca` displays the current month's Accounts Book (Mal Kharid, Operating Expenses, Capital Assets, Total Outflow).
 - **`/tax_savings`**: `junior-ca` suggests Section 32 asset depreciation and proprietor personal tax deductions (80C, 80D, NPS).
 - **`/presumptive [turnover] [digital_pct]`**: `junior-ca` computes Section 44AD deemed profit and estimated tax savings.
+- **`/alerts`**: `follow-up` reports pending GST filing deadlines (countdown to the 20th), disputed ITC at risk, and depleted stock warnings.
+- **Natural Language ("Ask MunimJi"):** Send conversational questions in Hindi or English (e.g., *"Aaj ka stock kaisa hai"*, *"Tax kaise bacha sakte hain"*, *"Mera khata dikhao"*, *"Staff ki attendance"*). The system classifies intent and returns structured operational or tax insights.
 - **`/status`**: `follow-up` returns clean vs pending bill totals.
 
 ### In CA Office Room (`ca-office`)
@@ -376,7 +392,7 @@ python scripts/seed_database.py
 # 5. Run full automated end-to-end demo dry run (All 12 beats)
 python scripts/test_e2e_flow.py
 
-# 6. Run complete test suite (75 automated tests)
+# 6. Run complete test suite (87 automated tests)
 pytest
 
 # 7. Launch FastAPI server and view interactive Visual Cockpit

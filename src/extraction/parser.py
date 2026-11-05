@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 from PIL import Image, ImageStat
 from src.extraction.pdf_extractor import extract_text_from_pdf
+from src.ai.gemini_client import extract_bill_with_gemini_vision
 
 GSTIN_PATTERN = re.compile(r"\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})\b")
 DATE_PATTERN = re.compile(r"\b(\d{4}-\d{2}-\d{2}|\d{2}[/-]\d{2}[/-]\d{4})\b")
@@ -29,6 +30,56 @@ def check_image_blur(image_path: Path) -> bool:
         return False
 
 
+def parse_items_from_lines(lines: list[str]) -> list[dict[str, Any]]:
+    items = []
+    start = False
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if "Item Description" in line:
+            start = True
+            j = i + 1
+            while j < len(lines) and j < i + 10:
+                if lines[j] == "1":
+                    i = j - 1
+                    break
+                j += 1
+            i += 1
+            continue
+
+        if start:
+            if any(term in line for term in ["Taxable Amount", "Subtotal", "Total Invoice Value", "Declaration:", "Total Amount"]):
+                break
+
+            if line.isdigit() and i + 7 < len(lines):
+                try:
+                    desc = lines[i + 1]
+                    hsn = lines[i + 2]
+                    qty = clean_number(lines[i + 3])
+                    rate = clean_number(lines[i + 4])
+                    taxable_val = clean_number(lines[i + 5])
+                    tax_rate_str = lines[i + 6].replace("%", "").strip()
+                    tax_rate = clean_number(tax_rate_str)
+                    total_val = clean_number(lines[i + 7])
+
+                    items.append({
+                        "description": desc,
+                        "hsn": hsn,
+                        "qty": qty if qty > 0 else 1.0,
+                        "rate": rate,
+                        "tax_rate": tax_rate,
+                        "taxable_value": taxable_val,
+                        "total": total_val,
+                    })
+                    i += 8
+                    continue
+                except Exception:
+                    pass
+
+        i += 1
+    return items
+
+
 def parse_bill_text(text: str) -> dict[str, Any]:
     supplier_name = None
     supplier_gstin = None
@@ -39,9 +90,9 @@ def parse_bill_text(text: str) -> dict[str, Any]:
     sgst_amount = 0.0
     igst_amount = 0.0
     total_amount = 0.0
-    items = []
 
     lines = [line.strip() for line in text.split("\n") if line.strip()]
+    items = parse_items_from_lines(lines)
 
     for idx, line in enumerate(lines):
         if "Supplier:" in line or "Supplier :" in line:
@@ -125,6 +176,12 @@ def extract_bill_data(file_path: str) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
+    # 1. Attempt Gemini Vision multimodal extraction first if available
+    gemini_result = extract_bill_with_gemini_vision(file_path)
+    if gemini_result and gemini_result.get("supplier_name") and gemini_result.get("total_amount"):
+        return gemini_result
+
+    # 2. Local fallback pipeline
     is_image = path.suffix.lower() in [".png", ".jpg", ".jpeg"]
     if is_image:
         is_blurry = check_image_blur(path) or "blurry" in path.name.lower()

@@ -77,3 +77,4 @@ def test_create_and_query_user_profile(db_session):
 
     users = list_shop_users("shop-sharma-kirana", db_session)
     assert len(users) >= 1
+

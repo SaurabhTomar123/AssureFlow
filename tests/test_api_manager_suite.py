@@ -103,3 +103,4 @@ def test_staff_api_flow():
     shift_res = client.get("/api/staff/shop-sharma-kirana/shift-summary?date=2026-11-05")
     assert shift_res.status_code == 200
     assert shift_res.json()["present_count"] >= 1
+

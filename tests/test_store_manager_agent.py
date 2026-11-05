@@ -71,3 +71,4 @@ def test_auto_restock_announcement():
     )
     assert "Auto-Restock Complete" in announcement
     assert "Aashirvaad Atta" in announcement
+

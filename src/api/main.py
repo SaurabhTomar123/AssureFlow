@@ -9,13 +9,23 @@ from src.api.routes_advisory import router as advisory_router
 from src.api.routes_users import router as users_router
 from src.api.routes_inventory import router as inventory_router
 from src.api.routes_staff import router as staff_router
+from src.api.routes_notifications import router as notifications_router
 from src.dashboard.router import router as dashboard_router
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 app = FastAPI(
     title="MunimJi Core API",
     description="Automated GST Accounting, Store Operations & Manager Suite for Indian MSMEs & CAs",
     version="2.0.0",
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error occurred.", "error_type": type(exc).__name__},
+    )
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,6 +43,7 @@ app.include_router(advisory_router)
 app.include_router(users_router)
 app.include_router(inventory_router)
 app.include_router(staff_router)
+app.include_router(notifications_router)
 app.include_router(dashboard_router)
 
 

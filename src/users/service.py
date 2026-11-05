@@ -43,3 +43,4 @@ def list_shop_users(shop_id: str, db: Session) -> List[UserProfile]:
 
 def get_user_profile(user_id: str, db: Session) -> Optional[UserProfile]:
     return db.query(UserProfile).filter(UserProfile.id == user_id).first()
+

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse
@@ -42,8 +43,9 @@ def get_dashboard_metrics(
     low_stock = get_low_stock_report(shop_id, db)
 
     employees = list_employees(shop_id, db)
-    shift = get_daily_shift_summary(shop_id, "2026-11-05", db)
-    payroll = calculate_monthly_payroll(shop_id, 11, 2026, db)
+    today = date.today()
+    shift = get_daily_shift_summary(shop_id, today.isoformat(), db)
+    payroll = calculate_monthly_payroll(shop_id, today.month, today.year, db)
     total_payroll = sum(p["net_payable"] for p in payroll)
 
     raw_data = {
@@ -226,7 +228,83 @@ def render_visual_dashboard(
         </div>
       </div>
     </div>
+
+    <!-- Analytics & Data Visualization Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+        <h2 class="font-bold text-lg text-white mb-4">Cash Outflow & Expense Allocation</h2>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="expenseChart"></canvas>
+        </div>
+      </div>
+      <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+        <h2 class="font-bold text-lg text-white mb-4">GST Input Tax Credit Health</h2>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="itcChart"></canvas>
+        </div>
+      </div>
+    </div>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const expCtx = document.getElementById('expenseChart');
+    if (expCtx) {{
+      new Chart(expCtx, {{
+        type: 'doughnut',
+        data: {{
+          labels: ['Inventory Purchases', 'Operating Expenses', 'Capital Equipment'],
+          datasets: [{{
+            data: [
+              {metrics.get('financial_summary', {}).get('total_purchases', 0.0) if 'financial_summary' in metrics else 0.0},
+              {metrics.get('financial_summary', {}).get('total_operating_expenses', 0.0) if 'financial_summary' in metrics else 0.0},
+              {metrics.get('financial_summary', {}).get('total_capital_investments', 0.0) if 'financial_summary' in metrics else 0.0}
+            ],
+            backgroundColor: ['#6366f1', '#10b981', '#f59e0b'],
+            borderWidth: 0
+          }}]
+        }},
+        options: {{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {{
+            legend: {{ position: 'bottom', labels: {{ color: '#94a3b8', font: {{ size: 11 }} }} }}
+          }}
+        }}
+      }});
+    }}
+
+    const itcCtx = document.getElementById('itcChart');
+    if (itcCtx) {{
+      new Chart(itcCtx, {{
+        type: 'bar',
+        data: {{
+          labels: ['Eligible ITC', 'Disputed ITC at Risk'],
+          datasets: [{{
+            label: 'Amount in INR',
+            data: [
+              {metrics.get('gst_compliance', {}).get('eligible_itc', 0.0)},
+              {metrics.get('gst_compliance', {}).get('itc_at_risk', 0.0)}
+            ],
+            backgroundColor: ['#10b981', '#f43f5e'],
+            borderRadius: 6
+          }}]
+        }},
+        options: {{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {{
+            legend: {{ display: false }}
+          }},
+          scales: {{
+            x: {{ ticks: {{ color: '#94a3b8' }}, grid: {{ display: false }} }},
+            y: {{ ticks: {{ color: '#94a3b8' }}, grid: {{ color: '#1e293b' }} }}
+          }}
+        }}
+      }});
+    }}
+  </script>
 </body>
 </html>"""
     return html
+

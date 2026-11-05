@@ -48,3 +48,4 @@ def add_user(payload: UserProfileCreate, db: Session = Depends(get_db)):
 @router.get("/{shop_id}", response_model=list[UserProfileResponse])
 def get_users(shop_id: str, db: Session = Depends(get_db)):
     return list_shop_users(shop_id, db)
+

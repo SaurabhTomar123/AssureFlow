@@ -74,9 +74,64 @@ def get_shop_summary(shop_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{shop_id}/export")
-def export_shop_summary(shop_id: str, db: Session = Depends(get_db)):
+def export_shop_summary(
+    shop_id: str,
+    format: str = "summary",
+    db: Session = Depends(get_db),
+):
     summary = get_shop_summary(shop_id, db)
     bills = db.query(Bill).filter(Bill.shop_id == shop_id).all()
+
+    if format.lower() == "gstr3b":
+        gstr3b_payload = {
+            "gstin": summary.shop_gstin,
+            "ret_period": "112026",
+            "filing_status": "DRAFT_READY",
+            "filing_mode": "ASSUREFLOW_AI_PREPARED",
+            "sec_sum": {
+                "sec_nm": "GSTR3B",
+                "tbl_nm": ["itc_elg", "inward_sup"],
+            },
+            "itc_elg": {
+                "itc_avl": [
+                    {
+                        "ty": "All other ITC",
+                        "iamt": summary.eligible_itc.igst,
+                        "camt": summary.eligible_itc.cgst,
+                        "samt": summary.eligible_itc.sgst,
+                        "csamt": 0.0,
+                    }
+                ],
+                "itc_rev": [
+                    {
+                        "ty": "As per rules 38, 42 and 43 of CGST Rules",
+                        "iamt": 0.0,
+                        "camt": 0.0,
+                        "samt": 0.0,
+                        "csamt": 0.0,
+                    }
+                ],
+                "itc_net": {
+                    "iamt": summary.eligible_itc.igst,
+                    "camt": summary.eligible_itc.cgst,
+                    "samt": summary.eligible_itc.sgst,
+                    "csamt": 0.0,
+                },
+                "itc_inelg": [
+                    {
+                        "ty": "As per section 17(5) and compliance flags",
+                        "iamt": 0.0,
+                        "camt": round(summary.itc_at_risk / 2, 2) if summary.itc_at_risk else 0.0,
+                        "samt": round(summary.itc_at_risk / 2, 2) if summary.itc_at_risk else 0.0,
+                        "csamt": 0.0,
+                    }
+                ],
+            },
+        }
+        return JSONResponse(
+            content=gstr3b_payload,
+            headers={"Content-Disposition": f"attachment; filename=gstr3b_{shop_id}.json"},
+        )
 
     export_payload = {
         "summary": summary.model_dump(),

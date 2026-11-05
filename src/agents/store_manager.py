@@ -218,3 +218,4 @@ class StoreManagerAgent:
             f"Inventory balances updated automatically:\n"
             f"- " + "\n- ".join(item_summaries)
         )
+

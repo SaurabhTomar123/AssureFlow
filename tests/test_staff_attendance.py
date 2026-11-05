@@ -83,3 +83,4 @@ def test_daily_shift_summary(db_session):
     assert "present_count" in summary
     assert "urgent_reorder_count" in summary
     assert "urgent_reorder_items" in summary
+

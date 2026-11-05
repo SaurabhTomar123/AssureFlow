@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from sqlalchemy.orm import Session
 from src.accounts.ledger import get_accounts_book
 from src.advisory.tax_advisor import (
@@ -7,6 +7,7 @@ from src.advisory.tax_advisor import (
     generate_proprietor_tax_savings_plan,
     detect_blocked_itc_section_17_5,
 )
+from src.ai.gemini_client import is_gemini_available, generate_conversational_advice
 
 
 class JuniorCAAgent:
@@ -18,7 +19,7 @@ class JuniorCAAgent:
         bd = book["breakdown"]
 
         if language == "hi":
-            return (
+            report = (
                 f"Aapka Masik Khata (Monthly Accounts Book):\n"
                 f"----------------------------------------\n"
                 f"Kul Kharcha / Outflow: INR {book['total_cash_outflow']:,.2f}\n"
@@ -31,20 +32,30 @@ class JuniorCAAgent:
                 f"----------------------------------------\n"
                 f"Kul Entries: {book['entry_count']} bills darj hain."
             )
+        else:
+            report = (
+                f"Monthly Accounts Book (Khata):\n"
+                f"----------------------------------------\n"
+                f"Total Cash Outflow: INR {book['total_cash_outflow']:,.2f}\n"
+                f"Total Tax Paid on Purchases: INR {book['total_tax_paid']:,.2f}\n\n"
+                f"Expense Categorization:\n"
+                f"- Inventory Purchases: INR {bd['inventory_purchases']:,.2f}\n"
+                f"- Operating Expenses: INR {bd['operating_expenses']:,.2f}\n"
+                f"- Capital Equipment: INR {bd['capital_assets']:,.2f}\n"
+                f"- Logistics & Delivery: INR {bd['logistics_freight']:,.2f}\n"
+                f"----------------------------------------\n"
+                f"Total Invoices Reconciled: {book['entry_count']}"
+            )
 
-        return (
-            f"Monthly Accounts Book (Khata):\n"
-            f"----------------------------------------\n"
-            f"Total Cash Outflow: INR {book['total_cash_outflow']:,.2f}\n"
-            f"Total Tax Paid on Purchases: INR {book['total_tax_paid']:,.2f}\n\n"
-            f"Expense Categorization:\n"
-            f"- Inventory Purchases: INR {bd['inventory_purchases']:,.2f}\n"
-            f"- Operating Expenses: INR {bd['operating_expenses']:,.2f}\n"
-            f"- Capital Equipment: INR {bd['capital_assets']:,.2f}\n"
-            f"- Logistics & Delivery: INR {bd['logistics_freight']:,.2f}\n"
-            f"----------------------------------------\n"
-            f"Total Invoices Reconciled: {book['entry_count']}"
-        )
+        if is_gemini_available():
+            ai_insight = generate_conversational_advice(
+                prompt=f"Merchant accounts book summary: Outflow INR {book['total_cash_outflow']:,.2f}, inventory INR {bd['inventory_purchases']:,.2f}, opex INR {bd['operating_expenses']:,.2f}. Provide 2 concise practical financial health observations.",
+                language=language,
+            )
+            if ai_insight:
+                report += f"\n\nAI Junior CA Strategic Note:\n{ai_insight}"
+
+        return report
 
     def handle_tax_savings_request(self, shop_id: str, db: Session, language: str = "en") -> str:
         plan = generate_proprietor_tax_savings_plan()
@@ -65,23 +76,33 @@ class JuniorCAAgent:
             for it in plan["advice_items"]:
                 lines.append(f"- {it['section']}: {it['opportunity']} (Tax bachat: INR {it['annual_tax_saved']:,.2f})")
                 lines.append(f"  Salah: {it['tip']}")
-            return "\n".join(lines)
+            report = "\n".join(lines)
+        else:
+            lines = [
+                "Junior CA Tax Savings Advisory:",
+                "----------------------------------------",
+                f"Total Potential Annual Tax Savings: ~INR {plan['total_potential_annual_tax_saved'] + depreciation['estimated_income_tax_saved']:,.2f}",
+                "",
+                "1. Section 32 Commercial Asset Depreciation:",
+                f"   Write off INR {depreciation['total_depreciation_claimable']:,.2f} on business tech/equipment.",
+                f"   Estimated Income Tax Saved: INR {depreciation['estimated_income_tax_saved']:,.2f}.",
+                "",
+                "2. Proprietor Personal Tax Optimizations:",
+            ]
+            for it in plan["advice_items"]:
+                lines.append(f"- {it['section']}: {it['opportunity']} (Save ~INR {it['annual_tax_saved']:,.2f})")
+                lines.append(f"  Note: {it['tip']}")
+            report = "\n".join(lines)
 
-        lines = [
-            "Junior CA Tax Savings Advisory:",
-            "----------------------------------------",
-            f"Total Potential Annual Tax Savings: ~INR {plan['total_potential_annual_tax_saved'] + depreciation['estimated_income_tax_saved']:,.2f}",
-            "",
-            "1. Section 32 Commercial Asset Depreciation:",
-            f"   Write off INR {depreciation['total_depreciation_claimable']:,.2f} on business tech/equipment.",
-            f"   Estimated Income Tax Saved: INR {depreciation['estimated_income_tax_saved']:,.2f}.",
-            "",
-            "2. Proprietor Personal Tax Optimizations:",
-        ]
-        for it in plan["advice_items"]:
-            lines.append(f"- {it['section']}: {it['opportunity']} (Save ~INR {it['annual_tax_saved']:,.2f})")
-            lines.append(f"  Note: {it['tip']}")
-        return "\n".join(lines)
+        if is_gemini_available():
+            ai_insight = generate_conversational_advice(
+                prompt=f"Tax optimization plan: Section 32 write-off INR {depreciation['total_depreciation_claimable']:,.2f}, 80C/80D/80CCD savings INR {plan['total_potential_annual_tax_saved']:,.2f}. Provide 2 concise tips on timing these tax-saving investments before March 31.",
+                language=language,
+            )
+            if ai_insight:
+                report += f"\n\nAI Junior CA Strategic Note:\n{ai_insight}"
+
+        return report
 
     def handle_presumptive_tax_request(
         self,
@@ -93,7 +114,7 @@ class JuniorCAAgent:
         analysis = analyze_presumptive_tax_44ad(annual_turnover, digital_pct, actual_margin_pct)
 
         if language == "hi":
-            return (
+            report = (
                 f"Section 44AD Presumptive Taxation Vishleshan:\n"
                 f"----------------------------------------\n"
                 f"Varshik Turnover: INR {annual_turnover:,.2f} ({digital_pct:.0f}% Digital / UPI)\n"
@@ -103,15 +124,44 @@ class JuniorCAAgent:
                 f"Estimated Tax Bachat: ~INR {analysis['estimated_tax_saved_30pct']:,.2f}\n\n"
                 f"CA Salah: {analysis['recommendation']}"
             )
+        else:
+            report = (
+                f"Section 44AD Presumptive Taxation Analysis:\n"
+                f"----------------------------------------\n"
+                f"Annual Turnover: INR {annual_turnover:,.2f} ({digital_pct:.0f}% Digital / Bank)\n"
+                f"Actual Net Profit: INR {analysis['actual_profit']:,.2f} ({actual_margin_pct:.1f}%)\n"
+                f"Section 44AD Deemed Profit: INR {analysis['deemed_profit_44ad']:,.2f}\n"
+                f"Taxable Income Reduction: INR {analysis['taxable_income_reduction']:,.2f}\n"
+                f"Estimated Tax Savings: ~INR {analysis['estimated_tax_saved_30pct']:,.2f}\n\n"
+                f"Junior CA Advisory: {analysis['recommendation']}"
+            )
+
+        if is_gemini_available():
+            ai_insight = generate_conversational_advice(
+                prompt=f"Explain Section 44AD presumptive tax savings for turnover INR {annual_turnover:,.2f} with {digital_pct:.0f}% digital share. Tax reduction INR {analysis['taxable_income_reduction']:,.2f}. State the statutory audit exemption under Section 44AB concisely.",
+                language=language,
+            )
+            if ai_insight:
+                report += f"\n\nAI Junior CA Strategic Note:\n{ai_insight}"
+
+        return report
+
+    def answer_open_tax_query(self, query: str, language: str = "en") -> str:
+        if is_gemini_available():
+            ai_ans = generate_conversational_advice(
+                prompt=f"The shopkeeper asks this Indian tax question: '{query}'. Provide an accurate, practical response in 2-3 short paragraphs referencing applicable GST or Income Tax sections. Do not use emojis.",
+                language=language,
+            )
+            if ai_ans:
+                return f"MunimJi Junior CA Advisory:\n----------------------------------------\n{ai_ans}"
 
         return (
-            f"Section 44AD Presumptive Taxation Analysis:\n"
-            f"----------------------------------------\n"
-            f"Annual Turnover: INR {annual_turnover:,.2f} ({digital_pct:.0f}% Digital / Bank)\n"
-            f"Actual Net Profit: INR {analysis['actual_profit']:,.2f} ({actual_margin_pct:.1f}%)\n"
-            f"Section 44AD Deemed Profit: INR {analysis['deemed_profit_44ad']:,.2f}\n"
-            f"Taxable Income Reduction: INR {analysis['taxable_income_reduction']:,.2f}\n"
-            f"Estimated Tax Savings: ~INR {analysis['estimated_tax_saved_30pct']:,.2f}\n\n"
-            f"Junior CA Advisory: {analysis['recommendation']}"
+            "MunimJi Junior CA Assistant:\n"
+            "----------------------------------------\n"
+            "Available tax commands:\n"
+            "- /khata: View monthly cash outflows and categorized expenses\n"
+            "- /tax_savings: Commercial asset depreciation and Section 80C/80D advice\n"
+            "- /presumptive [turnover]: Evaluate Section 44AD presumptive taxation\n"
+            "- /status: View GST invoice compliance status"
         )
 

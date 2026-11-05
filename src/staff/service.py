@@ -218,3 +218,4 @@ def get_daily_shift_summary(
         "urgent_reorder_count": len(low_stock),
         "urgent_reorder_items": [f"{it['name']} ({it['current_stock']} left)" for it in low_stock[:4]],
     }
+

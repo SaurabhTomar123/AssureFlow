@@ -40,3 +40,4 @@ def post_stock_out(shop_id: str, payload: StockOutRequest, db: Session = Depends
     if not res:
         raise HTTPException(status_code=404, detail="SKU not found in store inventory")
     return res
+

@@ -1,4 +1,5 @@
 from datetime import date
+import re
 from typing import Any
 from src.db.session import SessionLocal
 from src.db.models import Shop, Bill, ComplianceIssueModel, Employee
@@ -10,6 +11,7 @@ from src.agents.junior_ca import JuniorCAAgent
 from src.agents.store_manager import StoreManagerAgent
 from src.inventory.service import restock_inventory_from_bill
 from src.staff.service import mark_attendance
+from src.notifications.alert_engine import get_proactive_store_alerts
 
 
 class SwitchWebhookRouter:
@@ -116,7 +118,7 @@ class SwitchWebhookRouter:
                         "text": f"Shop Status for {shop.name}:\nTotal Bills Sent: {len(bills)}\nClean: {clean_c}\nPending/Flagged: {flagged_c}",
                     })
 
-                elif any(cmd in text.strip().lower() for cmd in ["/khata", "/accounts", "khata", "accounts"]):
+                elif bool(re.search(r"\b(/khata|/accounts|khata|accounts)\b", text.strip().lower())):
                     lang = "hi" if any(w in text.lower() for w in ["dikhao", "batao", "mera", "kya"]) else "en"
                     khata_text = self.junior_ca.handle_khata_request(shop.id, db, language=lang)
                     responses.append({
@@ -125,7 +127,7 @@ class SwitchWebhookRouter:
                         "text": khata_text,
                     })
 
-                elif any(cmd in text.strip().lower() for cmd in ["/tax_savings", "/savings", "tax bachat", "tax save"]):
+                elif bool(re.search(r"\b(/tax_savings|/savings|tax bachat|tax save)\b", text.strip().lower())):
                     lang = "hi" if any(w in text.lower() for w in ["kaise", "bachayein", "batao", "salah"]) else "en"
                     savings_text = self.junior_ca.handle_tax_savings_request(shop.id, db, language=lang)
                     responses.append({
@@ -216,6 +218,83 @@ class SwitchWebhookRouter:
                         "sender": "store-manager",
                         "text": shift_text,
                     })
+
+                elif text.strip().startswith("/alerts"):
+                    alert_data = get_proactive_store_alerts(shop.id, db)
+                    lines = [
+                        f"Proactive Store & Compliance Alerts for {shop.name}:",
+                        "----------------------------------------",
+                        f"Status: {alert_data['status']} | Active Alerts: {alert_data['total_active_alerts']}",
+                        "",
+                    ]
+                    for g_alert in alert_data["gst_deadline_alerts"]:
+                        lines.append(f"- [GST Deadline Alert]: {g_alert['message']}")
+                    for s_alert in alert_data["inventory_alerts"][:4]:
+                        lines.append(f"- [Low Stock Warning]: {s_alert['message']}")
+                    if not alert_data["gst_deadline_alerts"] and not alert_data["inventory_alerts"]:
+                        lines.append("No critical issues or inventory deficits found. Store running smoothly.")
+                    lines.append("----------------------------------------")
+                    responses.append({
+                        "room": room_name,
+                        "sender": "follow-up",
+                        "text": "\n".join(lines),
+                    })
+
+                else:
+                    low_text = text.strip().lower()
+                    lang = "hi" if any(w in low_text for w in ["namaste", "bhai", "karo", "yeh", "dekho", "kya", "kaise", "dikhao", "batao", "aaj", "kitna"]) else "en"
+
+                    if any(w in low_text for w in ["reorder", "procure", "khatam", "order"]):
+                        reorder_text = self.store_manager.format_reorder_alert(shop.id, db, language=lang)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "store-manager",
+                            "text": reorder_text,
+                        })
+                    elif any(w in low_text for w in ["stock", "maal", "inventory", "goods", "items", "catalog"]):
+                        stock_text = self.store_manager.format_stock_overview(shop.id, db, language=lang)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "store-manager",
+                            "text": stock_text,
+                        })
+                    elif any(w in low_text for w in ["khata", "accounts", "hisaab", "kharch", "outflow", "expense"]):
+                        khata_text = self.junior_ca.handle_khata_request(shop.id, db, language=lang)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "junior-ca",
+                            "text": khata_text,
+                        })
+                    elif any(w in low_text for w in ["tax", "bachat", "save", "savings", "depreciation", "80c"]):
+                        tax_text = self.junior_ca.handle_tax_savings_request(shop.id, db, language=lang)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "junior-ca",
+                            "text": tax_text,
+                        })
+                    elif any(w in low_text for w in ["attendance", "hazri", "present", "shift", "karmchari", "staff"]):
+                        today_str = date.today().isoformat()
+                        shift_text = self.store_manager.format_shift_summary(shop.id, today_str, db, language=lang)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "store-manager",
+                            "text": shift_text,
+                        })
+                    elif any(w in low_text for w in ["payroll", "salary", "vetan", "tankhwah", "wages"]):
+                        today_dt = date.today()
+                        payroll_text = self.store_manager.format_payroll_report(shop.id, today_dt.month, today_dt.year, db, language=lang)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "store-manager",
+                            "text": payroll_text,
+                        })
+                    else:
+                        open_ans = self.junior_ca.answer_open_tax_query(text.strip(), language=lang)
+                        responses.append({
+                            "room": room_name,
+                            "sender": "junior-ca",
+                            "text": open_ans,
+                        })
 
             elif room_name == "ca-office":
                 cleaned_text = text.strip()

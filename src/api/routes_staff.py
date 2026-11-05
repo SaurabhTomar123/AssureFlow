@@ -98,3 +98,4 @@ def get_shift_summary(
     db: Session = Depends(get_db),
 ):
     return get_daily_shift_summary(shop_id=shop_id, date=date, db=db)
+

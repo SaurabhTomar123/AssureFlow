@@ -101,6 +101,7 @@ rooms:
     participants:
       - "{$creator}"
       - "bill-reader"
+      - "gst-checker"
       - "follow-up"
       - "junior-ca"
       - "store-manager"
@@ -114,6 +115,7 @@ rooms:
     participants:
       - "{$creator}"
       - "bill-reader"
+      - "gst-checker"
       - "follow-up"
       - "junior-ca"
       - "store-manager"
@@ -131,4 +133,26 @@ rooms:
     rules:
       shared_context: true
       aggregate_multi_shop: true
+
+events:
+  - name: "bill_received"
+    trigger: "on_file_upload"
+    handler: "bill-reader.process_document"
+    next: "gst-checker.check_compliance"
+
+  - name: "bill_confirmed"
+    trigger: "on_owner_confirmation_ok"
+    handler: "store-manager.auto_restock"
+    description: "Auto-restocks inventory catalog items and logs stock movement directly from verified invoice."
+
+  - name: "compliance_defect_serious"
+    trigger: "on_gst_violation"
+    condition: "severity == serious"
+    route_to_room: "ca-office"
+    handler: "return-preparer.format_ca_alert"
+
+  - name: "daily_shift_start"
+    trigger: "on_schedule_0900"
+    handler: "store-manager.format_shift_summary"
+
 

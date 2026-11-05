@@ -81,3 +81,4 @@ def filter_dashboard_data_for_role(role: str, data: dict[str, Any]) -> dict[str,
         filtered["accessible_features"] = ["Full Enterprise Governance"]
 
     return filtered
+
