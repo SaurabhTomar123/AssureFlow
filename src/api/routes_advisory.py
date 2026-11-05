@@ -11,6 +11,15 @@ from src.advisory.tax_advisor import (
     detect_blocked_itc_section_17_5,
 )
 from src.advisory.audit_radar import compute_shop_audit_risk
+from src.accounts.double_entry import (
+    record_bill_journal_entry,
+    get_trial_balance,
+    get_profit_and_loss,
+    get_balance_sheet,
+    get_cash_flow_forecast,
+    get_vendor_payment_priority_queue,
+)
+from src.db.models import Bill
 
 router = APIRouter(prefix="/api/advisory", tags=["Junior CA & Accounts"])
 
@@ -81,5 +90,60 @@ def get_shop_audit_radar(shop_id: str, db: Session = Depends(get_db)):
         return radar_report
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/double-entry/{shop_id}/sync-bills")
+def post_sync_bills_to_journal(shop_id: str, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    bills = db.query(Bill).filter(Bill.shop_id == shop_id, Bill.status != "REJECTED").all()
+    created = []
+    for b in bills:
+        entry = record_bill_journal_entry(b.id, db)
+        if entry:
+            created.append(entry.entry_number)
+    return {"shop_id": shop_id, "synced_count": len(created), "entries": created}
+
+
+@router.get("/double-entry/{shop_id}/trial-balance")
+def get_shop_trial_balance(shop_id: str, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return get_trial_balance(shop_id, db)
+
+
+@router.get("/double-entry/{shop_id}/profit-loss")
+def get_shop_profit_loss(shop_id: str, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return get_profit_and_loss(shop_id, db)
+
+
+@router.get("/double-entry/{shop_id}/balance-sheet")
+def get_shop_balance_sheet(shop_id: str, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return get_balance_sheet(shop_id, db)
+
+
+@router.get("/treasury/{shop_id}/cash-flow-forecast")
+def get_shop_cash_flow_forecast(shop_id: str, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return get_cash_flow_forecast(shop_id, db)
+
+
+@router.get("/treasury/{shop_id}/vendor-payment-priority")
+def get_shop_vendor_payment_priority(shop_id: str, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return get_vendor_payment_priority_queue(shop_id, db)
+
 
 

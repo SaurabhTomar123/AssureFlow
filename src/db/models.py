@@ -139,6 +139,38 @@ class LedgerEntry(Base):
     bill = relationship("Bill")
 
 
+class JournalEntry(Base):
+    __tablename__ = "journal_entries"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    shop_id = Column(String(36), ForeignKey("shops.id"), nullable=False)
+    entry_number = Column(String(64), nullable=False)
+    entry_date = Column(String(32), nullable=False)
+    reference_type = Column(String(32), nullable=False)
+    reference_id = Column(String(64), nullable=True)
+    description = Column(String(255), nullable=False)
+    total_debit = Column(Float, default=0.0)
+    total_credit = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    shop = relationship("Shop")
+    lines = relationship("JournalEntryLine", back_populates="entry", cascade="all, delete-orphan")
+
+
+class JournalEntryLine(Base):
+    __tablename__ = "journal_entry_lines"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    entry_id = Column(String(36), ForeignKey("journal_entries.id"), nullable=False)
+    account_code = Column(String(16), nullable=False)
+    account_name = Column(String(128), nullable=False)
+    debit = Column(Float, default=0.0)
+    credit = Column(Float, default=0.0)
+    notes = Column(String(255), nullable=True)
+
+    entry = relationship("JournalEntry", back_populates="lines")
+
+
 class UserProfile(Base):
     __tablename__ = "user_profiles"
 
