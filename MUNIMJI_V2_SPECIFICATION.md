@@ -278,3 +278,4 @@ pytest
 uvicorn src.api.main:app --reload --port 8000
 # Navigate to: http://localhost:8000/dashboard
 ```
+
