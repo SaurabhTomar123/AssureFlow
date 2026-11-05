@@ -108,11 +108,15 @@ class SwitchHttp:
         filename = disposition.split("filename=")[-1].strip('"') if "filename=" in disposition else None
         return b"".join(chunks), ctype, filename
 
-    def op(self, operation: str, args: dict[str, Any] | None = None) -> Any:
+    def op(self, operation: str, args: dict[str, Any] | None = None, connected: bool = False) -> Any:
+        """Call an operation. Only room-bound operations need the live connection id header."""
+        headers = dict(self._auth)
+        if connected:
+            headers["X-Switch-Connection-Id"] = self.creds.connection_id
         resp = httpx.post(
             f"{self.base}/agents/{self.creds.agent_id}/ops/{operation}",
             json=args or {},
-            headers={**self._auth, "X-Switch-Connection-Id": self.creds.connection_id},
+            headers=headers,
             timeout=self.timeout,
         )
         resp.raise_for_status()

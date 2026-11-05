@@ -79,6 +79,28 @@ def bind_rooms() -> None:
             print(f"BOUND    {room['name']} -> {switch_id}")
 
 
+def create_rooms(mapping: dict[str, str]) -> None:
+    settings = get_settings()
+    http = SwitchHttp(SwitchCredentials.load())
+    existing = {str(r.get("name")) for r in http.op("list_rooms") or []}
+    config = yaml.safe_load(open(settings.ROOM_BINDINGS_FILE, encoding="utf-8"))
+    for room in config["rooms"]:
+        if not room.get("provision") or room["name"] in existing:
+            continue
+        users = [mapping[h] for h in room["members"] if h in mapping]
+        http.op(
+            "create_room",
+            {
+                "name": room["name"],
+                "description": f"Assure Flow {room['purpose'].replace('_', ' ')} room (synthetic demo data)",
+                "agent_names": [AGENT_NAME],
+                "user_names": users,
+            },
+        )
+        print(f"CREATED  {room['name']} with {', '.join(users) or 'no users'}")
+    bind_rooms()
+
+
 def unmapped() -> None:
     with transaction() as s:
         rows = s.execute(
@@ -121,6 +143,8 @@ def main(argv: list[str]) -> None:
     cmd, args = argv[0], argv[1:]
     if cmd == "register-agent":
         register_agent()
+    elif cmd == "create-rooms":
+        create_rooms(dict(a.split("=", 1) for a in args))
     elif cmd == "bind-rooms":
         bind_rooms()
     elif cmd == "unmapped":

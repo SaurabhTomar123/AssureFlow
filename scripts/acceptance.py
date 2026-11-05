@@ -25,14 +25,19 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     junit = out / f"junit-{run_id}.xml"
     code = subprocess.call(
-        [sys.executable, "-m", "pytest", "tests/offline", "-q", "-p", "no:warnings", f"--junitxml={junit}"], cwd=ROOT
+        [sys.executable, "-m", "pytest", "tests/offline", "-q", "-p", "no:warnings", f"--junitxml={junit}"],
+        cwd=ROOT,
     )
     tree = ET.parse(junit).getroot()
     cases = list(tree.iter("testcase"))
     failures = [
-        f"{c.get('classname')}::{c.get('name')}" for c in cases if c.find("failure") is not None or c.find("error") is not None
+        f"{c.get('classname')}::{c.get('name')}"
+        for c in cases
+        if c.find("failure") is not None or c.find("error") is not None
     ]
-    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True
+    ).stdout.strip()
     fixtures = hashlib.sha256((ROOT / "seed" / "expected" / "fixtures.json").read_bytes()).hexdigest()[:12]
     report = {
         "run_id": run_id,

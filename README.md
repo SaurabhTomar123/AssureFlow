@@ -123,8 +123,9 @@ make acceptance  # machine-generated report in docs/release/
 2. In the Switch Gateway, create a **registration** API key. Then run
    `SWITCH_REGISTRATION_KEY=… python -m scripts.admin register-agent`. This registers the `assure-flow`
    agent and saves its credentials to `data/`.
-3. Create the rooms `af-shop-sharma`, `af-shop-gupta` and `af-ca-review` in your chat app, then invite
-   `assure-flow` and the people (see `agents/rooms.yaml`). Run `python -m scripts.admin bind-rooms`.
+3. Let the agent create and bind the rooms through Switch (on the default bridge, e.g. Mattermost), mapping each
+   seeded person to their chat username: `python -m scripts.admin create-rooms owner.sharma=<user>
+   owner.gupta=<user> ca.mehta=<user>`. (Or create them yourself, invite `assure-flow`, and run `bind-rooms`.)
 4. Start the stack: `docker compose --profile switch up -d --build` (api, worker, adapter).
 5. Have each person send one message, then map identities. `python -m scripts.admin unmapped` lists the
    unmapped senders; bind each one with `python -m scripts.admin bind-user @switch-user-…:server owner.sharma`.
@@ -164,8 +165,10 @@ implied to work.
   per file. Per-page text/vision merging is replaced by whole-document vision when any page is weak.
 * No `trace <case>` command; correlation ids are in the logs.
 * The business tools are an authenticated HTTP API. The MCP wrapper is deferred (docs/decisions.md D-07).
-* Live-integration tests (R01, R02, R04, live R19) have not been run yet. Every offline test passes; see
-  `docs/gates/STATUS.md`.
+* The full workflow has been run live against Switch 0.31.0 + Mattermost (`docs/release/live-run-2026-11-05.md`);
+  automated live tests R01, R02 and R04 have not been run.
+* On Switch's standalone stack, the deployment's admin accounts are members of every room. Assure Flow's
+  disclosure check uses the declared audience in `agents/rooms.yaml`, not Switch's live member list.
 * Scope: INR domestic B2B purchase tax invoices only. Assure Flow does **not** file GST returns, verify live GSTIN
   registration, or decide ITC eligibility. Amounts are "tax associated with an issue", never "money lost". The
   CA files separately.

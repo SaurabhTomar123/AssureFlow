@@ -1,7 +1,7 @@
 # Phase gate status: v1.0.0-hackathon (offline evidence)
 
 Legend: **Done** = implemented and covered by an offline test. **Deferred** = "Deferred — hackathon cut" (spec s.10),
-listed in README *Known limitations*. **Live pending** = needs a running Switch server; not yet executed.
+listed in README *Known limitations*. **Live** = executed against a real Switch 0.31.0 server (`docs/release/live-run-2026-11-05.md`).
 
 Evidence: `python -m scripts.acceptance` → `docs/release/acceptance-*.json` (62/62 offline tests passing at the time of writing).
 
@@ -12,16 +12,16 @@ Evidence: `python -m scripts.acceptance` → `docs/release/acceptance-*.json` (6
 | P0-04 migration | Done | `migrations/versions/p0_foundation.py`; up/down/up verified |
 | P0-05/06 scopes, contexts, grants | Done | `domain/scope.py`, `domain/context.py`; R16 test |
 | P0-07 seed + reset (demo/test only) | Done | `seed/loader.py` |
-| P0-08/09 pinned Switch, all-event delivery | Done (verified in source, D-02) / **Live pending** | `adapters/switch_client.py` |
+| P0-08/09 pinned Switch, all-event delivery | Done + **Live** (unaddressed uploads and replies processed) | `adapters/switch_client.py` |
 | P0-10/11 durable inbox, code classification | Done | `adapters/inbox_writer.py`, `domain/services/inbox.py`; R19 offline |
 | P0-12/13 rooms.yaml, intake tools | Done | `agents/rooms.yaml` |
 | P0-14 queue: leases, fencing, dead-letter | Done | `workers/queue.py`; R12 |
 | P0-15 idempotency, correlation, envelope, /healthz /readyz | Done | `api/main.py`; API tests |
 | P0-16..18 receipt, fetch_and_store, ordered outbox | Done | handlers; R08 |
 | P0-19 health | Done | `scripts/health.py` |
-| P0-20 live photo+PDF | **Live pending** | needs Switch running |
+| P0-20 live photo+PDF | Done + **Live** (stored SHA-256 = original for PDF and PNG; two messages per upload) | `docs/release/live-run-2026-11-05.md` |
 | P0-21..23 context, fencing, recovery tests | Done | `test_api.py`, `test_reliability.py` |
-| P0-24 clean clone health | Partial | `make health` reports Switch items FAIL until bootstrap |
+| P0-24 clean clone health | Partial | `make health` all PASS after bootstrap on this machine; clean-clone rehearsal pending |
 
 ## P1 Evidence-backed intake
 | Item | Status |
@@ -63,6 +63,6 @@ routing, exposure once per component, golden fixtures, hypothesis property tests
 | P5-04 injection, P5-05 isolation matrix, P5-06 per-shop model sessions | Done (`metadata.user_id` per shop) |
 | P5-07 operations / synthetic testing rooms | **Deferred** (`make health`, `make acceptance`) |
 | P5-08 tool inventory | Done (`agents/rooms.yaml` ↔ `api/routers/tools.py`) |
-| P5-09 R01–R19 | Offline rows Done; live rows R01, R02, R04, R19-live **Live pending** |
+| P5-09 R01–R19 | Offline rows Done; R19 and R05 (hashes, verified sender, unmapped sender rejected) **Live**; R01, R02, R04 pending |
 | P5-10 trace command | **Deferred**; correlation ids in logs |
 | P5-11 clean-clone rehearsal, video, tag | **Pending** |
