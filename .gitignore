@@ -38,9 +38,6 @@ venv.bak/
 *.sqlite3
 munimji.db
 
-synthetic_data/bills_pdf/
-synthetic_data/bills_img/
-!synthetic_data/ground_truth.json
 tmp/
 .pytest_cache/
 uploads/
