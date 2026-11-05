@@ -82,6 +82,26 @@ Simultaneously, retail shop owners struggle with daily store management, multi-p
 - **Live Web Simulator (`/switch-simulator`):** An interactive 3-column split view displaying isolated Switch rooms (`shop-sharma-kirana`, `ca-office`, `vendor-dispute-desk`) running multi-agent handoffs in real-time.
 - **1-Click Terminal Demo Runner (`scripts/demo_switch_live.py`):** High-speed colorized terminal playback running all 15 beats, demonstrating instant message propagation, automated disputes, voice ingestion, FEFO expiry, double-entry journaling, and bulk payout approvals.
 
+#### Complete 15-Beat Autonomous Demonstration Flow
+
+| Beat | Stage & Feature | Active Agents & Rooms | Autonomous Action & Regulatory Impact | Verifiable Output |
+| :---: | :--- | :--- | :--- | :--- |
+| **01** | Clean Tax Bill Intake & Auto-Restock | `bill-reader`, `gst-checker`, `store-manager` (`shop-sharma-kirana`) | Extracts supplier GSTIN, invoice date, amounts. Passes Mod-36 check-digit & PoS verification. Owner `OK` auto-restocks store catalog. | Confirmed Bill #INV-2026-001, stock balance incremented |
+| **02** | Blurry Capture Rejection | `bill-reader`, `follow-up` (`shop-sharma-kirana`) | Blur detector detects unreadable scan, warns merchant immediately, requesting high-clarity retake before CA submission. | Actionable blur advisory alert |
+| **03** | "Kacha-Pakka" Smart Sieve | `document-classifier`, `store-manager` (`shop-sharma-kirana`) | Classifies informal handwritten counter slip (`KACHA_ESTIMATE_SLIP`), quarantines from tax return, logs non-GST expense and inventory. | Zero Section 122 penalty risk, digital khata updated |
+| **04** | Simple Place-of-Supply Math Defect | `gst-checker`, `follow-up` (`shop-sharma-kirana`) | Intrastate transaction has 100% CGST instead of equal 50/50 CGST+SGST split. Translates defect to merchant with exact INR ITC at risk. | Local shop resolution alert with Rupee ITC calculation |
+| **05** | Serious Checksum Defect & CA Routing | `gst-checker`, `return-preparer` (`ca-office`) | Vendor GSTIN fails ISO/IEC 7064 Mod-36 checksum. Quarantined from shop room, routed to CA Office Cockpit for professional action. | CA Cockpit Issue Card with `/approve` or `/reject` |
+| **06** | Autonomous Vendor Dispute Generation | `return-preparer`, `vendor-concierge` (`ca-office` -> `vendor-dispute-desk`) | CA flags supplier default. Generates secure tokenized dispute portal URL dispatched directly to defaulting supplier. | Dispute Ticket #DISP-001 dispatched with token |
+| **07** | Supplier Resolution & Multi-Room Broadcast | `vendor-concierge`, `ca-office`, `shop-sharma-kirana` | Supplier issues Credit Note via dispute link. System verifies resolution and simultaneously broadcasts updates to shop and CA rooms. | Credit Note #CN-2026-9901 logged, ITC unlocked |
+| **08** | Wispr Flow Voice Note Ingestion | `voice-transcriber`, `store-manager` (`shop-sharma-kirana`) | Ingests spoken Hinglish audio note (*"12 bori Aashirvaad Atta delivery aayi"*), parses payload, restocks catalog with zero typing. | Restocked 12 units of Atta via hands-free voice |
+| **09** | Live GSP Inward 2-Way Auto-Reconciliation | `GSPClient`, `reconciler` (`ca-office`) | Synchronizes live portal GSTR-2B feed, identifies unfiled invoices under Section 16(2)(aa), generates formal Rule 37A demand notices. | Reconciled 2B status: Matched vs Defaulted |
+| **10** | Account Aggregator 3-Way Bank Outflow Match | `AccountAggregatorClient`, `three-way-recon` (`ca-office`) | Reconciles bank debit outflows against physical bills and GSTR-2B return. Confirms invoice settled via UPI. | `THREE_WAY_MATCHED` certification |
+| **11** | Proactive DGGI Audit Radar & Scorecards | `audit-radar` (`ca-office`) | Evaluates unfiled exposure, calculates DGGI Audit Risk Index (25/100), vendor compliance tiers (A+ to C), and MSME Solvency Score (760/900). | DGGI Risk Index & Mudra loan readiness score |
+| **12** | Junior CA Bookkeeping & Section 44AD Advice | `junior-ca` (`shop-sharma-kirana`) | `/khata` outputs accounts book categorized by inventory, rent, and overheads. Computes presumptive tax savings under Section 44AD. | Tax savings analysis (INR 24,600 saved in audit fees) |
+| **13** | Month-End GSTR-3B Government Export | `return-preparer` (`ca-office`) | Aggregates all clean verified invoices into official government GSTR-3B Table 4 format with downloadable JSON payload. | Official `munimji_gstr3b_export.json` |
+| **14** | Smart Inventory FEFO Expiry & RTV Debit Note | `store-manager` (`shop-sharma-kirana`) | `/fefo_expiry_check` flags expired batch (Amul Butter), generates formal Return-to-Vendor Debit Note with 18% GST reversal and stock auto-deduction. | Debit Note #DN-RTV-20261105-EXP001, stock deducted |
+| **15** | Autonomous Ledger, 30-Day Runway & Payout Approval | `junior-ca`, `store-manager`, `return-preparer` | Generates balanced Trial Balance & 30-day runway. Records voice crew check-in and udhari advance. Owner approves payout batch, posting balanced journal entries. | Balanced Trial Balance, Approved Payout Batch & Journal JE |
+
 ---
 
 ## 3. Multi-Room Isolation & System Architecture
@@ -597,7 +617,7 @@ python scripts/seed_database.py
 # 5. Run full automated end-to-end demo dry run
 python scripts/test_e2e_flow.py
 
-# 6. Run complete test suite (138 automated unit and integration tests across 34 test suites)
+# 6. Run complete test suite (138 automated unit and integration tests across 35 test suites)
 pytest
 
 # 7. Run 1-Click Interactive Terminal War-Room Playback (All 15 beats with colorized agent handoffs)
@@ -643,3 +663,22 @@ docker-compose up --build
 ## 11. Regulatory Philosophy: "AI Prepares, CA Files"
 
 MunimJi never submits filings directly to the GST Network portal. The AI agents and deterministic engines extract, validate, and organize the ledger; the licensed Chartered Accountant reviews the final summary and files the official return.
+
+---
+
+## 12. Hackathon Track Alignment & Evaluation Matrix
+
+### Track 1: Best Business Workflow ($2,000 USD)
+- **Problem Solved:** Overcomes the monthly GST crunch, informal receipt leakage, supplier default under Rule 37A, inventory spoilage, and manual payroll math for India's 63M+ MSMEs.
+- **Workflow Orchestration:** Connects 3 isolated Switch rooms (`shop-sharma-kirana`, `ca-office`, `vendor-dispute-desk`) across 7 specialized autonomous agents with multi-party dispute loops and deterministic verification.
+- **Deterministic Code Checks:** Zero hallucinations in tax calculations; check-digit validation, 3-way reconciliation, double-entry ledger balancing, and statutory EPF/ESIC payroll deduction formulas run exclusively on deterministic Python code.
+- **Enterprise-Ready:** Full JWT authentication, bcrypt hashing, multi-tenant database schema, role-based access control, and 138 automated tests.
+
+### Sponsored Track: Code with Wispr Voice Track ($500 USD)
+- **Hands-Busy Floor Utility:** Solves the physical bottleneck of kirana and warehouse workers who cannot type on computers while unloading inventory or serving counter customers.
+- **Natural Spoken Hinglish Processing:** Ingests unstructured spoken audio notes via `src/voice/voice_transcriber.py`.
+- **Direct Operational Dispatch:** Automatically parses voice transcripts into structured operational actions:
+  - Inventory restock: `"12 bori Aashirvaad Atta delivery aayi"` -> updates catalog count.
+  - Crew attendance: `"Poori loading team present hai siwaye Mukesh ke"` -> marks crew present and flags understaffing.
+  - Udhari cash advances: `"Chandan ko 1500 advance diya"` -> logs staff advance ledger.
+  - Bookkeeping queries: `"Is mahine kitna mal kharida"` -> returns digital khata summary.
