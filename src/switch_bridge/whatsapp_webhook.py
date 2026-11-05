@@ -137,3 +137,4 @@ async def receive_whatsapp_event(request: Request, db: Session = Depends(get_db)
         "status": "EVENT_RECEIVED",
         "processed_actions": results,
     }
+

@@ -128,3 +128,4 @@ def test_whatsapp_text_natural_language_query():
     assert actions[0]["action"] == "text_query_processed"
     assert len(actions[0]["agent_replies"]) >= 1
     assert "stock" in actions[0]["agent_replies"][0]["text"].lower()
+
