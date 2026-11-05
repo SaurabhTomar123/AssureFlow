@@ -585,6 +585,121 @@ def build() -> dict[str, Any]:
     return index
 
 
+def _portal_date(iso: str) -> str:
+    y, mth, d = iso.split("-")
+    return f"{d}-{mth}-{y}"
+
+
+def build_gstr2b() -> dict[str, Any]:
+    """A synthetic GSTR-2B for Sharma, 2026-11, designed to hit every reconciliation class:
+    F01 exact, F04 IGST differs (mismatch), F05 absent (purchase_only), one supplier invoice with no bill
+    (statement_only), and F10's number reported twice (ambiguous)."""
+    by_name = {fx.name: fx for fx in FIXTURE_LIST}
+    entries: list[tuple[Fixture, dict[str, Decimal]]] = []
+    for name, tweak in (
+        ("F01_clean_intrastate_5pct", {}),
+        ("F04_clean_interstate_18pct", {"igst": Decimal("-50.00")}),
+        ("F10_duplicate_original", {}),
+        ("F10_duplicate_original", {}),
+    ):
+        entries.append((by_name[name], tweak))
+    b2b: dict[str, dict[str, Any]] = {}
+    for fx, tweak in entries:
+        t = fx.totals()
+        igst = t["igst"] + tweak.get("igst", Decimal(0))
+        inv = {
+            "inum": fx.number,
+            "dt": _portal_date(fx.date),
+            "typ": "R",
+            "itcavl": "Y",
+            "val": str(t["taxable"] + t["cgst"] + t["sgst"] + igst + fx.round_off),
+            "items": [
+                {
+                    "txval": str(t["taxable"]),
+                    "igst": str(igst),
+                    "cgst": str(t["cgst"]),
+                    "sgst": str(t["sgst"]),
+                    "cess": "0",
+                }
+            ],
+        }
+        b2b.setdefault(fx.gstin or "", {"ctin": fx.gstin, "trdnm": SUPPLIERS[fx.supplier][0], "inv": []})[
+            "inv"
+        ].append(inv)
+    other = make_gstin("07", "KAPUR1212K")
+    b2b[other] = {
+        "ctin": other,
+        "trdnm": "Kapur Cold Storage",
+        "inv": [
+            {
+                "inum": "KCS-77",
+                "dt": "15-11-2026",
+                "typ": "R",
+                "itcavl": "Y",
+                "val": "1180.00",
+                "items": [{"txval": "1000.00", "igst": "0", "cgst": "90.00", "sgst": "90.00", "cess": "0"}],
+            }
+        ],
+    }
+    doc = {
+        "data": {
+            "gstin": SHARMA,
+            "rtnprd": "112026",
+            "gendt": "14-12-2026",
+            "docdata": {"b2b": list(b2b.values()), "cdnr": [{"ctin": other, "nt": [{"ntnum": "CN-1"}]}]},
+        }
+    }
+    (FIXTURES / "gstr2b_sharma_2026-11.json").write_text(json.dumps(doc, indent=1, sort_keys=True), "utf-8")
+    from openpyxl import Workbook
+
+    wb = Workbook()
+    readme = wb.active
+    readme.title = "Read me"
+    readme.append(["GSTIN", SHARMA])
+    readme.append(["Tax period", "112026"])
+    sheet = wb.create_sheet("B2B")
+    sheet.append(["Taxable inward supplies received from registered persons"])
+    sheet.append(
+        [
+            "GSTIN of supplier",
+            "Trade/Legal name",
+            "Invoice number",
+            "Invoice type",
+            "Invoice Date",
+            "Invoice Value(₹)",
+            "Taxable Value (₹)",
+            "Integrated Tax(₹)",
+            "Central Tax(₹)",
+            "State/UT Tax(₹)",
+            "Cess(₹)",
+            "ITC Availability",
+        ]
+    )
+    for supplier in doc["data"]["docdata"]["b2b"]:
+        for inv in supplier["inv"]:
+            it = inv["items"][0]
+            sheet.append(
+                [
+                    supplier["ctin"],
+                    supplier["trdnm"],
+                    inv["inum"],
+                    "Regular",
+                    inv["dt"],
+                    inv["val"],
+                    it["txval"],
+                    it["igst"],
+                    it["cgst"],
+                    it["sgst"],
+                    it["cess"],
+                    inv["itcavl"],
+                ]
+            )
+    wb.properties.created = wb.properties.modified = __import__("datetime").datetime(2026, 1, 1)
+    wb.save(FIXTURES / "gstr2b_sharma_2026-11.xlsx")
+    return doc
+
+
 if __name__ == "__main__":
     result = build()
+    build_gstr2b()
     print(f"wrote {len(result)} fixtures")

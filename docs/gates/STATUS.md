@@ -66,3 +66,14 @@ routing, exposure once per component, golden fixtures, hypothesis property tests
 | P5-09 R01–R19 | Offline rows Done; R19 and R05 (hashes, verified sender, unmapped sender rejected) **Live**; R01, R02, R04 pending |
 | P5-10 trace command | **Deferred**; correlation ids in logs |
 | P5-11 clean-clone rehearsal, video, tag | **Pending** |
+
+## P6 Reconciliation (started early; ported from `main`, D-17)
+| Item | Status |
+|---|---|
+| P6-01 user-uploaded GSTR-2B JSON/Excel, immutable, idempotent re-upload | Done + **Live** (Excel; JSON blocked by Switch bug D-18) |
+| P6-02 versioned parsers, reject wrong GSTIN/period, statement_lines | Done (`adapters/gstr2b.py`: gstr2b_json_v1, gstr2b_xlsx_v1) |
+| P6-03/04 matching on GSTIN, type, FY, number; one-to-one (UNIQUE per run) | Done (`rules/reconcile.py`) |
+| P6-05 classes exact_match, mismatch, purchase_only, statement_only, ambiguous | Done + **Live** |
+| P6-06/07 credit/debit notes, eligibility evidence | Not started (needs CA-approved examples) |
+| P6-08 gate tests | Done offline; CA sign-off pending |
+| P6-09 sign-off (CA, security owner) | Pending (human) |

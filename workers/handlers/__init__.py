@@ -14,7 +14,7 @@ from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from adapters import pdf
+from adapters import gstr2b, pdf
 from adapters.excel import build_workbook
 from adapters.llm import ProviderError, ProviderPermanentError, get_provider
 from adapters.storage import LocalStorage
@@ -36,10 +36,12 @@ from domain.models import (
     RoomBinding,
     Shop,
     Snapshot,
+    Statement,
     UsageRecord,
 )
 from domain.services import inbox as inbox_service
 from domain.services import intake
+from domain.services import reconciliation as recon
 from domain.services.base import audit, post, room_for_shop
 from domain.services.cases import Exec
 from domain.services.checks import evaluate, record_check_run
@@ -322,6 +324,58 @@ def build_export(job: LeasedJob) -> None:
             )
 
 
+# ------------------------------------------------------------------------------ P6 GSTR-2B
+
+
+def import_statement(job: LeasedJob) -> None:
+    settings = get_settings()
+    p = job.payload
+    with transaction() as s:
+        check_grant(s, job.grant_id, "import_statement")
+    parsed: dict[str, Any]
+    data = b""
+    try:
+        data, _, _ = get_switch().download_media(p["room_id"], p["mxc"], settings.MAX_UPLOAD_MB * 1024 * 1024)
+        parsed = run_cpu(gstr2b.parse, data, p["filename"])
+    except LimitExceeded as exc:
+        parsed = {"error": exc.message}
+    except (httpx.HTTPError, OSError) as exc:
+        raise Retryable(f"download failed: {type(exc).__name__}") from exc
+    except (CpuTaskTimeout, CpuTaskFailed) as exc:
+        parsed = {"error": f"the file could not be parsed ({type(exc).__name__})"}
+    sha = key = ""
+    if not parsed.get("error"):
+        sha, key = LocalStorage().put(f"{p['shop_id']}/statements", data)
+    with transaction() as s:
+        fence_and_complete(s, job)
+        grant = check_grant(s, job.grant_id, "import_statement")
+        shop = s.get(Shop, uuid.UUID(p["shop_id"]))
+        room = s.execute(select(RoomBinding).where(RoomBinding.switch_room_id == p["room_id"])).scalar_one()
+        assert shop is not None
+        reply = recon.record_statement(
+            s,
+            shop=shop,
+            period=p["period"],
+            parsed=parsed,
+            sha256=sha,
+            storage_key=key,
+            filename=p["filename"],
+            user_id=uuid.UUID(p["user_id"]),
+            grant=grant,
+            correlation_id=job.correlation_id,
+        )
+        post(s, room, action_id=f"import:{job.id}", body=reply, correlation_id=job.correlation_id)
+
+
+def reconcile_job(job: LeasedJob) -> None:
+    with transaction() as s:
+        fence_and_complete(s, job)
+        check_grant(s, job.grant_id, "reconcile")
+        statement = s.get(Statement, uuid.UUID(job.payload["statement_id"]))
+        assert statement is not None
+        recon.reconcile(s, statement, job.correlation_id)
+
+
 HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "process_inbox_event": process_inbox_event,
     "fetch_and_store": fetch_and_store,
@@ -329,6 +383,8 @@ HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "run_checks": run_checks,
     "build_snapshot": build_snapshot_job,
     "build_export": build_export,
+    "import_statement": import_statement,
+    "reconcile": reconcile_job,
 }
 
 

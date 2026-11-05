@@ -140,5 +140,6 @@ def help_ca() -> str:
         "Review requests: `RR-0001 include`, `RR-0001 exclude <reason>`, `RR-0001 resolve <RULE-ID> <reason>`, "
         "`RR-0001 clarify <question>`, `RR-0001 supplier <reason>`.\n"
         "Month: `readiness <shop> 2026-11`, `snapshot <shop> 2026-11`, "
-        "`approve SN-0001 <hash-12> [ack <held> <unassigned>]`, `assign INV-0001 2026-11`, `pending`."
+        "`approve SN-0001 <hash-12> [ack <held> <unassigned>]`, `assign INV-0001 2026-11`, `pending`.\n"
+        "GSTR-2B: attach the portal JSON/Excel to `gstr2b <shop> 2026-11`; `recon <shop> 2026-11` shows the result."
     )

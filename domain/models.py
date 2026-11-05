@@ -246,7 +246,8 @@ class ExecutionGrant(Base):
         *shop_fk(),
         CheckConstraint(
             "operation IN ('preserve_document','extract_generation','run_checks','notify',"
-            "'build_snapshot','build_export')"
+            "'build_snapshot','build_export','import_statement','reconcile')",
+            name="execution_grants_operation_check",
         ),
         {"info": {"phase": "P0"}},
     )
@@ -789,6 +790,103 @@ class Artifact(Base):
     created_at: Mapped[datetime] = ts()
 
 
+# --------------------------------------------------------------------------------------------- P6
+
+
+class Statement(Base):
+    """A user-uploaded GSTR-2B statement, stored immutably; an identical re-upload is idempotent."""
+
+    __tablename__ = "statements"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("shop_id", "kind", "period", "sha256"),
+        UniqueConstraint("practice_id", "public_ref"),
+        {"info": {"phase": "P6"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    public_ref: Mapped[str] = mapped_column(String(16))
+    kind: Mapped[str] = mapped_column(String(16), default="gstr2b")
+    period: Mapped[str] = mapped_column(String(7))
+    parser_version: Mapped[str] = mapped_column(String(32))
+    sha256: Mapped[str] = mapped_column(String(64))
+    storage_key: Mapped[str] = mapped_column(String(512))
+    filename: Mapped[str] = mapped_column(String(255))
+    line_count: Mapped[int] = mapped_column(Integer)
+    skipped: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    imported_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
+class StatementLine(Base):
+    __tablename__ = "statement_lines"
+    __table_args__ = (*shop_fk(), UniqueConstraint("statement_id", "line_no"), {"info": {"phase": "P6"}})
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    statement_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("statements.id"))
+    line_no: Mapped[int] = mapped_column(Integer)
+    supplier_gstin: Mapped[str] = mapped_column(String(15))
+    supplier_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    document_type: Mapped[str] = mapped_column(String(24))
+    invoice_number: Mapped[str] = mapped_column(String(64))
+    number_norm: Mapped[str] = mapped_column(String(64))
+    invoice_date: Mapped[str] = mapped_column(String(10))
+    financial_year: Mapped[str] = mapped_column(String(7))
+    invoice_value: Mapped[Decimal] = mapped_column(MONEY)
+    taxable: Mapped[Decimal] = mapped_column(MONEY)
+    igst: Mapped[Decimal] = mapped_column(MONEY)
+    cgst: Mapped[Decimal] = mapped_column(MONEY)
+    sgst: Mapped[Decimal] = mapped_column(MONEY)
+    cess: Mapped[Decimal] = mapped_column(MONEY)
+    itc_available: Mapped[str | None] = mapped_column(String(8), nullable=True)
+
+
+class ReconciliationRun(Base):
+    __tablename__ = "reconciliation_runs"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("statement_id", "run_seq"),
+        UniqueConstraint("practice_id", "public_ref"),
+        {"info": {"phase": "P6"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    public_ref: Mapped[str] = mapped_column(String(16))
+    statement_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("statements.id"))
+    period: Mapped[str] = mapped_column(String(7))
+    run_seq: Mapped[int] = mapped_column(Integer)
+    matcher_version: Mapped[str] = mapped_column(String(32))
+    summary: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    results_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = ts()
+
+
+class ReconciliationResult(Base):
+    """One row per statement line and per purchase revision; each side appears at most once per run (P6-04)."""
+
+    __tablename__ = "reconciliation_results"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("run_id", "statement_line_id"),
+        UniqueConstraint("run_id", "revision_id"),
+        CheckConstraint("class_ IN ('exact_match','mismatch','purchase_only','statement_only','ambiguous')"),
+        {"info": {"phase": "P6"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    run_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("reconciliation_runs.id"))
+    class_: Mapped[str] = mapped_column("class_", String(16))
+    statement_line_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    revision_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    case_ref: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    key: Mapped[str] = mapped_column(String(160))
+    differences: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+
+
 APPEND_ONLY_TABLES = (
     "documents",
     "field_evidence",
@@ -796,6 +894,9 @@ APPEND_ONLY_TABLES = (
     "decisions",
     "case_events",
     "audit_events",
+    "statements",
+    "statement_lines",
+    "reconciliation_results",
 )
 
 

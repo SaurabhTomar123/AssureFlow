@@ -139,6 +139,8 @@ To use real extraction instead of recorded fixtures, set `LLM_PROVIDER=anthropic
 **Shop room:** send a file · `ok INV-0001 r1` · `ok INV-0001 hold` · `INV-0001 total=1180.00 date=2026-11-03` ·
 send a file with `INV-0001` in the message to replace a document · `status` · `pending` · `why-held INV-0001` · `help`
 
+**CA room (GSTR-2B):** attach the portal Excel (or JSON) to `gstr2b sharma 2026-11` · `recon sharma 2026-11`
+
 **CA room:** `RR-0001 include` · `RR-0001 exclude <reason>` · `RR-0001 resolve <RULE-ID> <reason>` ·
 `RR-0001 clarify <question>` · `RR-0001 supplier <reason>` · `readiness sharma 2026-11` ·
 `snapshot sharma 2026-11` · `approve SN-0001 <hash-12> [ack <held> <unassigned>]` · `assign INV-0001 2026-11` · `pending`
@@ -150,6 +152,14 @@ services · `rules/` deterministic checks · `workers/` queue, lanes, CPU pool, 
 client, inbox writer, storage, PDF, Claude extraction, Excel · `agents/rooms.yaml` · `migrations/` one revision per phase
 · `seed/` 20 synthetic fixtures + recorded extractions + expected outcomes · `tests/offline/` ·
 `docs/` decisions, gate status, OpenAPI, release reports
+
+## GSTR-2B reconciliation (Phase 6, early)
+
+The CA attaches the GSTR-2B downloaded from the portal to `gstr2b <shop> <period>` in the CA room. It is stored
+immutably (a re-upload of the same file changes nothing); a wrong GSTIN or period is refused. Code matches each
+confirmed purchase to at most one statement line by supplier GSTIN, document type, financial year and invoice
+number, compares every tax component in `Decimal`, and reports **exact match, mismatch, purchase only,
+statement only, ambiguous** back to the room. A match supports review; it is not an ITC eligibility decision.
 
 ## Known limitations (v1.0.0-hackathon)
 
@@ -169,6 +179,7 @@ implied to work.
   automated live tests R01, R02 and R04 have not been run.
 * On Switch's standalone stack, the deployment's admin accounts are members of every room. Assure Flow's
   disclosure check uses the declared audience in `agents/rooms.yaml`, not Switch's live member list.
+* Through Mattermost, attach GSTR-2B as Excel: Switch 0.31.0's Mattermost bridge cannot relay `.json` files (D-18).
 * Scope: INR domestic B2B purchase tax invoices only. Assure Flow does **not** file GST returns, verify live GSTIN
   registration, or decide ITC eligibility. Amounts are "tax associated with an issue", never "money lost". The
   CA files separately.

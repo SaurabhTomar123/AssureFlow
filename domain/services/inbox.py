@@ -35,6 +35,7 @@ from domain.periods import assign_period, parse_period, readiness, why_held
 from domain.scope import is_assigned_ca, is_owner_of
 from domain.services import intake
 from domain.services import messages as msg
+from domain.services import reconciliation as recon
 from domain.services.base import audit, post, shops_of_room
 from domain.services.snapshots import approve_snapshot, request_snapshot
 
@@ -53,6 +54,8 @@ COMMAND_WORDS = {
     "approve",
     "snapshot",
     "readiness",
+    "gstr2b",
+    "recon",
     "assign",
     "include",
     "exclude",
@@ -337,6 +340,16 @@ def _ca_room(
         return False
     if verb == "help":
         replies.append(msg.help_ca())
+        return True
+    if verb in ("gstr2b", "recon") and len(words) >= 3:
+        shop = _ca_shop(s, room.practice_id, shops, words[1])
+        period = parse_period(words[2])
+        if verb == "recon":
+            replies.append(recon.latest_summary(s, shop, period))
+        elif not event.attachments:
+            replies.append(f"Attach the GSTR-2B JSON or Excel file to `gstr2b {shop.code} {period}`.")
+        else:
+            recon.request_import(s, ctx, event, room, shop, period)
         return True
     rr = RR_RE.search(text)
     rr_ref = rr.group(0).upper() if rr else _thread_rr_ref(s, event)

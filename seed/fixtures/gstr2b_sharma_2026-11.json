@@ -1,0 +1,125 @@
+{
+ "data": {
+  "docdata": {
+   "b2b": [
+    {
+     "ctin": "07MODER1111A1Z1",
+     "inv": [
+      {
+       "dt": "01-11-2026",
+       "inum": "MAS-2026-101",
+       "itcavl": "Y",
+       "items": [
+        {
+         "cess": "0",
+         "cgst": "185.00",
+         "igst": "0",
+         "sgst": "185.00",
+         "txval": "7400.00"
+        }
+       ],
+       "typ": "R",
+       "val": "7770.00"
+      }
+     ],
+     "trdnm": "Modern Agro Staples Pvt Ltd"
+    },
+    {
+     "ctin": "27PUNEE3333C1Z7",
+     "inv": [
+      {
+       "dt": "04-11-2026",
+       "inum": "PEL/26/0457",
+       "itcavl": "Y",
+       "items": [
+        {
+         "cess": "0",
+         "cgst": "0",
+         "igst": "1318.00",
+         "sgst": "0",
+         "txval": "7600.00"
+        }
+       ],
+       "typ": "R",
+       "val": "8918.00"
+      }
+     ],
+     "trdnm": "Pune Electricals LLP"
+    },
+    {
+     "ctin": "07SHREE5555E1ZD",
+     "inv": [
+      {
+       "dt": "10-11-2026",
+       "inum": "SDF-5520",
+       "itcavl": "Y",
+       "items": [
+        {
+         "cess": "0",
+         "cgst": "318.00",
+         "igst": "0",
+         "sgst": "318.00",
+         "txval": "5300.00"
+        }
+       ],
+       "typ": "R",
+       "val": "5936.00"
+      },
+      {
+       "dt": "10-11-2026",
+       "inum": "SDF-5520",
+       "itcavl": "Y",
+       "items": [
+        {
+         "cess": "0",
+         "cgst": "318.00",
+         "igst": "0",
+         "sgst": "318.00",
+         "txval": "5300.00"
+        }
+       ],
+       "typ": "R",
+       "val": "5936.00"
+      }
+     ],
+     "trdnm": "Shree Dairy Foods"
+    },
+    {
+     "ctin": "07KAPUR1212K1Z0",
+     "inv": [
+      {
+       "dt": "15-11-2026",
+       "inum": "KCS-77",
+       "itcavl": "Y",
+       "items": [
+        {
+         "cess": "0",
+         "cgst": "90.00",
+         "igst": "0",
+         "sgst": "90.00",
+         "txval": "1000.00"
+        }
+       ],
+       "typ": "R",
+       "val": "1180.00"
+      }
+     ],
+     "trdnm": "Kapur Cold Storage"
+    }
+   ],
+   "cdnr": [
+    {
+     "ctin": "07KAPUR1212K1Z0",
+     "nt": [
+      {
+       "ntnum": "CN-1"
+      }
+     ]
+    }
+   ]
+  },
+  "gendt": "14-12-2026",
+  "gstin": "07SHARM9999K1ZU",
+  "rtnprd": "112026"
+ }
+}
