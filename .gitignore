@@ -36,11 +36,10 @@ venv.bak/
 
 *.db
 *.sqlite3
-munimji.db
+data/
+docs/release/junit-*.xml
 
 tmp/
 .pytest_cache/
 uploads/
 
-!MunimJi — Features & Build Checklist.docx
-!MunimJi — Features & Build Checklist.pdf

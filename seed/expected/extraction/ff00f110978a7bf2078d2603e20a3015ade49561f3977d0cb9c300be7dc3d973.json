@@ -1,0 +1,177 @@
+{
+ "cess_total": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "cgst_total": {
+  "confidence": 0.97,
+  "excerpt": "318.00",
+  "page": 1,
+  "value": "318.00"
+ },
+ "currency": {
+  "confidence": 0.97,
+  "excerpt": "INR",
+  "page": 1,
+  "value": "INR"
+ },
+ "document_type": {
+  "confidence": 0.97,
+  "excerpt": "TAX INVOICE (COPY)",
+  "page": 1,
+  "value": "tax_invoice"
+ },
+ "igst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 1,
+  "value": "0"
+ },
+ "invoice_date": {
+  "confidence": 0.97,
+  "excerpt": "2026-11-10",
+  "page": 1,
+  "value": "2026-11-10"
+ },
+ "invoice_number": {
+  "confidence": 0.97,
+  "excerpt": "SDF/5520",
+  "page": 1,
+  "value": "SDF/5520"
+ },
+ "invoice_total": {
+  "confidence": 0.97,
+  "excerpt": "5936.00",
+  "page": 1,
+  "value": "5936.00"
+ },
+ "lines": [
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "318.00",
+    "page": 1,
+    "value": "318.00"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "6",
+    "page": 1,
+    "value": "6"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Butter 500g",
+    "page": 1,
+    "value": "Butter 500g"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "0405",
+    "page": 1,
+    "value": "0405"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 1,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "20",
+    "page": 1,
+    "value": "20"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "318.00",
+    "page": 1,
+    "value": "318.00"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "6",
+    "page": 1,
+    "value": "6"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "5300.00",
+    "page": 1,
+    "value": "5300.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "265.00",
+    "page": 1,
+    "value": "265.00"
+   }
+  }
+ ],
+ "multiple_invoices": false,
+ "place_of_supply": {
+  "confidence": 0.97,
+  "excerpt": "07",
+  "page": 1,
+  "value": "07"
+ },
+ "recipient_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07SHARM9999K1ZU",
+  "page": 1,
+  "value": "07SHARM9999K1ZU"
+ },
+ "round_off": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "sgst_total": {
+  "confidence": 0.97,
+  "excerpt": "318.00",
+  "page": 1,
+  "value": "318.00"
+ },
+ "supplier_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07SHREE5555E1ZD",
+  "page": 1,
+  "value": "07SHREE5555E1ZD"
+ },
+ "supplier_name": {
+  "confidence": 0.97,
+  "excerpt": "Shree Dairy Foods",
+  "page": 1,
+  "value": "Shree Dairy Foods"
+ },
+ "tax_printed_per_line": true,
+ "taxable_total": {
+  "confidence": 0.97,
+  "excerpt": "5300.00",
+  "page": 1,
+  "value": "5300.00"
+ }
+}

@@ -1,0 +1,177 @@
+{
+ "cess_total": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "cgst_total": {
+  "confidence": 0.97,
+  "excerpt": "184.50",
+  "page": 1,
+  "value": "184.50"
+ },
+ "currency": {
+  "confidence": 0.97,
+  "excerpt": "INR",
+  "page": 1,
+  "value": "INR"
+ },
+ "document_type": {
+  "confidence": 0.97,
+  "excerpt": "TAX INVOICE",
+  "page": 1,
+  "value": "tax_invoice"
+ },
+ "igst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 1,
+  "value": "0"
+ },
+ "invoice_date": {
+  "confidence": 0.97,
+  "excerpt": "2026-11-17",
+  "page": 1,
+  "value": "2026-11-17"
+ },
+ "invoice_number": {
+  "confidence": 0.97,
+  "excerpt": "DPC-790",
+  "page": 1,
+  "value": "DPC-790"
+ },
+ "invoice_total": {
+  "confidence": 0.97,
+  "excerpt": "2419.00",
+  "page": 1,
+  "value": "2419.00"
+ },
+ "lines": [
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "184.50",
+    "page": 1,
+    "value": "184.50"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "9",
+    "page": 1,
+    "value": "9"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Shrink wrap",
+    "page": 1,
+    "value": "Shrink wrap"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "3920",
+    "page": 1,
+    "value": "3920"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 1,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "5",
+    "page": 1,
+    "value": "5"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "184.50",
+    "page": 1,
+    "value": "184.50"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "9",
+    "page": 1,
+    "value": "9"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "2050.00",
+    "page": 1,
+    "value": "2050.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "410.00",
+    "page": 1,
+    "value": "410.00"
+   }
+  }
+ ],
+ "multiple_invoices": false,
+ "place_of_supply": {
+  "confidence": 0.97,
+  "excerpt": "07",
+  "page": 1,
+  "value": "07"
+ },
+ "recipient_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07OTHER1234Z1ZY",
+  "page": 1,
+  "value": "07OTHER1234Z1ZY"
+ },
+ "round_off": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "sgst_total": {
+  "confidence": 0.97,
+  "excerpt": "184.50",
+  "page": 1,
+  "value": "184.50"
+ },
+ "supplier_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07DELHI4444D1Z2",
+  "page": 1,
+  "value": "07DELHI4444D1Z2"
+ },
+ "supplier_name": {
+  "confidence": 0.97,
+  "excerpt": "Delhi Packaging Co",
+  "page": 1,
+  "value": "Delhi Packaging Co"
+ },
+ "tax_printed_per_line": true,
+ "taxable_total": {
+  "confidence": 0.97,
+  "excerpt": "2050.00",
+  "page": 1,
+  "value": "2050.00"
+ }
+}

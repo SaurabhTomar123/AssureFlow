@@ -1,0 +1,177 @@
+{
+ "cess_total": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "cgst_total": {
+  "confidence": 0.97,
+  "excerpt": "90.00",
+  "page": 1,
+  "value": "90.00"
+ },
+ "currency": {
+  "confidence": 0.97,
+  "excerpt": "INR",
+  "page": 1,
+  "value": "INR"
+ },
+ "document_type": {
+  "confidence": 0.97,
+  "excerpt": "TAX INVOICE",
+  "page": 1,
+  "value": "tax_invoice"
+ },
+ "igst_total": {
+  "confidence": 0.97,
+  "excerpt": "0",
+  "page": 1,
+  "value": "0"
+ },
+ "invoice_date": {
+  "confidence": 0.97,
+  "excerpt": "2026-11-13",
+  "page": 1,
+  "value": "2026-11-13"
+ },
+ "invoice_number": {
+  "confidence": 0.97,
+  "excerpt": "A108",
+  "page": 1,
+  "value": "A108"
+ },
+ "invoice_total": {
+  "confidence": 0.55,
+  "excerpt": "1780.00",
+  "page": 1,
+  "value": "1780.00"
+ },
+ "lines": [
+  {
+   "cgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "90.00",
+    "page": 1,
+    "value": "90.00"
+   },
+   "cgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "9",
+    "page": 1,
+    "value": "9"
+   },
+   "combined_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "description": {
+    "confidence": 0.97,
+    "excerpt": "Mustard oil 1L",
+    "page": 1,
+    "value": "Mustard oil 1L"
+   },
+   "discount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "hsn_sac": {
+    "confidence": 0.97,
+    "excerpt": "1514",
+    "page": 1,
+    "value": "1514"
+   },
+   "igst_amount": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "igst_rate": {
+    "confidence": 0.2,
+    "excerpt": null,
+    "page": null,
+    "value": null
+   },
+   "line_no": 1,
+   "qty": {
+    "confidence": 0.97,
+    "excerpt": "8",
+    "page": 1,
+    "value": "8"
+   },
+   "sgst_amount": {
+    "confidence": 0.97,
+    "excerpt": "90.00",
+    "page": 1,
+    "value": "90.00"
+   },
+   "sgst_rate": {
+    "confidence": 0.97,
+    "excerpt": "9",
+    "page": 1,
+    "value": "9"
+   },
+   "taxable_value": {
+    "confidence": 0.97,
+    "excerpt": "1000.00",
+    "page": 1,
+    "value": "1000.00"
+   },
+   "unit_price": {
+    "confidence": 0.97,
+    "excerpt": "125.00",
+    "page": 1,
+    "value": "125.00"
+   }
+  }
+ ],
+ "multiple_invoices": false,
+ "place_of_supply": {
+  "confidence": 0.97,
+  "excerpt": "07",
+  "page": 1,
+  "value": "07"
+ },
+ "recipient_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07SHARM9999K1ZU",
+  "page": 1,
+  "value": "07SHARM9999K1ZU"
+ },
+ "round_off": {
+  "confidence": 0.2,
+  "excerpt": null,
+  "page": null,
+  "value": null
+ },
+ "sgst_total": {
+  "confidence": 0.97,
+  "excerpt": "90.00",
+  "page": 1,
+  "value": "90.00"
+ },
+ "supplier_gstin": {
+  "confidence": 0.97,
+  "excerpt": "07MODER1111A1Z1",
+  "page": 1,
+  "value": "07MODER1111A1Z1"
+ },
+ "supplier_name": {
+  "confidence": 0.97,
+  "excerpt": "Modern Agro Staples Pvt Ltd",
+  "page": 1,
+  "value": "Modern Agro Staples Pvt Ltd"
+ },
+ "tax_printed_per_line": true,
+ "taxable_total": {
+  "confidence": 0.97,
+  "excerpt": "1000.00",
+  "page": 1,
+  "value": "1000.00"
+ }
+}
