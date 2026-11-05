@@ -17,4 +17,10 @@ google-genai>=1.0.0
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 email-validator>=2.0.0
+structlog>=25.1.0
+uuid6>=2025.0.1
+openpyxl>=3.1.5
+alembic>=1.14.0
+hypothesis>=6.120.0
+mcp>=1.0.0
 
