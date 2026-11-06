@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 import importlib.util
@@ -6,6 +7,9 @@ import pytest
 LEGACY_ROOT = Path(__file__).resolve().parent.parent
 if str(LEGACY_ROOT) not in sys.path:
     sys.path.insert(0, str(LEGACY_ROOT))
+# The prototypes use paths relative to their original repository root (synthetic_data/, scripts/),
+# which is now legacy/.
+os.chdir(LEGACY_ROOT)
 
 spec = importlib.util.spec_from_file_location("seed_database", str(LEGACY_ROOT / "scripts" / "seed_database.py"))
 if spec and spec.loader:

@@ -44,3 +44,9 @@ uploads/
 
 !MunimJi — Features & Build Checklist.docx
 !MunimJi — Features & Build Checklist.pdf
+
+# Assure Flow runtime data: Switch credentials, business tokens, stored files
+data/
+docs/release/junit-*.xml
+.claude/
+legacy_test.db

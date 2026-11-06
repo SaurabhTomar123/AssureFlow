@@ -1,3 +1,14 @@
+> **Archived 2026-11-06. Superseded by [docs/AUDIT_CHECKLIST.md](../../AUDIT_CHECKLIST.md).**
+> This report was written without running the offline test suite (see "BLOCKED – REQUIRES DOCKER" below), so
+> its pass/ready statements were not verified. Corrections, checked by running the code:
+> - `make test` on `main` at 4a1eca1: **84 passed, 1 failed**. The new `/switch-simulator` page returned 200 to any
+>   caller and failed the isolation matrix. Fixed: one static page at `/`, left out of the API schema.
+> - The MCP server has **16** tools, not 18. There are 10 rules in `domestic_goods_v1` (correct).
+> - The review pack supports the CA's review; Assure Flow does **not** file returns, and amounts are "tax associated
+>   with an issue", never "at risk" or "lost".
+> - `legacy/tests`: 141 passed, 2 failed on a throwaway SQLite database. They are outside the default `pytest` run.
+> - `file:///c:/harsh/...` links point to the author's machine and do not open elsewhere.
+
 # Complete Master Audit Report: MunimJi (AssureFlow)
 
 **Hackathon:** [WeMakeDevs & DevTools Academy "Flip the Switch"](https://www.wemakedevs.org/hackathons/switch)  

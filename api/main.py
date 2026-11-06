@@ -96,7 +96,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MunimJi (AssureFlow) &mdash; System Operations Cockpit</title>
+  <title>Assure Flow</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -167,14 +167,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <div style="margin-bottom: 0.75rem;">
         <span class="badge">Flip the Switch Hackathon</span>
         <span class="badge">Track 1: Best Business Workflow</span>
-        <span class="badge">Release v1.0.0</span>
+        <span class="badge">Release v1.0.0-hackathon</span>
       </div>
-      <h1>MunimJi (AssureFlow) Operations Cockpit</h1>
+      <h1>Assure Flow</h1>
       <p style="color: var(--text-muted);">Evidence-backed monthly GST purchase review run entirely inside Switch rooms.</p>
     </header>
 
     <div class="notice">
-      <strong>Architecture Note:</strong> AssureFlow&apos;s core product interface operates <strong>100% inside Switch collaboration rooms</strong> (Mattermost, Telegram, Slack). Shopkeepers and CAs interact directly via natural chat and file attachments. This web cockpit provides telemetry, health status, and developer guidance.
+      <strong>There is no web app.</strong> Assure Flow is used <strong>entirely inside Switch rooms</strong> (verified live on Mattermost; Telegram and other platforms connect the same way through Switch). Shop owners and CAs work by chat messages and file attachments. This static page only describes the project; it shows no business data. Live health is the <code>health</code> command in the operations room, or <code>make health</code>.
     </div>
 
     <div class="grid">
@@ -183,7 +183,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <p><span class="status-pill"><span class="status-dot"></span> Domain API Online</span></p>
         <p><strong>Health Endpoints:</strong> <a href="/healthz" style="color: var(--accent);">/healthz</a>, <a href="/readyz" style="color: var(--accent);">/readyz</a></p>
         <p><strong>Database:</strong> PostgreSQL 16 (Phases P0&ndash;P6)</p>
-        <p><strong>Rules Profile:</strong> <code>domestic_goods_v1</code> (10 statutory Decimal rules)</p>
+        <p><strong>Rules Profile:</strong> <code>domestic_goods_v1</code> (10 deterministic rules, exact <code>Decimal</code> arithmetic)</p>
         <p><strong>Switch Protocol:</strong> WebSocket Agent Protocol <code>0.31.0</code></p>
       </div>
 
@@ -192,7 +192,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <p>Run the 12-beat end-to-end room story offline with recorded fixtures (zero keys or servers needed):</p>
         <pre>python -m scripts.demo_offline</pre>
         <p style="margin-top: 0.75rem;">Run the automated regression test suite:</p>
-        <pre>pytest</pre>
+        <pre>make test</pre>
       </div>
     </div>
 
@@ -242,8 +242,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
 
     <div class="card">
-      <h2>Exploratory Prototypes Catalog (legacy/)</h2>
-      <p>Auxiliary prototypes covering store inventory (FEFO tracking), blue/white-collar attendance, and double-entry bookkeeping are preserved in <code>legacy/</code>. They are decoupled from the core Switch 0.31.0 GST review engine to guarantee strict statutory mathematical precision (<code>Decimal</code> and integer paise) across tax filings.</p>
+      <h2>Earlier prototypes (legacy/)</h2>
+      <p>Earlier MunimJi prototypes (inventory, attendance, double-entry bookkeeping) are kept in <code>legacy/</code> for reference. They are not part of this release, do not run through Switch, and are not used by Docker, the Makefile or the default tests.</p>
     </div>
   </div>
 </body>
@@ -251,10 +251,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 """
 
 
-@app.get("/", response_class=HTMLResponse)
-@app.get("/dashboard", response_class=HTMLResponse)
-@app.get("/switch-simulator", response_class=HTMLResponse)
-def cockpit_dashboard() -> HTMLResponse:
+# A static, data-free project page. Kept out of the OpenAPI schema: it is not a business tool, so the
+# isolation matrix (every scoped route refuses other shops and practices) does not apply to it.
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def landing_page() -> HTMLResponse:
     return HTMLResponse(content=DASHBOARD_HTML, status_code=200)
 
 
