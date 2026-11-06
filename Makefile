@@ -14,7 +14,7 @@ migrate:
 seed reset:    ## idempotent; refuses outside demo/test
 	$(PY) -m seed.loader
 
-fixtures:      ## regenerate the 20 synthetic documents (deterministic)
+fixtures:      ## regenerate the 21 synthetic documents (deterministic)
 	$(PY) -m seed.make_fixtures
 
 test:          ## offline CI: fixtures, fake model, mocked Switch, real PostgreSQL
