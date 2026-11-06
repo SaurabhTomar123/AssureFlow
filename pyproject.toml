@@ -57,6 +57,7 @@ warn_unused_ignores = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests/offline"]
+pythonpath = [".", "legacy", "legacy/scripts"]
 addopts = "-q"
 
 [tool.setuptools.packages.find]

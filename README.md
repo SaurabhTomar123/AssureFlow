@@ -105,18 +105,24 @@ Run the story yourself without keys or servers: `make demo`.
 
 ## Quickstart (offline: no Switch, no API key)
 
+### Instant Evaluation (Zero Docker, Zero Servers):
+Run the complete 12-beat interaction story printed as live room transcripts using recorded fixtures:
+```bash
+python -m scripts.demo_offline
+```
+
+### Full Local Stack (PostgreSQL + API + Tests):
 Prerequisites: Docker, Python 3.12+.
 
 ```bash
-git clone https://github.com/SaurabhTomar123/AssureFlow.git && cd AssureFlow && git checkout rebuild/assure-flow
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.lock && pip install pytest hypothesis ruff mypy mcp
 cp .env.example .env
 docker compose up -d db                              # PostgreSQL 16 on 127.0.0.1:5433
 python -m alembic upgrade head
-make demo        # the correction-to-export story, printed as room transcripts
-make test        # 85 offline tests: rules, workflow, authority, isolation, fencing, snapshots, GSTR-2B, MCP
-make acceptance  # machine-generated report in docs/release/
+python -m scripts.demo_offline                       # or: make demo
+pytest                                               # or: make test (85 offline tests)
+uvicorn api.main:app --port 8000                     # Cockpit dashboard at http://localhost:8000/dashboard
 ```
 
 ## Run with Switch (live)

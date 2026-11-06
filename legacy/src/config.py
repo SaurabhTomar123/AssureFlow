@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     SWITCH_GATEWAY_URL: str = "http://localhost:9000"
     SWITCH_SHARED_SECRET: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
-    JWT_SECRET_KEY: str = "munimji_enterprise_jwt_super_secret_key_2026_production"
+    JWT_SECRET_KEY: str = "munimji_development_default_jwt_secret_override_in_env"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     GSP_ENVIRONMENT: str = "sandbox"
