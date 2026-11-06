@@ -8,7 +8,7 @@ rooms:
   - name: af-shop-sharma
     purpose: shop_intake
     shops: [sharma]
-    members: [owner.sharma]
+    members: [owner.sharma, staff.anil]   # staff.anil holds invoice_view (U2, D-25)
     provision: true
     agents:
       assure-flow: {role: intake, tools: [get_request_context, get_receipt_status, get_case, get_status,
@@ -26,6 +26,15 @@ rooms:
                                           request_clarification, get_check_results, explain_issue,
                                           draft_supplier_request]}
     failure_routing: "Extraction failure -> owner message naming the case; operations alert without invoice content."
+
+  - name: af-delivery-sharma
+    purpose: delivery
+    shops: [sharma]
+    members: [staff.suresh]         # receivers only: item names and quantities, never prices (U2 section 3)
+    provision: true
+    agents:
+      assure-flow: {role: operations, tools: [get_request_context]}
+    failure_routing: "Unknown order or line -> one clarification; never a price or invoice detail."
 
   - name: af-ca-review
     purpose: ca_review

@@ -148,6 +148,9 @@ def _transition(
         {"from": old, "to": new, **payload},
         context_id=ctx.context_id,
     )
+    from domain.services import purchases
+
+    purchases.on_case_change(s, case, ctx.request_id, ctx, None)
 
 
 def perform(

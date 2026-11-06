@@ -49,6 +49,8 @@ the room-isolation checks would then (correctly) block messages.
 | C | Owner of Gupta store | `owner.gupta` | Isolation between shops (T-14) | Recommended |
 | D | Rao, operator | `ops.rao` | Operations room (T-19) | Optional |
 | E | Iyer, developer | `dev.iyer` | Synthetic testing room (T-20) | Optional |
+| F | Suresh, storekeeper | `staff.suresh` | Delivery room, purchase tests (P-xx) | For purchase tests |
+| G | Anil, purchasing staff | `staff.anil` | Assigned task in the shop room (P-04) | For purchase tests |
 
 Without C, D or E, skip the tests marked for them and use `make health` in the terminal instead of the
 operations room. A second account can be a second phone number, or a teammate's account.
@@ -131,6 +133,9 @@ Create these groups in Telegram. **The titles must match exactly**, because Assu
 | `af-practice-home` | B only | B |
 | `af-operations` | D only | D (optional) |
 | `af-synthetic-testing` | E only | E (optional) |
+| `af-delivery-sharma` | F only | F (purchase tests only) |
+
+For the purchase tests, also add account G to `af-shop-sharma`. Anil may see invoices (capability `invoice_view`); Suresh must **not** be in the shop room.
 
 For each group:
 
@@ -361,6 +366,48 @@ Telegram keeps undelivered updates for up to 24 hours.
 `python -m scripts.admin revoke-user owner.gupta`, then C sends `status`.
 Expected: no reply. Rebind C with `bind-user` to undo.
 
+### Purchase assurance (optional; needs accounts F and G)
+
+Turn it on first: set `PURCHASE_ASSURANCE_ENABLED=true` in `.env`, then restart the worker and adapter. Bind F to
+`staff.suresh` and G to `staff.anil` (section 7). The seeded order is **PO-101**: 10 cartons of "Sunflower oil 1L x 12"
+from ABC Traders at ₹500.00 per carton.
+
+**P-01 Order confirmed; storekeeper asked without prices** · A in `af-shop-sharma`
+Send `ok PO-101 r1`. Expected: "PO-101 r1 confirmed". In `af-delivery-sharma`: "please count what arrived" with
+**no ₹ amount or price**.
+
+**P-02 Invoice linked to the order** · A
+Send `F22_abc_invoice_10_cartons.pdf` as a file, then `ok INV-000X r1`.
+Expected: "INV-000X looks like PO-101 …". Reply `link INV-000X PO-101`. Expected: "linked to PO-101".
+
+**P-03 Storekeeper counts 8; code holds the purchase** · F in `af-delivery-sharma`, then B
+F sends `PO-101 L1=8`, then `ok DR-0001 v1`. B includes the invoice's review request in `af-ca-review`.
+Expected in the shop room: "payment readiness is on hold … billed 10 carton but 8 confirmed received (difference 2)".
+
+**P-04 Assigned work; finishing it does not clear the hold** · A, G
+A sends `task INV-000X anil tomorrow get a corrected invoice for 8 cartons`. G sends `TK-0001 ack`, then
+`TK-0001 done supplier is sending a revised bill`. A sends `TK-0001 verify`.
+Expected: verify is **refused**: "cannot be verified yet … A finished task alone never clears a mismatch."
+
+**P-05 Corrected invoice; partial delivery accepted** · A, B
+A sends `F23_abc_corrected_8_cartons.pdf` with the message `corrected bill for INV-000X`, then `ok INV-000X r2`.
+B includes the new review request. A sends `accept-partial PO-101`, then `TK-0001 verify`.
+Expected: "Still outstanding on PO-101: 2 carton …"; then `PR-0001` appears in `af-ca-review` with a hash.
+
+**P-06 Reviewer, then owner, sign the same record** · A, B
+A first tries `authorize PR-0001 <hash> due 2026-11-20`. Expected: refused, "has not been reviewed yet".
+B sends `review PR-0001 <hash>`. A sends `authorize PR-0001 <hash> due 2026-11-20`.
+Expected: "PR-0001 is ready for payment: ₹4,200.00 … Nothing has been paid", then an Excel + JSON purchase pack in
+the shop room and the CA room.
+
+**P-07 Storekeeper privacy and authority** · F, G
+Read every message in `af-delivery-sharma`: no ₹, no unit price. F sends `link INV-000X PO-101` in any room it can
+reach, and G sends `accept-partial PO-101`. Expected: both refused ("not set up to …").
+
+**P-08 A change after review withdraws the record** (run on a fresh database with delivery 10)
+After B's `review`, F sends `DR-0001 L1=9` and `ok DR-0001 v2`.
+Expected: "Withdrawn: PR-0001 … because the confirmed delivery changed"; A's `authorize` is refused.
+
 ---
 
 ## Results sheet
@@ -394,6 +441,14 @@ Copy this table into your notes or the pull request, and fill it in as you go.
 | T-23 Adapter restart | | |
 | T-24 Switch down | | |
 | T-25 Revoke | | |
+| P-01 Order confirmed, no prices to storekeeper | | |
+| P-02 Invoice linked | | |
+| P-03 Count 8 → hold | | |
+| P-04 Task done does not clear hold | | |
+| P-05 Corrected invoice, partial accepted | | |
+| P-06 Review then authorize, pack delivered | | |
+| P-07 Storekeeper privacy and authority | | |
+| P-08 Change after review withdraws | | |
 
 Tester: ______  Date: ______  Commit: `git rev-parse --short HEAD` ______  Switch version: 0.31.0
 

@@ -24,6 +24,7 @@ from domain.models import (
     InboxEvent,
     Invoice,
     Outbox,
+    PurchaseOrder,
     RequestContext,
     ReviewRequest,
     RoomBinding,
@@ -32,10 +33,11 @@ from domain.models import (
     utcnow,
 )
 from domain.periods import assign_period, parse_period, readiness, why_held
-from domain.scope import is_assigned_ca, is_owner_of
-from domain.services import intake
+from domain.scope import has_capability, is_assigned_ca, is_owner_of
+from domain.services import business_tasks, intake, purchases
 from domain.services import messages as msg
 from domain.services import operations as ops
+from domain.services import readiness as purchase_readiness
 from domain.services import reconciliation as recon
 from domain.services.base import audit, post, shops_of_room
 from domain.services.snapshots import approve_snapshot, request_snapshot
@@ -43,6 +45,11 @@ from domain.services.snapshots import approve_snapshot, request_snapshot
 CASE_RE = re.compile(r"\bINV-\d{4,}\b", re.I)
 RR_RE = re.compile(r"\bRR-\d{4,}\b", re.I)
 SN_RE = re.compile(r"\bSN-\d{4,}\b", re.I)
+PO_RE = re.compile(r"\bPO-\d+\b", re.I)
+TK_RE = re.compile(r"\bTK-\d{4,}\b", re.I)
+PR_RE = re.compile(r"\bPR-\d{4,}\b", re.I)
+DR_RE = re.compile(r"\bDR-\d{4,}\b", re.I)
+VER_RE = re.compile(r"\bv(\d+)\b", re.I)
 REV_RE = re.compile(r"\br(\d+)\b", re.I)
 COMMAND_WORDS = {
     "ok",
@@ -67,6 +74,14 @@ COMMAND_WORDS = {
     "assign",
     "include",
     "exclude",
+    "link",
+    "accept-partial",
+    "task",
+    "tasks",
+    "authorize",
+    "review",
+    "orders",
+    "purchase",
 }
 
 CA_VERBS = {
@@ -88,7 +103,8 @@ class Outcome:
 
 def looks_like_command(text: str) -> bool:
     words = text.strip().lower().split()
-    return bool(words) and (words[0] in COMMAND_WORDS or bool(CASE_RE.search(text) or RR_RE.search(text)))
+    refs = (CASE_RE, RR_RE, PO_RE, TK_RE, PR_RE, DR_RE)
+    return bool(words) and (words[0] in COMMAND_WORDS or any(r.search(text) for r in refs))
 
 
 def process(s: Session, event: InboxEvent) -> Outcome:
@@ -146,6 +162,8 @@ def process(s: Session, event: InboxEvent) -> Outcome:
                 handled = _ops_room(s, ctx, event, replies)
             elif room.purpose == "synthetic_testing":
                 handled = _testing_room(s, ctx, event, room, replies)
+            elif room.purpose == "delivery":
+                handled = _delivery_room(s, ctx, event, room, shops, replies)
     except DomainError as err:
         if isinstance(err, Forbidden):
             _deny(s, event, room, err.code, user_id=user.id, context_id=ctx.context_id)
@@ -250,8 +268,10 @@ def _shop_room(
         return False
     words = text.split()
     verb = words[0].lower().rstrip(":")
+    if _shop_purchase(s, ctx, room, shop, shops, text, words, verb, case_ref, replies):
+        return True
     if verb == "help":
-        replies.append(msg.help_shop())
+        replies.append(msg.help_shop() + (msg.help_purchases_shop() if purchases.enabled(shop) else ""))
         return True
     if verb in ("status", "pending"):
         if not (
@@ -259,6 +279,8 @@ def _shop_room(
         ):
             raise Forbidden("Not authorized for this shop.")
         replies.append(_shop_status(s, shop, pending_only=verb == "pending"))
+        if verb == "pending" and purchases.enabled(shop):
+            replies.append(business_tasks.list_text(s, ctx, shop))
         return True
     if verb in ("why-held", "why"):
         if not case_ref:
@@ -293,6 +315,125 @@ def _shop_room(
                 expected = int(token[1:])
         rev = intake.correct(s, ctx, case, expected, changes)
         replies.append(f"{case.case_ref} corrected (r{rev.revision_no}); the new summary follows.")
+        return True
+    return False
+
+
+def _shop_purchase(
+    s: Session,
+    ctx: RequestContext,
+    room: RoomBinding,
+    shop: Shop,
+    shops: list[uuid.UUID],
+    text: str,
+    words: list[str],
+    verb: str,
+    case_ref: str | None,
+    replies: list[str],
+) -> bool:
+    """U2 purchase commands in the shop room. Returns False when the message is not one of them."""
+    po = PO_RE.search(text)
+    tk = TK_RE.search(text)
+    pr = PR_RE.search(text)
+    named_case = CASE_RE.search(text)
+    if verb in ("ok", "confirm", "yes") and po and not named_case:
+        order = purchases.find_order(s, room.practice_id, shops, po.group(0))
+        rev = REV_RE.search(text.replace(po.group(0), ""))
+        replies.append(purchases.confirm_order(s, ctx, order, int(rev.group(1)) if rev else None))
+        return True
+    if verb == "link":
+        if not (named_case and po):
+            raise ValidationFailed("Use `link INV-0001 PO-101`.")
+        case = _find_case(s, room.practice_id, shops, named_case.group(0))
+        order = purchases.find_order(s, room.practice_id, shops, po.group(0))
+        replies.append(purchases.confirm_link(s, ctx, case, order, text[po.end() :]))
+        return True
+    if verb in ("accept-partial", "accept_partial"):
+        if not po:
+            raise ValidationFailed("Use `accept-partial PO-101`.")
+        replies.append(purchases.accept_partial(s, ctx, purchases.find_order(s, room.practice_id, shops, po.group(0))))
+        return True
+    if verb == "task" and named_case:
+        case = _find_case(s, room.practice_id, shops, named_case.group(0))
+        replies.append(business_tasks.assign(s, ctx, case, words))
+        return True
+    if tk and verb == tk.group(0).lower():
+        action = words[1].lower() if len(words) > 1 else ""
+        note = " ".join(words[2:]) or None
+        replies.append(business_tasks.act(s, ctx, shops, tk.group(0), action, note))
+        return True
+    if verb == "tasks":
+        replies.append(business_tasks.list_text(s, ctx, shop))
+        return True
+    if verb == "authorize":
+        if not pr or len(words) < 3:
+            raise ValidationFailed("Use `authorize PR-0001 <first 12 of hash> due YYYY-MM-DD` (or `due unknown`).")
+        replies.append(purchase_readiness.authorize(s, ctx, shops, pr.group(0), words[2], words))
+        return True
+    if verb == "orders":
+        purchases.require_enabled(shop)
+        if not (is_owner_of(s, ctx.verified_user_id, shop.id) or has_capability(s, ctx.verified_user_id, shop.id, "invoice_view")):
+            raise Forbidden("Not authorized for this shop's orders.")
+        replies.append(purchases.orders_text(s, shop, with_prices=True))
+        return True
+    if verb == "purchase":
+        ref = po.group(0) if po else (named_case.group(0) if named_case else case_ref)
+        if not ref:
+            raise ValidationFailed("Which one? `purchase PO-101` or `purchase INV-0001`.")
+        if not (is_owner_of(s, ctx.verified_user_id, shop.id) or has_capability(s, ctx.verified_user_id, shop.id, "invoice_view")):
+            raise Forbidden("Not authorized for this shop's purchases.")
+        replies.append(purchases.status_text(s, shop, ref))
+        return True
+    return False
+
+
+def _delivery_room(
+    s: Session,
+    ctx: RequestContext,
+    event: InboxEvent,
+    room: RoomBinding,
+    shops: list[uuid.UUID],
+    replies: list[str],
+) -> bool:
+    """Receivers report and confirm counts. Nothing posted here carries a price (U2 section 9)."""
+    text = event.body.strip()
+    if event.attachments and not text:
+        replies.append("Photos of delivery notes are not stored in this release. Reply with the counts, e.g. `PO-101 L1=8`.")
+        return True
+    if not text:
+        return False
+    shop = s.get(Shop, shops[0])
+    assert shop is not None
+    words = text.split()
+    verb = words[0].lower()
+    dr = DR_RE.search(text)
+    po = PO_RE.search(text)
+    if verb == "help":
+        replies.append(
+            "Delivery room: `orders` lists what is expected; report counts with `PO-101 L1=8`; "
+            "confirm with `ok DR-0001 v1`; correct a report with `DR-0001 L1=9`."
+        )
+        return True
+    if verb == "orders":
+        purchases.require_enabled(shop)
+        purchases.require_cap(s, ctx, shop.id, "delivery_confirm", "see deliveries")
+        replies.append(purchases.orders_text(s, shop, with_prices=False))
+        return True
+    if verb in ("ok", "confirm", "yes") and dr:
+        version = VER_RE.search(text.replace(dr.group(0), ""))
+        replies.append(
+            purchases.confirm_delivery(s, ctx, shops, dr.group(0), int(version.group(1)) if version else None)
+        )
+        return True
+    if dr and "=" in text:
+        report = purchases.report_by_ref(s, ctx.practice_id, shops, dr.group(0))
+        order = s.get(PurchaseOrder, report.order_id)
+        assert order is not None
+        replies.append(purchases.submit_delivery(s, ctx, event, order, report.report_ref, text[dr.end() :]))
+        return True
+    if po and "=" in text:
+        order = purchases.find_order(s, room.practice_id, shops, po.group(0))
+        replies.append(purchases.submit_delivery(s, ctx, event, order, None, text[po.end() :]))
         return True
     return False
 
@@ -353,7 +494,12 @@ def _ca_room(
             raise Forbidden("Only CAs assigned to every shop in this room can act here.")
         return False
     if verb == "help":
-        replies.append(msg.help_ca())
+        replies.append(msg.help_ca() + msg.help_purchases_ca())
+        return True
+    if verb == "review" and PR_RE.search(text):
+        if len(words) < 3:
+            raise ValidationFailed("Use `review PR-0001 <first 12 of hash>`.")
+        replies.append(purchase_readiness.review(s, ctx, shops, PR_RE.search(text).group(0), words[2]))  # type: ignore[union-attr]
         return True
     if verb in ("gstr2b", "recon") and len(words) >= 3:
         shop = _ca_shop(s, room.practice_id, shops, words[1])

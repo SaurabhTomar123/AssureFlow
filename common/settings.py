@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     QUIET_HOURS: str = "20:00-09:00"
     DIGEST_ESCALATE_AFTER: int = 2
     LIVE_MEMBER_CHECK: bool = True
+    PURCHASE_ASSURANCE_ENABLED: bool = False  # U2; shops also opt in (shops.purchase_assurance)
     SWITCH_TRUSTED_USERNAMES: Annotated[list[str], NoDecode] = Field(default_factory=list)
     API_BASE_URL: str = "http://127.0.0.1:8000"
     ACCEPTANCE_TIMEOUT_SECONDS: int = 900

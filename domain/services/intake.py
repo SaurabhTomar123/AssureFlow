@@ -434,6 +434,9 @@ def confirm(
     rev.confirmed_by = ctx.verified_user_id
     rev.confirmed_at = utcnow()
     executor.run(Event("owner_confirmed"))
+    from domain.services import purchases
+
+    purchases.propose_link(s, case, ctx.request_id)
     return rev
 
 

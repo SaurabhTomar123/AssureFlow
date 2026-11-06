@@ -13,13 +13,23 @@ from sqlalchemy.orm import Session
 
 from common.settings import get_settings
 from domain.models import ChatIdentity, RoomBinding, RoomMember, User
-from domain.scope import is_assigned_ca, is_owner_of
+from domain.scope import has_capability, is_assigned_ca, is_owner_of
 from domain.services.base import shops_of_room
 
 
 def _authorized(s: Session, room: RoomBinding, user: User, shops: list[uuid.UUID]) -> bool:
     if room.purpose == "shop_intake":
-        return all(is_owner_of(s, user.id, shop) or is_assigned_ca(s, user.id, shop) for shop in shops)
+        return all(
+            is_owner_of(s, user.id, shop)
+            or is_assigned_ca(s, user.id, shop)
+            or has_capability(s, user.id, shop, "invoice_view")
+            for shop in shops
+        )
+    if room.purpose == "delivery":
+        # Receivers see item names and quantities only; never invoice prices or tax details (U2 section 3).
+        return all(
+            is_owner_of(s, user.id, shop) or has_capability(s, user.id, shop, "delivery_confirm") for shop in shops
+        )
     if room.purpose in ("ca_review", "practice_home"):
         return user.role in ("ca", "practice_staff") and all(
             is_assigned_ca(s, user.id, shop) for shop in shops

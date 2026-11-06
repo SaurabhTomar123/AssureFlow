@@ -6,14 +6,21 @@ shops:
     name: Sharma Kirana Store
     state_code: "07"
     pan: SHARM9999K
+    purchase_assurance: true      # U2 opt-in
   - code: gupta
     name: Gupta Hardware
     state_code: "27"
     pan: GUPTA8888L
 
 users:
-  - {handle: owner.sharma, name: Ramesh Sharma, role: owner, shops: [sharma]}
+  - {handle: owner.sharma, name: Ramesh Sharma, role: owner, shops: [sharma],
+     capabilities: {sharma: [order_confirm, task_assign, readiness_authorize]}}
   - {handle: owner.gupta, name: Sunita Gupta, role: owner, shops: [gupta]}
-  - {handle: ca.mehta, name: CA Priya Mehta, role: ca, assigned: [sharma, gupta]}
+  - {handle: ca.mehta, name: CA Priya Mehta, role: ca, assigned: [sharma, gupta],
+     capabilities: {sharma: [purchase_review]}}
+  - {handle: staff.suresh, name: Suresh Kumar (storekeeper), role: staff,
+     capabilities: {sharma: [delivery_confirm]}}
+  - {handle: staff.anil, name: Anil Verma (purchasing), role: staff,
+     capabilities: {sharma: [task_work, invoice_view]}}
   - {handle: ops.rao, name: Operator Rao, role: operator}
   - {handle: dev.iyer, name: Developer Iyer, role: developer}

@@ -450,6 +450,8 @@ def run_acceptance(job: LeasedJob) -> None:
         )
 
 
+from workers.handlers import purchase_match as _purchase  # noqa: E402  (U2 handlers)
+
 HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "process_inbox_event": process_inbox_event,
     "fetch_and_store": fetch_and_store,
@@ -461,6 +463,8 @@ HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "reconcile": reconcile_job,
     "daily_digest": daily_digest,
     "run_acceptance": run_acceptance,
+    "run_purchase_match": _purchase.run_purchase_match,
+    "build_purchase_export": _purchase.build_purchase_export,
 }
 
 

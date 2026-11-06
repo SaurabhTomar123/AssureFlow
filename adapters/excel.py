@@ -162,6 +162,75 @@ def build_workbook(manifest_json: str) -> bytes:
     return out.getvalue()
 
 
+
+def build_purchase_workbook(pack_json: str) -> bytes:
+    """U2 purchase pack: Summary, Order, Delivery, Purchase checks and Assigned work sheets."""
+    from openpyxl import Workbook
+
+    p = json.loads(pack_json)
+    wb = Workbook()
+    wb.remove(wb.active)
+    wb.properties.creator = "Assure Flow"
+    wb.properties.created = FIXED_TIME
+    wb.properties.modified = FIXED_TIME
+    r = p["readiness"]
+    _sheet(
+        wb,
+        "Summary",
+        ["Item", "Value"],
+        [
+            ["Record", r["ref"]],
+            ["Status", r["status"]],
+            ["Amount", f"{r['amount']} {r['currency']}"],
+            ["Due date", r["due_date"] or "unknown"],
+            ["Due date source", r["due_source"]],
+            ["Order", p["order"]["ref"]],
+            ["Invoice case", p["invoice"]["case_ref"]],
+            ["Reviewed by", r["reviewed_by"]],
+            ["Authorized by", r["authorized_by"]],
+            ["Content hash", r["content_hash"]],
+            ["Note", p["wording"]],
+        ],
+    )
+    _sheet(
+        wb,
+        "Order",
+        ["Line", "Description", "Ordered", "Unit", "Unit price (excl. tax)"],
+        [[x["line_id"], x["description"], x["ordered_qty"], x["unit"], x["unit_price"]] for x in p["order"]["lines"]],
+    )
+    _sheet(
+        wb,
+        "Delivery",
+        ["Report", "Version", "Line", "Received", "Unit", "Confirmed by", "Confirmed at"],
+        [
+            [d["ref"], d["version"], x["line_id"], x["received_qty"], x["unit"], d["confirmed_by"], d["confirmed_at"]]
+            for d in p["deliveries"]
+            for x in d["lines"]
+        ],
+    )
+    _sheet(
+        wb,
+        "Purchase checks",
+        ["Line", "Description", "Ordered", "Received", "Billed", "Outstanding", "Unit"],
+        [
+            [x["line_id"], x["description"], x["ordered"], x["received"], x["billed"], x["outstanding"], x["unit"]]
+            for x in p["match"]["lines"]
+        ]
+        + [["Finding", f["rule"], f["severity"], f["message"], "", "", ""] for f in p["match"]["findings"]],
+    )
+    _sheet(
+        wb,
+        "Assigned work",
+        ["Task", "Assignee", "Due", "Status", "Reason", "History"],
+        [
+            [t["ref"], t["assignee"], t["due"], t["status"], t["reason"], " | ".join(t["history"])]
+            for t in p["tasks"]
+        ],
+    )
+    out = io.BytesIO()
+    wb.save(out)
+    return out.getvalue()
+
 def read_cells(xlsx: bytes) -> dict[str, list[list[Any]]]:
     """Cell values per sheet; used to prove re-exports are identical in content."""
     from openpyxl import load_workbook

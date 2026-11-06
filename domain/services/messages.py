@@ -143,3 +143,15 @@ def help_ca() -> str:
         "`approve SN-0001 <hash-12> [ack <held> <unassigned>]`, `assign INV-0001 2026-11`, `pending`.\n"
         "GSTR-2B: attach the portal JSON/Excel to `gstr2b <shop> 2026-11`; `recon <shop> 2026-11` shows the result."
     )
+
+
+def help_purchases_shop() -> str:
+    return (
+        "\nPurchases: `orders`, `ok PO-101` confirms an order, `link INV-0001 PO-101`, "
+        "`accept-partial PO-101`, `task INV-0001 <who> <due> <what>`, `TK-0001 ack|done|verify|cancel`, "
+        "`tasks`, `purchase PO-101`, `authorize PR-0001 <hash-12> due YYYY-MM-DD`."
+    )
+
+
+def help_purchases_ca() -> str:
+    return "\nPurchase review: `review PR-0001 <hash-12>` signs off the exact record."

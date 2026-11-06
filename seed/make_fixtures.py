@@ -40,6 +40,7 @@ SUPPLIERS = {
     "dairy": ("Shree Dairy Foods", make_gstin("07", "SHREE5555E")),
     "mumbai": ("Mumbai Hardware Mart", make_gstin("27", "MUMBA6666F")),
     "noida": ("Noida Stationers", make_gstin("09", "NOIDA7777G")),
+    "abc": ("ABC Traders", make_gstin("07", "ABCTR1234F")),  # U2 purchase-assurance supplier (PO-101)
 }
 
 
@@ -748,8 +749,61 @@ def build_multi() -> str:
     return sha
 
 
+PURCHASE_FIXTURES = [
+    Fixture(
+        "F22_abc_invoice_10_cartons",
+        "sharma",
+        "abc",
+        "ABC/2026/0101",
+        "2026-11-05",
+        "07",
+        [L("Sunflower oil 1L x 12", "1512", "10", "500.00", cs="2.5")],
+        note="U2: bills 10 cartons; PO-101 ordered 10; storekeeper confirms 8",
+    ),
+    Fixture(
+        "F23_abc_corrected_8_cartons",
+        "sharma",
+        "abc",
+        "ABC/2026/0101",
+        "2026-11-07",
+        "07",
+        [L("Sunflower oil 1L x 12", "1512", "8", "500.00", cs="2.5")],
+        title="TAX INVOICE (REVISED)",
+        note="U2: supplier's corrected invoice for the 8 cartons received",
+    ),
+]
+
+
+def build_purchase() -> list[str]:
+    """U2 fixtures only; appended to the index without regenerating the v1.4 files."""
+    import hashlib
+
+    index_path = ROOT / "expected" / "fixtures.json"
+    index = json.loads(index_path.read_text("utf-8"))
+    names = []
+    for fx in PURCHASE_FIXTURES:
+        data = _pdf(fx)
+        path = FIXTURES / f"{fx.name}.pdf"
+        path.write_bytes(data)
+        sha = hashlib.sha256(data).hexdigest()
+        (EXTRACTION / f"{sha}.json").write_text(json.dumps(extraction(fx), indent=1, sort_keys=True), "utf-8")
+        index[fx.name] = {
+            "file": path.name,
+            "sha256": sha,
+            "shop": fx.shop,
+            "kind": "pdf",
+            "note": fx.note,
+            "expected_non_pass": fx.expected,
+            "totals": {k: str(v) for k, v in fx.totals().items()},
+        }
+        names.append(fx.name)
+    index_path.write_text(json.dumps(index, indent=1, sort_keys=True), "utf-8")
+    return names
+
+
 if __name__ == "__main__":
     result = build()
     build_gstr2b()
     build_multi()
+    build_purchase()
     print(f"wrote {len(result)} fixtures")

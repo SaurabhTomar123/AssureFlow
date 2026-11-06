@@ -39,6 +39,7 @@ def seed(s: Session, rooms_file: Path | None = None) -> dict[str, Any]:
             name=sh["name"],
             state_code=sh["state_code"],
             gstin=make_gstin(sh["state_code"], sh["pan"]),
+            purchase_assurance=bool(sh.get("purchase_assurance", False)),
         )
         s.add(shop)
         shops[sh["code"]] = shop
@@ -53,6 +54,13 @@ def seed(s: Session, rooms_file: Path | None = None) -> dict[str, Any]:
             s.add(m.ShopMembership(user_id=user.id, shop_id=shops[code].id, role="owner"))
         for code in u.get("assigned", []):
             s.add(m.CaAssignment(ca_user_id=user.id, shop_id=shops[code].id))
+        for code, caps in (u.get("capabilities") or {}).items():
+            for cap in caps:
+                s.add(
+                    m.ShopCapability(
+                        practice_id=practice.id, shop_id=shops[code].id, user_id=user.id, capability=cap
+                    )
+                )
     for room in rooms["rooms"]:
         if not room.get("provision"):
             continue
@@ -73,6 +81,7 @@ def seed(s: Session, rooms_file: Path | None = None) -> dict[str, Any]:
             s.add(m.RoomBindingShop(room_binding_id=binding.id, shop_id=shops[code].id))
         for handle in room["members"]:
             s.add(m.RoomMember(room_binding_id=binding.id, user_id=users[handle].id))
+    seed_orders(s, practice, shops)
     for rule in RULES:
         s.add(
             m.RuleDefinition(
@@ -90,6 +99,38 @@ def seed(s: Session, rooms_file: Path | None = None) -> dict[str, Any]:
     return {"practice": practice, "shops": shops, "users": users}
 
 
+def seed_orders(s: Session, practice: m.Practice, shops: dict[str, m.Shop]) -> None:
+    """Structured seeded purchase orders, created as drafts for the owner to confirm in chat (D-29)."""
+    path = ROOT / "seed" / "purchase_orders.yaml"
+    if not path.exists():
+        return
+    for order in yaml.safe_load(path.read_text("utf-8"))["orders"]:
+        shop = shops[order["shop"]]
+        po = m.PurchaseOrder(
+            practice_id=practice.id,
+            shop_id=shop.id,
+            order_ref=order["order_ref"],
+            supplier_name=order["supplier_name"],
+            supplier_gstin=make_gstin(order["supplier_state"], order["supplier_pan"]),
+            status="draft",
+        )
+        s.add(po)
+        s.flush()
+        rev = m.PurchaseOrderRevision(
+            practice_id=practice.id,
+            shop_id=shop.id,
+            order_id=po.id,
+            revision_no=1,
+            status="draft",
+            expected_delivery_date=order.get("expected_delivery_date"),
+            currency="INR",
+            lines=[{k: str(v) for k, v in line.items()} for line in order["lines"]],
+        )
+        s.add(rev)
+        s.flush()
+        po.current_revision_id = rev.id
+
+
 def reset_and_seed(url: str | None = None) -> None:
     settings = get_settings()
     if settings.ENVIRONMENT not in ("demo", "test"):
@@ -101,4 +142,4 @@ def reset_and_seed(url: str | None = None) -> None:
 
 if __name__ == "__main__":
     reset_and_seed()
-    print("seeded: 1 practice, 2 shops, 5 users, 3 room bindings")
+    print("seeded: 1 practice, 2 shops, 7 users, 7 room bindings, 1 draft purchase order")
