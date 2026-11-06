@@ -2,7 +2,9 @@
 
 register-agent        Register the assure-flow integration agent in Switch (needs SWITCH_REGISTRATION_KEY)
 create-rooms HANDLE=CHATUSER ...   Agent creates the provisioned rooms in Switch, then binds them
-bind-rooms            Match Switch rooms the agent belongs to against agents/rooms.yaml by name
+bind-rooms [--prefix P]   Match Switch rooms the agent belongs to against agents/rooms.yaml by name.
+                      Rooms adopted from Telegram are named "<connection>: <group title>"; pass
+                      --prefix "Telegram: " to bind those (otherwise a unique ": <name>" suffix matches)
 unmapped              List senders whose events were rejected (to bind their identities)
 bind-user SENDER HANDLE [CHATUSER]   Map a Switch participant id (and chat username) to a seeded user
 revoke-user HANDLE    Revoke a user's chat identity and grants (removes their authority)
@@ -62,7 +64,19 @@ def register_agent() -> None:
     )
 
 
-def bind_rooms() -> None:
+def _match_room(by_name: dict[str, str], name: str, prefix: str | None) -> tuple[str | None, list[str]]:
+    """Find the Switch room for a configured room name. Returns (room id, ambiguous candidates)."""
+    if prefix is not None:
+        return by_name.get(prefix + name), []
+    if name in by_name:
+        return by_name[name], []
+    suffixed = [n for n in by_name if n.endswith(": " + name)]
+    if len(suffixed) == 1:
+        return by_name[suffixed[0]], []
+    return None, suffixed
+
+
+def bind_rooms(prefix: str | None = None) -> None:
     settings = get_settings()
     rooms = SwitchHttp(SwitchCredentials.load()).op("list_rooms") or []
     by_name = {str(r.get("name")): str(r.get("room_id") or r.get("id")) for r in rooms}
@@ -72,9 +86,12 @@ def bind_rooms() -> None:
             if not room.get("provision"):
                 continue
             binding = s.execute(select(m.RoomBinding).where(m.RoomBinding.name == room["name"])).scalar_one()
-            switch_id = by_name.get(room["name"])
+            switch_id, candidates = _match_room(by_name, room["name"], prefix)
             if switch_id is None:
-                print(f"MISSING  {room['name']}: create it in Switch and invite @{AGENT_NAME}")
+                if candidates:
+                    print(f"AMBIGUOUS {room['name']}: {', '.join(candidates)}; rerun with --prefix")
+                else:
+                    print(f"MISSING  {room['name']}: create it in Switch and invite @{AGENT_NAME}")
                 continue
             binding.switch_room_id = switch_id
             print(f"BOUND    {room['name']} -> {switch_id}")
@@ -150,8 +167,8 @@ def main(argv: list[str]) -> None:
         register_agent()
     elif cmd == "create-rooms":
         create_rooms(dict(a.split("=", 1) for a in args))
-    elif cmd == "bind-rooms":
-        bind_rooms()
+    elif cmd == "bind-rooms" and (not args or (len(args) == 2 and args[0] == "--prefix")):
+        bind_rooms(args[1] if args else None)
     elif cmd == "unmapped":
         unmapped()
     elif cmd == "bind-user" and len(args) in (2, 3):
