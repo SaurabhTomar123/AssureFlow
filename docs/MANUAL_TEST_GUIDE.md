@@ -58,7 +58,7 @@ Tip: use **Telegram Desktop** on the laptop for account A, so you can send files
 
 ### On the laptop
 
-- The repository on branch `rebuild/assure-flow`, the virtual environment, and `.env` (see the README Quickstart).
+- The repository on branch `main`, the virtual environment, and `.env` (see the README Quickstart).
 - Docker running.
 - The Switch 0.31.0 standalone stack. The Gateway admin page is at http://localhost:3000.
 - The Switch admin login you created when you first started the stack.

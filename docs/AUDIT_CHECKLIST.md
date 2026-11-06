@@ -1,6 +1,6 @@
 # Assure Flow audit checklist
 
-Release `v1.0.0-hackathon` · branch `rebuild/assure-flow` · Flip the Switch hackathon, Track 1 (Best Business Workflow)
+Release `v1.0.0-hackathon` · branch `main` · Flip the Switch hackathon, Track 1 (Best Business Workflow)
 Submission deadline: **2026-11-07, 11:59 PM IST**
 
 Use this list before submitting, after any merge, and whenever someone asks "does it really do that?".
@@ -19,7 +19,7 @@ virtual environment active.
 
 | ID | Check | How to check | Expected | Status |
 |---|---|---|---|---|
-| A-01 | Judges are sent to the right branch | Repository link in the submission form points at `rebuild/assure-flow` (or `main` once it holds this code) | The link opens this README | ⬜ |
+| A-01 | Judges are sent to the right branch | Repository link in the submission form points at the repository's default branch, `main` | The link opens this README | ⬜ |
 | A-02 | Repository is public | Open the link in a private browser window | Opens with no login | ⬜ |
 | A-03 | Demo video recorded and linked | Video shows a real Switch room: upload → correction → CA review → GSTR-2B → approval → Excel/JSON | Under the time limit in the rules; link works when logged out | 👤 |
 | A-04 | README explains how Switch is used | README section "How Switch is used" | Says what breaks without Switch | ✅ |
@@ -143,9 +143,10 @@ virtual environment active.
 
 | ID | Check | How to check | Expected | Status |
 |---|---|---|---|---|
-| K-01 | Submission branch is clean and pushed | `git status -sb` | `## rebuild/assure-flow...origin/rebuild/assure-flow`, nothing to commit | ✅ |
-| K-02 | `main` is not linked to judges until fixed | See the review of `origin/main` (ab38963) | Docker serves the old `src/` app; tests clash on the `shops` table; most routes unauthenticated; hard-coded JWT secret; float money | ⚠️ |
+| K-01 | Submission branch is clean and pushed | `git status -sb` | `## main...origin/main`, nothing to commit | ✅ |
+| K-02 | `main` holds the release; old prototypes cannot affect it | `make test`; Dockerfile `CMD`; `legacy/` outside default `pytest` | 85 passed; Docker runs `api.main:app`; `legacy/` tests run only on a throwaway SQLite DB | ✅ 2026-11-06 |
 | K-03 | Teammate features ported properly (optional) | Each port uses Switch rooms, `Decimal`, scoped tools and tests | Done the same way as the GSTR-2B port | ⬜ |
+| K-04 | `rebuild/assure-flow` frozen as a backup | `git log origin/rebuild/assure-flow -1` | No new commits after the switch to `main` | ✅ |
 
 ## L. Not in this release (stated in the README)
 

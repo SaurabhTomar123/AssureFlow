@@ -145,7 +145,7 @@ Without Switch there is no intake, no review, no handoff and no delivery: the ro
 Prerequisites: Docker, Python 3.12+, `make` (or run the commands in the `Makefile` by hand).
 
 ```bash
-git clone https://github.com/SaurabhTomar123/AssureFlow.git && cd AssureFlow && git checkout rebuild/assure-flow
+git clone https://github.com/SaurabhTomar123/AssureFlow.git && cd AssureFlow
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.lock && pip install pytest hypothesis ruff mypy mcp
 cp .env.example .env
