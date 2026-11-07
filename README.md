@@ -1,32 +1,112 @@
 # Assure Flow
 
-**Monthly GST purchase review for small Indian shops and their Chartered Accountant, run entirely inside Switch rooms.**
+### Your shop's GST review, caught in the chat where the bill arrived. Not at month end, when it's hardest to fix.
 
-> Flip the Switch hackathon · Track 1: Best Business Workflow · Release `v1.0.0-hackathon` · Switch server 0.31.0
+A shop owner sends a bill to a group chat. AI reads it, the owner confirms the details, and code checks the tax. Their Chartered Accountant reviews it, asks the supplier for a correction with one message, and approves a month-end pack that can't quietly change afterwards.
+
+No new app to install. The team keeps talking where it already talks, and the bot tells people what to reply when it needs something.
+
+> **Flip the Switch hackathon · Track 1: Best Business Workflow** · Built on Switch 0.31.0
 >
-> AI reads and explains. Code validates and calculates. Authorized people confirm and decide.
+> **AI reads and explains. Code validates and calculates. People confirm and decide.**
 >
 > All shops, people, GSTINs and invoices in this repository are synthetic.
 
-| | |
+## The problem nobody has time for
+
+Every month, a small Indian shop collects bills as paper, photos and PDFs, then hands the pile to its CA close to filing time. That's when the trouble surfaces:
+
+- A supplier in another state charged CGST and SGST when they should have charged IGST.
+- A GSTIN is wrong. A total doesn't add up. The same bill arrived twice.
+- The supplier now has to reissue an invoice from weeks ago, and the CA chases them over WhatsApp.
+- Nobody can say which version of a bill was reviewed, or who approved what.
+
+The shop owner isn't a tax expert. The CA can't recheck every line of every client's bills by hand. Both are working from a chat thread that was never built to be a record.
+
+## What changes
+
+| | Today | With Assure Flow |
+|---|---|---|
+| **Finding a mistake** | Near filing time, by hand | When the owner confirms the bill, by fixed rules |
+| **Fixing it** | Phone calls and forwarded photos | The CA asks in one message; the owner gets a draft ready to send to the supplier |
+| **Knowing the current version** | "Is this the latest one?" | One case with every version kept. Approving an old version is refused |
+| **Bills from clients** | Lost in someone's chat | A drop-off room; they get "received", and the owner gets the details |
+| **Month end** | A spreadsheet someone edited | An exact pack approved by its hash. If a bill changes, the pack is marked superseded |
+| **Reconciliation** | Manual comparison with GSTR-2B | Bills matched against the statement, with differences listed |
+
+## See it in 30 seconds
+
+Shortened from a live test run, with a bill that looked fine to the owner:
+
+```
+Owner's group
+  Ramesh       [sends the bill from Pune Electricals]
+  assure-flow  INV-0003: Total ₹8,732.00. Please check these details.
+  Ramesh       ok INV-0003 r1
+
+  assure-flow  RR-0003 · R-TAX-01: Interstate supply (27 to 07) must use IGST only,
+               but CGST 666.00 / SGST 666.00 are printed.
+               Suggestion from the checks, not a decision: request a corrected invoice
+               from the supplier. Priya, your decision.
+
+  Priya (CA)   RR-0003 supplier please reissue with IGST for this interstate supply
+  assure-flow  Draft you can send: "Dear Pune Electricals LLP, please issue a corrected tax invoice..."
+
+  Ramesh       corrected bill for INV-0003  [sends the new PDF]
+  Ramesh       ok INV-0003 r2
+
+  Priya (CA)   RR-0003 include       (trying the old version on purpose)
+  assure-flow  That refers to an older version. Nothing was changed.
+```
+
+₹1,332 of tax charged under the wrong heads, caught and corrected before anyone filed anything.
+
+## Who it works for
+
+- **An owner on their own.** Send a bill, check the summary, confirm. That's all they have to do. No @mention and no app.
+- **An owner and a CA together.** Work in one shared group and talk it through, or keep separate rooms. It's a per-shop choice.
+- **A CA with many clients.** A private room keeps every shop's queue, monthly packs and approvals together.
+- **Suppliers and clients.** A drop-off room where they send a bill and only ever see "received".
+
+And in every case, **authority doesn't depend on the room**. Only the owner confirms the details. Only the assigned CA can include or exclude a bill. Agents can explain and draft, but they're never given a tool to approve. People can chat freely, too: "yes, please call him" can't confirm a bill by accident.
+
+## Why you can trust it
+
+| Risk | What stops it |
 |---|---|
-| **Offline tests** | 189 passed (real PostgreSQL, recorded extractions, in-memory Switch), incl. purchase assurance |
-| **Live tests** | 4 passed, 1 manual, against Switch 0.31.0 + Mattermost |
-| **Lint / types** | ruff clean · mypy strict clean (58 files) |
-| **Health** | 12/12 PASS on the live stack |
-| **Audit** | [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) |
+| An AI invents a number | It only reads. Fixed rules do every calculation, in exact decimals, and the owner confirms the reading |
+| Someone approves an outdated bill | Every decision is tied to one version; a stale one is refused |
+| A pack changes after sign-off | Approval is bound to the pack's hash, and any later change marks it superseded |
+| One shop sees another's bills | Rooms are scoped per shop, and the audience is rechecked before every message |
+| A message goes to the wrong audience | Sent only if everyone known in the room is allowed to see it; otherwise withheld and flagged to operations |
+| A crash loses work | Durable inbox and outbox; messages are processed once after a restart |
+
+It doesn't file GST, pay anyone or decide what credit you can claim. It gets the review right and leaves a record, and the CA stays in charge.
+
+## What's actually been proven
+
+| Evidence | Result |
+|---|---|
+| **Offline tests** | 189 passed, on real PostgreSQL |
+| **Live on Mattermost, five separate accounts** | 33/33 checks: [full results](docs/release/live-run-2026-11-07-shared-review.md) |
+| **Controlled restart** | Second copy refused; a message sent during downtime answered once; nothing replayed |
+| **Live on Telegram** | The main owner and CA journey run by hand: [test report, including what failed](docs/release/telegram-manual-2026-11-06.md). The fixes for those failures are proven on Mattermost, and their Telegram rerun is pending |
+| **Live bill reading with Gemini** | 4 clean synthetic bills matched on all 48 fields; a small sample, not an accuracy claim |
+| **Lint and types** | ruff clean, mypy strict clean |
+
+Everything still limited is listed under [Known limitations](#known-limitations-v100-hackathon). The full audit is in [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md).
 
 ## Contents
 
 1. [For judges: five minutes](#for-judges-five-minutes)
-2. [The problem](#the-problem)
-3. [How Switch is used](#how-switch-is-used-and-why-it-would-not-work-without-it)
-4. [Walkthrough](#walkthrough-what-you-see-in-the-rooms)
-5. [Architecture](#architecture)
-6. [Quickstart (offline)](#quickstart-offline-no-switch-no-api-key)
-7. [Run with Switch (live)](#run-with-switch-live)
-8. [Room commands](#room-commands)
-9. [GSTR-2B reconciliation](#gstr-2b-reconciliation)
+2. [How Switch is used](#how-switch-is-used-and-why-it-would-not-work-without-it)
+3. [Walkthrough](#walkthrough-what-you-see-in-the-rooms)
+4. [Architecture](#architecture)
+5. [Quickstart (offline)](#quickstart-offline-no-switch-no-api-key)
+6. [Run with Switch (live)](#run-with-switch-live)
+7. [Room commands](#room-commands)
+8. [GSTR-2B reconciliation](#gstr-2b-reconciliation)
+9. [Shared review group and client invoices](#shared-review-group-optional-per-shop)
 10. [Purchase assurance (U2)](#purchase-assurance-update-u2-behind-a-flag)
 11. [Configuration](#configuration)
 12. [Testing and verification](#testing-and-verification)
@@ -36,29 +116,15 @@
 
 ## For judges: five minutes
 
-1. **See it without installing anything:** read the real Switch room transcripts in
-   [docs/release/live-run-2026-11-05.md](docs/release/live-run-2026-11-05.md).
-2. **Run the story offline (no keys, no Switch):** follow [Quickstart](#quickstart-offline-no-switch-no-api-key) and run `make demo`.
-3. **Check the claims:** `make test` (189 tests) and `make acceptance` (machine-generated report). Every phase item
-   is listed with its evidence in [docs/gates/](docs/gates/README.md). Design decisions are in
-   [docs/decisions.md](docs/decisions.md).
-
-## The problem
-
-Indian shop owners collect paper bills, photos and PDFs all month and hand them to their CA at filing time.
-Errors show up late: a wrong GSTIN, CGST+SGST charged on an interstate supply, totals that don't add up, the
-same bill twice. The CA re-checks everything by hand, chases suppliers over WhatsApp, and has no reliable record
-of what was reviewed.
-
-Assure Flow turns invoice messages into a **case** with evidence. It runs **deterministic checks**, routes every
-problem to the **person who owns it**, reconciles the month against **GSTR-2B**, and ends with a **frozen,
-hash-approved review pack** (Excel + JSON) that the CA can trust and reproduce.
+1. **See the live results without installing anything:** the [33-check Mattermost run](docs/release/live-run-2026-11-07-shared-review.md) and the [room transcripts](docs/release/live-run-2026-11-05.md).
+2. **Run the story offline, with no keys and no Switch:** follow the [Quickstart](#quickstart-offline-no-switch-no-api-key) and run `make demo`.
+3. **Check the claims:** `make test` (189 tests) and `make acceptance`, which writes a machine-generated report. Every phase item is listed with its evidence in [docs/gates/](docs/gates/README.md), and design decisions are in [docs/decisions.md](docs/decisions.md).
 
 ## How Switch is used (and why it would not work without it)
 
 Switch is the collaboration layer: every channel is a room, people and the `assure-flow` agent share it, and
 work moves between rooms. Assure Flow owns the records, checks, state and approvals. The agent creates and binds
-all six rooms itself.
+its rooms itself.
 
 | Room | Who is in it | What happens there |
 |---|---|---|
@@ -67,6 +133,7 @@ all six rooms itself.
 | `af-practice-home` | CAs and practice staff only | Practice directory and month readiness across the practice's shops |
 | `af-operations` | the operator | Health, failed jobs, `retry`, `trace INV-…`; alerts for dead jobs and withheld messages (ids and metadata only) |
 | `af-synthetic-testing` | developers (test/demo only) | `acceptance` runs the full offline suite and posts the machine-generated report |
+| `af-submit-sharma` (one per shop, optional) | clients and suppliers | Drop off a bill and see only "received": no reference numbers, amounts or commands |
 | `af-delivery-sharma` (purchase assurance) | the storekeeper | Counts what arrived against the order: item names and quantities only, **never prices** |
 
 * **Room isolation is the product.** Shop A never sees shop B, and owners never see the CA room. Before every
@@ -107,7 +174,7 @@ Without Switch there is no intake, no review, no handoff and no delivery: the ro
 ## Architecture
 
 ```
- Switch rooms (Mattermost / Telegram / Slack…)                     Assure Flow (Docker Compose)
+ Switch rooms (Mattermost / Telegram)                             Assure Flow (Docker Compose)
  ┌──────────────────────┐   WebSocket events (all)   ┌──────────────────────────────────────────────┐
  │ shop · CA · practice │ ─────────────────────────▶ │ adapter → inbox_events (durable, cursor)      │
  │ ops · testing rooms  │ ◀───────────────────────── │ worker: fast | io | slow lanes + outbox       │
