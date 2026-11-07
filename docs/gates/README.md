@@ -15,4 +15,5 @@ Offline evidence: `make acceptance` → `docs/release/acceptance-*.json` (85/85)
 | P4 Monthly snapshot and evidence pack | [P4.md](P4.md) | Done, Live |
 | P5 Recovery, reproducibility, submission | [P5.md](P5.md) | Done, Live; video Human |
 | P6 Reconciliation (early, post-MVP) | [P6.md](P6.md) | P6-01..05 Done/Live; P6-06/07/09 not started |
+| U2 Purchase assurance (hackathon slice, flag) | [U2.md](U2.md) | U0–U4 Done/Live; UAT10 and §14–17 not started |
 | P7–P9 Production | — | Not started (needs CA + security owner sign-off) |

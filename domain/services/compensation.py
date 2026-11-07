@@ -8,12 +8,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from domain.models import Decision, Invoice, InvoiceRevision, ReviewRequest, Snapshot
-from domain.services.base import post, room_for_shop
+from domain.services.base import post, review_room, room_for_shop
 
 REASONS = {
     "document_replaced": "a replacement document arrived",
     "revision_replaced": "the details were corrected",
     "case_excluded": "the invoice was excluded",
+    "case_reopened": "the case was reopened",
     "period_changed": "an invoice in the month changed",
     "rebuilt": "a newer pack was built",
     "approved_newer": "a newer pack was approved",
@@ -26,7 +27,7 @@ def _reason(code: str) -> str:
 
 
 def review_requests_withdrawn(s: Session, case: Invoice, reason: str, correlation_id: str) -> None:
-    room = room_for_shop(s, case.shop_id, "ca_review")
+    room = review_room(s, case.shop_id)
     if room is None:
         return
     for rr in s.execute(
@@ -48,7 +49,7 @@ def review_requests_withdrawn(s: Session, case: Invoice, reason: str, correlatio
 def decision_invalidated(
     s: Session, case: Invoice, decision: Decision, reason: str, correlation_id: str
 ) -> None:
-    room = room_for_shop(s, case.shop_id, "ca_review")
+    room = review_room(s, case.shop_id)
     rr = s.get(ReviewRequest, decision.review_request_id)
     if room is None or rr is None:
         return

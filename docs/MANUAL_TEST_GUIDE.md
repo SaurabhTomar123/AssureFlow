@@ -1,5 +1,9 @@
 # Manual test guide: the full workflow in real Telegram
 
+For the practical owner/CA workflow and steps to enable and verify live Gemini or Anthropic extraction, use the [connected API operating guide](TELEGRAM_CONNECTED_API_GUIDE.md). It separates automatic processing from required human decisions and distinguishes configuration from a verified API connection.
+
+For the proposed onboarding, plain-English conversations, contextual buttons, LLM assistance, and fixes identified during testing, see the [Telegram workflow improvement specification](TELEGRAM_WORKFLOW_IMPROVEMENT_SPEC.md). That document describes planned improvements, not current behavior.
+
 This guide connects Assure Flow to **real Telegram groups** through Switch 0.31.0 and walks through every
 part of the workflow by hand: shop intake, corrections, CA review, supplier replacement, GSTR-2B, monthly
 approval, isolation, operations and recovery.
@@ -49,6 +53,8 @@ the room-isolation checks would then (correctly) block messages.
 | C | Owner of Gupta store | `owner.gupta` | Isolation between shops (T-14) | Recommended |
 | D | Rao, operator | `ops.rao` | Operations room (T-19) | Optional |
 | E | Iyer, developer | `dev.iyer` | Synthetic testing room (T-20) | Optional |
+| F | Suresh, storekeeper | `staff.suresh` | Delivery room, purchase tests (P-xx) | For purchase tests |
+| G | Anil, purchasing staff | `staff.anil` | Assigned task in the shop room (P-04) | For purchase tests |
 
 Without C, D or E, skip the tests marked for them and use `make health` in the terminal instead of the
 operations room. A second account can be a second phone number, or a teammate's account.
@@ -131,6 +137,9 @@ Create these groups in Telegram. **The titles must match exactly**, because Assu
 | `af-practice-home` | B only | B |
 | `af-operations` | D only | D (optional) |
 | `af-synthetic-testing` | E only | E (optional) |
+| `af-delivery-sharma` | F only | F (purchase tests only) |
+
+For the purchase tests, also add account G to `af-shop-sharma`. Anil may see invoices (capability `invoice_view`); Suresh must **not** be in the shop room.
 
 For each group:
 
@@ -277,7 +286,7 @@ Try each one on an open review request (create more by sending `F09_total_mismat
 | `RR-000X clarify which branch received the goods?` | Question appears in the shop room |
 | `RR-000X override R-DUP-02 confirmed separate deliveries` | Allowed (overridable rule); listed in the export later |
 | `RR-000X override R-TAX-01 looks fine` | **Refused**: that rule cannot be overridden |
-| `reopen INV-0001 recheck after supplier call` | Checks re-run on INV-0001 |
+| `reopen INV-0001 recheck after supplier call` | Works on an approved or excluded case. Checks re-run once; an earlier approval stays in history but no longer counts, and a new review request appears |
 
 **T-12 A stale decision is refused** · B
 Reply to an old review request after its invoice has a new revision (for example the RR withdrawn in T-10).
@@ -321,7 +330,7 @@ Mattermost cannot relay `.json` (D-18). **Record the result** either way.
 1. `readiness sharma 2026-11`. Expected: counts of included, held and unassigned invoices.
 2. `snapshot sharma 2026-11`. Expected: `SN-000X · hash <12 chars> · Included …`.
 3. `approve SN-000X <the 12-character hash>` (add `ack <held> <unassigned>` if it asks).
-4. Expected: `SN-000X export: Excel + JSON attached.` and **two files arrive in the Telegram group**.
+4. Expected: **two separate messages arrive in the Telegram group, one file each**: `SN-000X export, JSON file …` and `SN-000X export, Excel file …`. If a file doesn't arrive, send `resend SN-000X` (or `resend SN-000X excel`), which sends the same stored file again.
 5. Open the Excel file. It should show the included invoices, issues and overrides from T-11. Cells must not
    run formulas.
 6. `approve SN-000X 000000000000` (wrong hash). Expected: refused.
@@ -361,6 +370,48 @@ Telegram keeps undelivered updates for up to 24 hours.
 `python -m scripts.admin revoke-user owner.gupta`, then C sends `status`.
 Expected: no reply. Rebind C with `bind-user` to undo.
 
+### Purchase assurance (optional; needs accounts F and G)
+
+Turn it on first: set `PURCHASE_ASSURANCE_ENABLED=true` in `.env`, then restart the worker and adapter. Bind F to
+`staff.suresh` and G to `staff.anil` (section 7). The seeded order is **PO-101**: 10 cartons of "Sunflower oil 1L x 12"
+from ABC Traders at ₹500.00 per carton.
+
+**P-01 Order confirmed; storekeeper asked without prices** · A in `af-shop-sharma`
+Send `ok PO-101 r1`. Expected: "PO-101 r1 confirmed". In `af-delivery-sharma`: "please count what arrived" with
+**no ₹ amount or price**.
+
+**P-02 Invoice linked to the order** · A
+Send `F22_abc_invoice_10_cartons.pdf` as a file, then `ok INV-000X r1`.
+Expected: "INV-000X looks like PO-101 …". Reply `link INV-000X PO-101`. Expected: "linked to PO-101".
+
+**P-03 Storekeeper counts 8; code holds the purchase** · F in `af-delivery-sharma`, then B
+F sends `PO-101 L1=8`, then `ok DR-0001 v1`. B includes the invoice's review request in `af-ca-review`.
+Expected in the shop room: "payment readiness is on hold … billed 10 carton but 8 confirmed received (difference 2)".
+
+**P-04 Assigned work; finishing it does not clear the hold** · A, G
+A sends `task INV-000X anil tomorrow get a corrected invoice for 8 cartons`. G sends `TK-0001 ack`, then
+`TK-0001 done supplier is sending a revised bill`. A sends `TK-0001 verify`.
+Expected: verify is **refused**: "cannot be verified yet … A finished task alone never clears a mismatch."
+
+**P-05 Corrected invoice; partial delivery accepted** · A, B
+A sends `F23_abc_corrected_8_cartons.pdf` with the message `corrected bill for INV-000X`, then `ok INV-000X r2`.
+B includes the new review request. A sends `accept-partial PO-101`, then `TK-0001 verify`.
+Expected: "Still outstanding on PO-101: 2 carton …"; then `PR-0001` appears in `af-ca-review` with a hash.
+
+**P-06 Reviewer, then owner, sign the same record** · A, B
+A first tries `authorize PR-0001 <hash> due 2026-11-20`. Expected: refused, "has not been reviewed yet".
+B sends `review PR-0001 <hash>`. A sends `authorize PR-0001 <hash> due 2026-11-20`.
+Expected: "PR-0001 is ready for payment: ₹4,200.00 … Nothing has been paid", then an Excel + JSON purchase pack in
+the shop room and the CA room.
+
+**P-07 Storekeeper privacy and authority** · F, G
+Read every message in `af-delivery-sharma`: no ₹, no unit price. F sends `link INV-000X PO-101` in any room it can
+reach, and G sends `accept-partial PO-101`. Expected: both refused ("not set up to …").
+
+**P-08 A change after review withdraws the record** (run on a fresh database with delivery 10)
+After B's `review`, F sends `DR-0001 L1=9` and `ok DR-0001 v2`.
+Expected: "Withdrawn: PR-0001 … because the confirmed delivery changed"; A's `authorize` is refused.
+
 ---
 
 ## Results sheet
@@ -394,6 +445,14 @@ Copy this table into your notes or the pull request, and fill it in as you go.
 | T-23 Adapter restart | | |
 | T-24 Switch down | | |
 | T-25 Revoke | | |
+| P-01 Order confirmed, no prices to storekeeper | | |
+| P-02 Invoice linked | | |
+| P-03 Count 8 → hold | | |
+| P-04 Task done does not clear hold | | |
+| P-05 Corrected invoice, partial accepted | | |
+| P-06 Review then authorize, pack delivered | | |
+| P-07 Storekeeper privacy and authority | | |
+| P-08 Change after review withdraws | | |
 
 Tester: ______  Date: ______  Commit: `git rev-parse --short HEAD` ______  Switch version: 0.31.0
 
@@ -406,6 +465,7 @@ Tester: ______  Date: ______  Commit: `git rev-parse --short HEAD` ______  Switc
 | Bot posts "can only see messages that tag it" | Group Privacy was on when it joined. Turn it off in BotFather, then remove the bot from the group and add it back, or make the bot a group admin. |
 | Messages arrive only sometimes | Another Switch server is polling the same bot token. Stop it, or make a second bot. The Switch logs show a "polling conflict". |
 | `bind-rooms` says `MISSING` | The group title is not exactly right, the bot is not in the group, or the connection is not named `Telegram` (use `--prefix "<your name>: "`). |
+| Replies stay withheld after you removed someone from a Telegram group | Switch 0.31.0 doesn't notice removals. Create a fresh group, invite the bot, then run `python -m scripts.admin rebind-room af-ca-review <switch-room-id> <reason>`. The old room and its withheld messages are kept. `bind-rooms` leaves this binding alone unless given `--force`. |
 | `bind-rooms` says `AMBIGUOUS` | The same title exists on two connections (for example Mattermost and Telegram). Pass `--prefix`. |
 | No reply at all to a bound person | Check the worker and adapter are running, and that `assure-flow` is invited (`!list-agents`). Then check `make health`. |
 | Every reply in one room is withheld | Someone in that room is not bound, or was bound with the wrong Telegram username. Check the alert in `af-operations` (or the outbox line in `make health`) and fix with `bind-user` / `revoke-user`. |

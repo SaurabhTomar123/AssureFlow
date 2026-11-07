@@ -1,6 +1,7 @@
 """ExtractionProvider: the single extraction path, called only by the worker's extract_document handler.
 
 AnthropicProvider uses Claude vision with JSON-schema-constrained output (messages.parse).
+GeminiProvider uses Gemini vision with the same schema and prompt (D-30; synthetic documents only on a free key).
 FakeProvider replays recorded fixtures keyed by document SHA-256 (offline CI and key-less demos).
 """
 
@@ -12,6 +13,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, cast
+
+from pydantic import ValidationError
 
 from common.settings import get_settings
 from domain.extraction import ExtractionV1
@@ -127,6 +130,78 @@ class AnthropicProvider:
         )
 
 
+class GeminiProvider:
+    def __init__(self) -> None:
+        from google import genai
+        from google.genai import types
+
+        settings = get_settings()
+        if not settings.LLM_API_KEY:
+            raise ProviderPermanentError("LLM_PROVIDER=gemini needs LLM_API_KEY")
+        if not settings.LLM_MODEL.startswith("gemini"):
+            raise ProviderPermanentError(f"LLM_MODEL must name a Gemini model, not {settings.LLM_MODEL}")
+        self.model = settings.LLM_MODEL
+        self.client = genai.Client(
+            api_key=settings.LLM_API_KEY,
+            http_options=types.HttpOptions(timeout=settings.MODEL_TIMEOUT_SECONDS * 1000),
+        )
+
+    def _parts(self, prepared: dict[str, Any]) -> list[Any]:
+        from google.genai import types
+
+        parts: list[Any] = []
+        for page in prepared["pages"]:
+            if page["text"]:
+                parts.append(
+                    types.Part.from_text(
+                        text=f'<page number="{page["page"]}" source="text layer">\n{page["text"]}\n</page>'
+                    )
+                )
+            if page["image"]:
+                parts.append(types.Part.from_text(text=f"Page {page['page']} image:"))
+                parts.append(types.Part.from_bytes(data=page["image"], mime_type="image/png"))
+        parts.append(types.Part.from_text(text="Extract the purchase document fields."))
+        return parts
+
+    def extract(self, prepared: dict[str, Any], sha256: str, shop_key: str) -> ExtractionOutcome:
+        import httpx
+        from google.genai import errors, types
+
+        started = time.monotonic()
+        try:
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=self._parts(prepared),
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    temperature=0,
+                    response_mime_type="application/json",
+                    response_json_schema=ExtractionV1.model_json_schema(),
+                ),
+            )
+        except errors.APIError as exc:
+            if exc.code in (408, 429) or exc.code >= 500:
+                raise ProviderError(f"provider {exc.code}") from exc
+            raise ProviderPermanentError(f"provider rejected the request ({exc.code})") from exc
+        except (httpx.TransportError, TimeoutError) as exc:
+            raise ProviderError(type(exc).__name__) from exc
+        result = response.parsed if isinstance(response.parsed, ExtractionV1) else None
+        if result is None:
+            try:
+                result = ExtractionV1.model_validate_json(response.text or "")
+            except ValidationError as exc:
+                raise ProviderPermanentError("no structured output from the provider") from exc
+        usage = response.usage_metadata
+        return ExtractionOutcome(
+            result=result,
+            provider="gemini",
+            model=self.model,
+            input_tokens=(usage.prompt_token_count or 0) if usage else 0,
+            output_tokens=(usage.candidates_token_count or 0) if usage else 0,
+            duration_ms=int((time.monotonic() - started) * 1000),
+        )
+
+
 _provider: ExtractionProvider | None = None
 
 
@@ -138,5 +213,11 @@ def set_provider(provider: ExtractionProvider | None) -> None:
 def get_provider() -> ExtractionProvider:
     global _provider
     if _provider is None:
-        _provider = AnthropicProvider() if get_settings().LLM_PROVIDER == "anthropic" else FakeProvider()
+        choice = get_settings().LLM_PROVIDER
+        if choice == "anthropic":
+            _provider = AnthropicProvider()
+        elif choice == "gemini":
+            _provider = GeminiProvider()
+        else:
+            _provider = FakeProvider()
     return _provider

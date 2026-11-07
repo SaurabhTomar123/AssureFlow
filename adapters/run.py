@@ -10,6 +10,7 @@ from typing import Any
 
 from adapters.inbox_writer import load_cursor, record_event, save_generation
 from adapters.switch_client import SwitchCredentials, run_adapter
+from common import runtime
 from common.logging import configure_logging, get_logger
 from common.settings import get_settings
 
@@ -21,6 +22,10 @@ def main() -> None:
     settings = get_settings()
     if not settings.SWITCH_SERVER_VERSION:
         raise SystemExit("SWITCH_SERVER_VERSION must be pinned (see docs/decisions.md D-02).")
+    try:
+        runtime.hold("adapter")
+    except runtime.AlreadyRunning as exc:
+        raise SystemExit(str(exc)) from exc
     creds = SwitchCredentials.load()
 
     def store(data: dict[str, Any], sequence: int) -> None:

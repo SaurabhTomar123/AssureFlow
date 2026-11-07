@@ -47,6 +47,7 @@ TRANSITIONS: dict[tuple[str, str], str] = {
     (NEEDS_RESOLUTION, "issues_resolved"): READY_FOR_CA,
     (READY_FOR_CA, "ca_include"): APPROVED,
     (NEEDS_RESOLUTION, "ca_include_with_override"): APPROVED,
+    (READY_FOR_CA, "ca_include_with_override"): APPROVED,
     (NEEDS_CONFIRMATION, "ca_exclude"): EXCLUDED,
     (NEEDS_RESOLUTION, "ca_exclude"): EXCLUDED,
     (READY_FOR_CA, "ca_exclude"): EXCLUDED,
@@ -58,6 +59,7 @@ TRANSITIONS: dict[tuple[str, str], str] = {
     (NEEDS_RESOLUTION, "ca_request_supplier_replacement"): NEEDS_RESOLUTION,
     (READY_FOR_CA, "ca_request_supplier_replacement"): NEEDS_RESOLUTION,
     (EXCLUDED, "ca_reopen"): NEEDS_RESOLUTION,
+    (APPROVED, "ca_reopen"): NEEDS_RESOLUTION,
 }
 
 # A replacement document is accepted from any state except excluded.

@@ -21,6 +21,7 @@ from domain.models import (
     Outbox,
     RoomBinding,
     RoomBindingShop,
+    Shop,
     ShopPeriodVersion,
     utcnow,
 )
@@ -171,6 +172,16 @@ def room_for_shop(s: Session, shop_id: uuid.UUID, purpose: str) -> RoomBinding |
         .order_by(RoomBinding.created_at)
         .limit(1)
     ).scalar_one_or_none()
+
+
+def review_room(s: Session, shop_id: uuid.UUID) -> RoomBinding | None:
+    """Where review requests go: the shop's own group when it opted in to shared review (D-31)."""
+    shop = s.get(Shop, shop_id)
+    if shop is not None and shop.shared_review:
+        room = room_for_shop(s, shop_id, "shop_intake")
+        if room is not None:
+            return room
+    return room_for_shop(s, shop_id, "ca_review")
 
 
 def shops_of_room(s: Session, room_binding_id: uuid.UUID) -> list[uuid.UUID]:

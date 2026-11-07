@@ -41,8 +41,9 @@ def test_clean_invoice_from_upload_to_export(h: Harness) -> None:
         assert snap.partial is False
         assert snap.manifest["totals"]["total"] == "7770.00"
     h.event("ca", "ca", f"approve SN-0001 {digest[:12]}")
-    assert "approved" in h.said("ca")[-2]
-    assert h.switch.uploads and {f.rsplit(".", 1)[1] for f in h.switch.uploads[-1][1]} == {"json", "xlsx"}
+    assert "approved" in h.said("ca")[-3]  # then one message per export file
+    assert {f.rsplit(".", 1)[1] for _, files, _ in h.switch.uploads for f in files} == {"json", "xlsx"}
+    assert all(len(files) == 1 for _, files, _ in h.switch.uploads)
     with transaction() as s:
         snap = s.execute(select(m.Snapshot)).scalar_one()
         assert snap.status == "exported"

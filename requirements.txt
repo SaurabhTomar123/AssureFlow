@@ -11,6 +11,7 @@ pymupdf>=1.24.0
 pillow>=10.4.0
 openpyxl>=3.1.5,<4
 anthropic>=1.0,<2
+google-genai>=2.0,<3
 structlog>=25.1,<27
 pyyaml>=6.0.1
 python-multipart>=0.0.9

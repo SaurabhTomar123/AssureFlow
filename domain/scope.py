@@ -36,3 +36,18 @@ def can_read_shop(s: Session, user_id: uuid.UUID, shop_id: uuid.UUID) -> bool:
 
 def user_role(s: Session, user_id: uuid.UUID) -> str:
     return s.get(User, user_id).role  # type: ignore[union-attr]
+
+
+def has_capability(s: Session, user_id: uuid.UUID, shop_id: uuid.UUID, capability: str) -> bool:
+    """U2 business capability (D-25): a verified, unrevoked assignment for this shop. Titles grant nothing."""
+    from domain.models import ShopCapability
+
+    row = s.execute(
+        select(ShopCapability.id).where(
+            ShopCapability.user_id == user_id,
+            ShopCapability.shop_id == shop_id,
+            ShopCapability.capability == capability,
+            ShopCapability.revoked_at.is_(None),
+        )
+    ).first()
+    return row is not None

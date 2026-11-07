@@ -26,6 +26,8 @@ ROOMS = {
     "home": "unbound:af-practice-home",
     "ops": "unbound:af-operations",
     "testing": "unbound:af-synthetic-testing",
+    "delivery": "unbound:af-delivery-sharma",
+    "submit": "unbound:af-submit-sharma",
 }
 SENDERS = {
     "sharma": "@switch-user-sharma:test",
@@ -34,6 +36,9 @@ SENDERS = {
     "ops": "@switch-user-rao:test",
     "dev": "@switch-user-iyer:test",
     "stranger": "@switch-user-stranger:test",
+    "suresh": "@switch-user-suresh:test",
+    "anil": "@switch-user-anil:test",
+    "client": "@switch-user-client:test",
 }
 HANDLES = {
     "sharma": "owner.sharma",
@@ -41,6 +46,9 @@ HANDLES = {
     "ca": "ca.mehta",
     "ops": "ops.rao",
     "dev": "dev.iyer",
+    "suresh": "staff.suresh",
+    "anil": "staff.anil",
+    "client": "client.verma",
 }
 
 

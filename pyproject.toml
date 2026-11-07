@@ -17,6 +17,7 @@ dependencies = [
     "pillow==13.0.0",
     "openpyxl>=3.1.5,<4",
     "anthropic>=1.0,<2",
+    "google-genai>=2.0,<3",
     "structlog>=25.1,<26",
     "pyyaml==6.0.3",
     "python-multipart==0.0.33",

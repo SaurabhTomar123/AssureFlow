@@ -1,3 +1,4 @@
+import os
 import json
 import sys
 from pathlib import Path
@@ -45,7 +46,7 @@ def seed_database():
             id="user-admin-sharma",
             tenant_id=tenant.id,
             email="admin@munimji.ai",
-            hashed_password=get_password_hash("MunimJi@2026"),
+            hashed_password=get_password_hash(os.environ["LEGACY_SEED_ADMIN_PASSWORD"]),
             full_name="Rajesh Sharma",
             role="TENANT_ADMIN",
         )

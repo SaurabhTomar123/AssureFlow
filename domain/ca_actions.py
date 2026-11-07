@@ -2,14 +2,14 @@
 
 Actor: the assigned CA, identified by a fresh interactive context from that CA's own reply. Every action
 is bound to the review request's revision and check run, writes one decision row and one case event, and
-increments the shop-period version. Hackathon cut: include_with_override and reopen are not available.
+increments the shop-period version.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from common.errors import Forbidden, NotFound, StaleRevision, ValidationFailed
@@ -148,6 +148,9 @@ def _transition(
         {"from": old, "to": new, **payload},
         context_id=ctx.context_id,
     )
+    from domain.services import purchases
+
+    purchases.on_case_change(s, case, ctx.request_id, ctx, None)
 
 
 def perform(
@@ -174,21 +177,30 @@ def perform(
         if not arg or not reason:
             raise ValidationFailed("Use `RR-0001 override <RULE-ID>[,<RULE-ID>] <reason>`.")
         named = {r.strip().upper() for r in arg.split(",") if r.strip()}
-        blocking = [i for i in open_issues(s, case) if i.blocking]
-        uncovered = sorted(i.rule_id for i in blocking if i.rule_id.upper() not in named)
-        if uncovered:
+        if not named:
+            raise ValidationFailed("Use `RR-0001 override <RULE-ID>[,<RULE-ID>] <reason>`.")
+        issues = open_issues(s, case)
+        by_rule = {i.rule_id.upper(): i for i in issues}
+        unknown = sorted(named - by_rule.keys())
+        if unknown:
             raise ValidationFailed(
-                f"Name every blocking issue to override; still open: {', '.join(uncovered)}."
+                f"{case.case_ref} has no open issue {', '.join(unknown)}, so nothing was changed."
             )
-        for issue in blocking:
+        targets = [by_rule[rule_id] for rule_id in sorted(named)]
+        for issue in targets:
             rule = registry.BY_ID.get(issue.rule_id)
             if rule is None or not rule.overridable:
                 raise Forbidden(
                     f"{issue.rule_id} ({issue.category}) is never overridable: arithmetic, GSTIN structure, "
                     "exact duplicates and unsupported documents need a correction or an exclusion."
                 )
+        uncovered = sorted(i.rule_id for i in issues if i.blocking and i.rule_id.upper() not in named)
+        if uncovered:
+            raise ValidationFailed(
+                f"Name every blocking issue to override; still open: {', '.join(uncovered)}."
+            )
         st.target(case.status, "ca_include_with_override")
-        for issue in blocking:
+        for issue in targets:
             _decide(s, ctx, rr, case, "include_with_override", reason, issue)
             issue.status, issue.disposition, issue.updated_at = "resolved", "override", utcnow()
         rr.status = "decided"
@@ -316,7 +328,11 @@ def perform(
 
 
 def reopen(s: Session, ctx: RequestContext, case_ref: str, reason: str | None) -> ActionResult:
-    """excluded -> needs_resolution; the issues are re-raised by a new check run (CA action model)."""
+    """excluded or approved -> needs_resolution; the issues are re-raised by a new check run.
+
+    Reopening an approved case withdraws its approval: earlier decisions stay in history, marked invalidated,
+    and overrides on this revision stop counting until the CA decides again.
+    """
     require_live_context(ctx)
     if not reason:
         raise ValidationFailed("Reopen needs a reason: `reopen INV-0001 <reason>`.")
@@ -329,6 +345,7 @@ def reopen(s: Session, ctx: RequestContext, case_ref: str, reason: str | None) -
         raise NotFound(f"No case {case_ref}.")
     if not is_assigned_ca(s, ctx.verified_user_id, case.shop_id):
         raise Forbidden("Only the CA assigned to this shop can reopen its cases.")
+    was_approved = case.status == st.APPROVED
     st.target(case.status, "ca_reopen")
     rr = s.execute(
         select(ReviewRequest)
@@ -340,6 +357,16 @@ def reopen(s: Session, ctx: RequestContext, case_ref: str, reason: str | None) -
     if rr is None or rev is None or rev.status != "confirmed":
         raise ValidationFailed(
             f"{case.case_ref} has no confirmed revision to reopen; ask the owner to confirm it."
+        )
+    if was_approved:
+        # Before the reopen decision is written: this invalidates every decision still valid on the case.
+        Exec(s, case, ctx.request_id, context=ctx)._invalidate_decisions(
+            Command("invalidate_decisions", {"reason": "case_reopened"})
+        )
+        s.execute(
+            update(Issue)
+            .where(Issue.invoice_id == case.id, Issue.status == "resolved")
+            .values(status="superseded", close_reason="case_reopened", updated_at=utcnow())
         )
     _decide(s, ctx, rr, case, "reopen", reason)
     _transition(s, ctx, case, "ca_reopen", {"reason": reason})

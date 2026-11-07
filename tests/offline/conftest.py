@@ -15,6 +15,7 @@ os.environ["ENVIRONMENT"] = "test"
 os.environ["LLM_PROVIDER"] = "fake"
 os.environ["FILE_STORAGE_ROOT"] = tempfile.mkdtemp(prefix="af-files-")
 os.environ["CPU_TASK_TIMEOUT_SECONDS"] = "60"
+os.environ["PURCHASE_ASSURANCE_ENABLED"] = "false"  # v1.4 default; U2 tests enable it per test
 
 from sqlalchemy import create_engine, text  # noqa: E402
 

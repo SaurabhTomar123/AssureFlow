@@ -305,24 +305,23 @@ def build_export(job: LeasedJob) -> None:
         if snap.status == "approved":
             snap.status = "exported"
         s.flush()
-        artifact_ids = [
-            str(a.id)
-            for a in s.execute(
-                select(Artifact).where(Artifact.snapshot_id == snap.id).order_by(Artifact.kind)
-            ).scalars()
-        ]
+        artifacts = list(
+            s.execute(select(Artifact).where(Artifact.snapshot_id == snap.id).order_by(Artifact.kind)).scalars()
+        )
         room = room_for_shop(s, snap.shop_id, "ca_review")
         if room is not None:
             label = "PARTIAL " if snap.partial else ""
-            post(
-                s,
-                room,
-                action_id=f"export:{snap.id}",
-                body=f"{label}{ref} export (hash {snap.content_hash[:12]}): Excel + JSON attached.",
-                kind="files",
-                attachments=artifact_ids,
-                correlation_id=job.correlation_id,
-            )
+            names = {"xlsx": "Excel", "json": "JSON"}
+            for artifact in artifacts:  # one tracked message per file, so a partial failure is visible
+                post(
+                    s,
+                    room,
+                    action_id=f"export:{snap.id}:{artifact.id}",
+                    body=f"{label}{ref} export, {names[artifact.kind]} file (hash {snap.content_hash[:12]}).",
+                    kind="files",
+                    attachments=[str(artifact.id)],
+                    correlation_id=job.correlation_id,
+                )
 
 
 # ------------------------------------------------------------------------------ P6 GSTR-2B
@@ -450,6 +449,8 @@ def run_acceptance(job: LeasedJob) -> None:
         )
 
 
+from workers.handlers import purchase_match as _purchase  # noqa: E402  (U2 handlers)
+
 HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "process_inbox_event": process_inbox_event,
     "fetch_and_store": fetch_and_store,
@@ -461,6 +462,8 @@ HANDLERS: dict[str, Callable[[LeasedJob], None]] = {
     "reconcile": reconcile_job,
     "daily_digest": daily_digest,
     "run_acceptance": run_acceptance,
+    "run_purchase_match": _purchase.run_purchase_match,
+    "build_purchase_export": _purchase.build_purchase_export,
 }
 
 

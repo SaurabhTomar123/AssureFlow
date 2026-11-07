@@ -34,9 +34,10 @@ from domain.models import (
     RequestContext,
     RoomBinding,
     Shop,
+    User,
     utcnow,
 )
-from domain.scope import is_owner_of
+from domain.scope import has_capability, is_owner_of
 from domain.services import messages as msg
 from domain.services.base import audit, case_event, post, room_for_shop
 from domain.services.cases import (
@@ -91,7 +92,11 @@ def accept_upload(
     replaces: Invoice | None,
 ) -> Receipt:
     """Receipt + preserve_document grant + fetch_and_store job + 'received' outbox row, one transaction."""
-    if not is_owner_of(s, ctx.verified_user_id, shop.id):
+    client = room.purpose == "submission"
+    allowed = is_owner_of(s, ctx.verified_user_id, shop.id) or (
+        client and has_capability(s, ctx.verified_user_id, shop.id, "invoice_submit")
+    )
+    if not allowed:
         raise Forbidden("Only this shop's owner can send bills here.")
     receipt = Receipt(
         public_ref=next_ref(s, shop.practice_id, "R"),
@@ -129,10 +134,21 @@ def accept_upload(
         s,
         room,
         action_id=f"received:{receipt.id}",
-        body=msg.received(receipt.public_ref, receipt.filename),
+        body=msg.submission_received(receipt.filename) if client else msg.received(receipt.public_ref, receipt.filename),
         correlation_id=event.correlation_id,
         case_ref=replaces.case_ref if replaces else None,
     )
+    if client:
+        shop_room = room_for_shop(s, shop.id, "shop_intake")
+        sender = s.get(User, ctx.verified_user_id)
+        if shop_room is not None and sender is not None:
+            post(
+                s,
+                shop_room,
+                action_id=f"submitted:{receipt.id}",
+                body=msg.submitted_by(sender.display_name, receipt.filename, receipt.public_ref),
+                correlation_id=event.correlation_id,
+            )
     return receipt
 
 
@@ -146,7 +162,7 @@ def reject_receipt(s: Session, receipt: Receipt, room: RoomBinding, reason: str)
         s,
         room,
         action_id=f"rejected:{receipt.id}",
-        body=msg.rejected(receipt.public_ref, reason),
+        body=msg.rejected(receipt.filename if room.purpose == "submission" else receipt.public_ref, reason),
         correlation_id=receipt.correlation_id,
     )
     audit(
@@ -198,8 +214,10 @@ def record_preserved(
                 s,
                 room,
                 action_id=f"duplicate_file:{receipt.id}",
-                body=msg.duplicate_file(receipt.public_ref, original.case_ref),
-                case_ref=original.case_ref,
+                body=msg.submission_duplicate(receipt.filename)
+                if room.purpose == "submission"
+                else msg.duplicate_file(receipt.public_ref, original.case_ref),
+                case_ref=None if room.purpose == "submission" else original.case_ref,
                 correlation_id=receipt.correlation_id,
             )
             return None
@@ -434,6 +452,9 @@ def confirm(
     rev.confirmed_by = ctx.verified_user_id
     rev.confirmed_at = utcnow()
     executor.run(Event("owner_confirmed"))
+    from domain.services import purchases
+
+    purchases.propose_link(s, case, ctx.request_id)
     return rev
 
 

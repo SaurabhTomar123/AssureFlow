@@ -18,8 +18,8 @@ from adapters.switch_client import get_switch
 from common.db import transaction
 from common.logging import get_logger
 from common.settings import get_settings
-from domain.models import Artifact, Outbox, RoomBinding, utcnow
-from domain.services.base import audit
+from domain.models import Artifact, Outbox, RoomBinding, Snapshot, utcnow
+from domain.services.base import audit, post
 from domain.services.disclosure import audience_ok, unauthorized_live, unauthorized_members
 from domain.services.operations import ops_alert
 
@@ -39,6 +39,35 @@ def _heads(s: Session) -> list[Outbox]:
                 first, (Outbox.destination == first.c.destination) & (Outbox.seq == first.c.seq)
             )
         ).scalars()
+    )
+
+
+def _report_dead(s: Session, row: Outbox) -> None:
+    """A message that can never be sent must be visible; a file gets a recovery note in its own room."""
+    room = s.get(RoomBinding, row.room_binding_id)
+    assert room is not None
+    log.error("outbox.dead", room=room.name, action_id=row.action_id, error=row.last_error)
+    if room.purpose != "operations":
+        ops_alert(
+            s,
+            room.practice_id,
+            f"dead:{row.id}",
+            f"message {row.action_id.split(':')[0]} to {room.name} could not be sent: {row.last_error}.",
+            row.correlation_id,
+        )
+    if row.kind != "files":
+        return
+    artifacts = [s.get(Artifact, uuid.UUID(a)) for a in row.attachments]
+    names = ", ".join(a.filename for a in artifacts if a is not None)
+    snapshot_ids = {a.snapshot_id for a in artifacts if a is not None and a.snapshot_id is not None}
+    snapshot = s.get(Snapshot, next(iter(snapshot_ids))) if snapshot_ids else None
+    recovery = f" Reply `resend {snapshot.public_ref}` to try again." if snapshot is not None else ""
+    post(
+        s,
+        room,
+        action_id=f"failed:{row.id}",
+        body=f"I couldn't send {names}. The stored file is unchanged.{recovery}",
+        correlation_id=row.correlation_id,
     )
 
 
@@ -146,6 +175,7 @@ def dispatch_once() -> int:
                 row.last_error = type(exc).__name__
                 if row.transport_attempts >= settings.OUTBOX_MAX_ATTEMPTS:
                     row.status = "dead"
+                    _report_dead(s, row)
             continue
         with transaction() as s:
             row = s.get(Outbox, row_id)

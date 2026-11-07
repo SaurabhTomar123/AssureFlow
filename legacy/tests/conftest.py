@@ -1,4 +1,5 @@
 import os
+os.environ.setdefault("LEGACY_SEED_ADMIN_PASSWORD", "test-only-not-a-real-password")
 import sys
 from pathlib import Path
 import importlib.util

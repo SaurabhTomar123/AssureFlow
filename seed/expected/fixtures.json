@@ -328,5 +328,35 @@
   "sha256": "fd5b8b57f8aa0e8d54cf58ae244fdeea6c92c643efae9d8e784c5768127535c9",
   "shop": "sharma",
   "totals": {}
+ },
+ "F22_abc_invoice_10_cartons": {
+  "expected_non_pass": {},
+  "file": "F22_abc_invoice_10_cartons.pdf",
+  "kind": "pdf",
+  "note": "U2: bills 10 cartons; PO-101 ordered 10; storekeeper confirms 8",
+  "sha256": "03c9c130d98ef67f72d6dc1a08b5f1c3a11711f1c5c7eee07bdd1c211912b74f",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "125.00",
+   "igst": "0",
+   "sgst": "125.00",
+   "taxable": "5000.00",
+   "total": "5250.00"
+  }
+ },
+ "F23_abc_corrected_8_cartons": {
+  "expected_non_pass": {},
+  "file": "F23_abc_corrected_8_cartons.pdf",
+  "kind": "pdf",
+  "note": "U2: supplier's corrected invoice for the 8 cartons received",
+  "sha256": "87f5a1c068107ceb06d50fc27c12586ddc8c3af225b9421ff257970cfd70d01d",
+  "shop": "sharma",
+  "totals": {
+   "cgst": "100.00",
+   "igst": "0",
+   "sgst": "100.00",
+   "taxable": "4000.00",
+   "total": "4200.00"
+  }
  }
 }

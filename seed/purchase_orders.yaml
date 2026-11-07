@@ -1,0 +1,11 @@
+# Structured seeded purchase orders (U2, D-29). 100% synthetic. Created as drafts; the owner confirms
+# them in the shop room (`ok PO-101 r1`). Prices are tax-exclusive per unit.
+orders:
+  - order_ref: PO-101
+    shop: sharma
+    supplier_name: ABC Traders
+    supplier_state: "07"
+    supplier_pan: ABCTR1234F
+    expected_delivery_date: "2026-11-05"
+    lines:
+      - {line_id: L1, item_code: OIL-1L-12, description: "Sunflower oil 1L x 12", ordered_qty: "10", unit: carton, unit_price: "500.00", tax_basis: exclusive}

@@ -10,7 +10,7 @@
 
 | | |
 |---|---|
-| **Offline tests** | 85 passed (real PostgreSQL, recorded extractions, in-memory Switch) |
+| **Offline tests** | 189 passed (real PostgreSQL, recorded extractions, in-memory Switch), incl. purchase assurance |
 | **Live tests** | 4 passed, 1 manual, against Switch 0.31.0 + Mattermost |
 | **Lint / types** | ruff clean · mypy strict clean (58 files) |
 | **Health** | 12/12 PASS on the live stack |
@@ -27,18 +27,19 @@
 7. [Run with Switch (live)](#run-with-switch-live)
 8. [Room commands](#room-commands)
 9. [GSTR-2B reconciliation](#gstr-2b-reconciliation)
-10. [Configuration](#configuration)
-11. [Testing and verification](#testing-and-verification)
-12. [Troubleshooting](#troubleshooting)
-13. [Repository map](#repository-map)
-14. [Known limitations](#known-limitations-v100-hackathon)
+10. [Purchase assurance (U2)](#purchase-assurance-update-u2-behind-a-flag)
+11. [Configuration](#configuration)
+12. [Testing and verification](#testing-and-verification)
+13. [Troubleshooting](#troubleshooting)
+14. [Repository map](#repository-map)
+15. [Known limitations](#known-limitations-v100-hackathon)
 
 ## For judges: five minutes
 
 1. **See it without installing anything:** read the real Switch room transcripts in
    [docs/release/live-run-2026-11-05.md](docs/release/live-run-2026-11-05.md).
 2. **Run the story offline (no keys, no Switch):** follow [Quickstart](#quickstart-offline-no-switch-no-api-key) and run `make demo`.
-3. **Check the claims:** `make test` (85 tests) and `make acceptance` (machine-generated report). Every phase item
+3. **Check the claims:** `make test` (189 tests) and `make acceptance` (machine-generated report). Every phase item
    is listed with its evidence in [docs/gates/](docs/gates/README.md). Design decisions are in
    [docs/decisions.md](docs/decisions.md).
 
@@ -66,6 +67,7 @@ all six rooms itself.
 | `af-practice-home` | CAs and practice staff only | Practice directory and month readiness across the practice's shops |
 | `af-operations` | the operator | Health, failed jobs, `retry`, `trace INV-…`; alerts for dead jobs and withheld messages (ids and metadata only) |
 | `af-synthetic-testing` | developers (test/demo only) | `acceptance` runs the full offline suite and posts the machine-generated report |
+| `af-delivery-sharma` (purchase assurance) | the storekeeper | Counts what arrived against the order: item names and quantities only, **never prices** |
 
 * **Room isolation is the product.** Shop A never sees shop B, and owners never see the CA room. Before every
   message is sent, the outbox rechecks the room's declared audience **and Switch's live member list**. If anyone
@@ -99,7 +101,7 @@ Without Switch there is no intake, no review, no handoff and no delivery: the ro
 #af-ca-review    CA Mehta: snapshot sharma 2026-11
 #af-ca-review    assure-flow: SN-0001 · hash 539837db061e · Included 2 · …
 #af-ca-review    CA Mehta: approve SN-0001 539837db061e
-#af-ca-review    assure-flow: SN-0001 export: Excel + JSON attached.
+#af-ca-review    assure-flow: SN-0001 export, JSON file … · SN-0001 export, Excel file …
 ```
 
 ## Architecture
@@ -152,7 +154,7 @@ cp .env.example .env
 docker compose up -d db                              # PostgreSQL 16 on 127.0.0.1:5433
 python -m alembic upgrade head
 make demo        # the correction-to-export story, printed as room transcripts
-make test        # 85 offline tests
+make test        # 189 offline tests
 make acceptance  # machine-generated report in docs/release/
 uvicorn api.main:app --port 8000   # optional: project landing page at http://localhost:8000/
 ```
@@ -192,10 +194,13 @@ For development, give your coding agent the Switch documentation (never added to
 | Room | Commands |
 |---|---|
 | Shop | send a file · `ok INV-0001 r1` · `ok INV-0001 hold` · `INV-0001 total=1180.00 date=2026-11-03` · send a file with `INV-0001` in the message to replace a document · `status` · `pending` · `why-held INV-0001` · `help` |
-| CA review | `RR-0001 include` · `RR-0001 exclude <reason>` · `RR-0001 resolve <RULE-ID> <reason>` · `RR-0001 override <RULE-ID>[,…] <reason>` · `RR-0001 clarify <question>` · `RR-0001 supplier <reason>` · `reopen INV-0001 <reason>` · `readiness sharma 2026-11` · `snapshot sharma 2026-11` · `approve SN-0001 <hash-12> [ack <held> <unassigned>]` · `assign INV-0001 2026-11` · `pending` · `gstr2b sharma 2026-11` (with the file attached) · `recon sharma 2026-11` |
+| CA review | `RR-0001 include` · `RR-0001 exclude <reason>` · `RR-0001 resolve <RULE-ID> <reason>` · `RR-0001 override <RULE-ID>[,…] <reason>` · `RR-0001 clarify <question>` · `RR-0001 supplier <reason>` · `reopen INV-0001 <reason>` · `readiness sharma 2026-11` · `snapshot sharma 2026-11` · `approve SN-0001 <hash-12> [ack <held> <unassigned>]` · `resend SN-0001 [excel|json]` · `assign INV-0001 2026-11` · `pending` · `gstr2b sharma 2026-11` (with the file attached) · `recon sharma 2026-11` |
 | Practice home | `directory` · `readiness <shop> 2026-11` |
 | Operations | `health` · `failed` · `job <id>` · `retry <id>` · `trace INV-0001` |
 | Synthetic testing | `acceptance` · `report <run-id>` |
+| Shop, purchases (flag on) | `orders` · `ok PO-101` · `link INV-0001 PO-101 [1=L1]` · `accept-partial PO-101` · `task INV-0001 <who> <due> <what>` · `TK-0001 ack\|done <note>\|verify\|cancel <reason>` · `tasks` · `purchase PO-101` · `authorize PR-0001 <hash-12> due YYYY-MM-DD` |
+| Delivery (flag on) | `orders` · `PO-101 L1=8` · `ok DR-0001 v1` · `DR-0001 L1=9` (corrects, never adds) |
+| CA review, purchases (flag on) | `review PR-0001 <hash-12>` |
 
 ## GSTR-2B reconciliation
 
@@ -204,6 +209,52 @@ stored unchanged (re-uploading the same file changes nothing); a wrong GSTIN or 
 each confirmed purchase to at most one statement line by supplier GSTIN, document type, financial year and invoice
 number, compares every tax component in `Decimal`, and reports **exact match, mismatch, purchase only, statement
 only, ambiguous**. A match supports review; it is not an ITC eligibility decision.
+
+## Shared review group (optional, per shop)
+
+By default the owner and CA have separate rooms. A shop can instead share one group with its CA:
+`python -m scripts.admin shared-review sharma on`, then add the CA to the shop's chat group.
+
+* The owner uploads and confirms bills, and review requests and CA decisions all happen in that group.
+* Only the CA can include or exclude; only the owner can confirm. Agents can do neither.
+* People can talk freely: only strictly formed commands act, so "yes, call him" can't confirm a bill.
+* Each review request carries a suggestion worked out from the checks, labelled as not a decision.
+* The CA's private room remains for monthly packs, approvals and the view across shops.
+
+The owner sees the CA's review details in this mode, so use it only where that's acceptable (D-31).
+
+**Client invoices.** A client sends bills in the shop's submission room (`af-submit-sharma`) and only ever sees "received".
+The bill appears in the shop group with who sent it, the owner confirms the details, and it reaches the CA with no forwarding
+(D-32). To add one to an existing database: `python -m scripts.admin add-client sharma client.verma "Verma Supplies"`.
+
+## Purchase assurance (Update U2, behind a flag)
+
+Invoice review answers "is this bill correct?". Purchase assurance adds "did we get what we were billed for?",
+comparing **what was ordered, what the storekeeper confirms arrived and what the supplier billed**, then
+producing a reviewed **payment-readiness** record. It is off by default (`PURCHASE_ASSURANCE_ENABLED=false`,
+plus per-shop opt-in) and leaves every v1.4 behaviour unchanged when off.
+
+```
+#af-shop-sharma      Ramesh: ok PO-101 r1                       (owner confirms the order: 10 cartons)
+#af-delivery-sharma  Suresh: PO-101 L1=8 · ok DR-0001 v1        (storekeeper counts; this room never shows prices)
+#af-shop-sharma      assure-flow: PO-101 / INV-0001: payment readiness is on hold.
+                     • billed 10 carton but 8 confirmed received (difference 2)
+#af-shop-sharma      Ramesh: task INV-0001 anil tomorrow get a corrected invoice for 8 cartons
+#af-shop-sharma      Anil: TK-0001 done …    -> stays on hold: finishing a task never clears a mismatch
+#af-shop-sharma      Ramesh: corrected bill for INV-0001 [PDF] · ok INV-0001 r2 · accept-partial PO-101 · TK-0001 verify
+#af-ca-review        CA Mehta: review PR-0001 933eed99cf16       (signs the exact record)
+#af-shop-sharma      Ramesh: authorize PR-0001 933eed99cf16 due 2026-11-20
+#af-shop-sharma      assure-flow: PR-0001 is ready for payment: ₹4,200.00 … Nothing has been paid.
+                     Still outstanding on PO-101: 2 carton … [purchase pack: Excel + JSON]
+```
+
+Code does every comparison (`rules/purchase.py`, rules M01–M08: supplier, line mapping, exact quantities and
+units, exact price, partial delivery, invoice review first, missing evidence, one invoice per order). People
+confirm the order, the delivery count, the link and any partial delivery; the reviewer and then the owner sign the
+same content hash, and the owner's authorization rechecks every input in the same transaction. Any later change
+withdraws the record with a notice. Ready for payment never means paid. Full transcript:
+[docs/release/live-run-2026-11-06-purchase.md](docs/release/live-run-2026-11-06-purchase.md); contract and scope:
+[docs/purchase-assurance-update.md](docs/purchase-assurance-update.md); evidence: [docs/gates/U2.md](docs/gates/U2.md).
 
 ## Configuration
 
@@ -217,6 +268,8 @@ Every variable, with its default, is in [.env.example](.env.example). The ones y
 | `LLM_PROVIDER` / `LLM_MODEL` / `LLM_API_KEY` | `fake` / `claude-opus-5-5` / empty | `fake` replays recorded extractions; `anthropic` calls Claude |
 | `LIVE_MEMBER_CHECK` | `true` | Check Switch's live room members before each send |
 | `SWITCH_TRUSTED_USERNAMES` | empty | Chat usernames allowed in rooms without an identity (e.g. deployment admins) |
+| `LLM_PROVIDER` | `fake` | `fake` replays recorded extractions (no key); `anthropic` or `gemini` read new bills live and need `LLM_MODEL` and `LLM_API_KEY`. Measure accuracy with `make eval-extraction` first. A free Gemini key is for synthetic documents only (D-30) |
+| `PURCHASE_ASSURANCE_ENABLED` | `false` | Purchase assurance (U2); shops also opt in (`seed/practice.yaml`) |
 | `TAX_LINE_TOLERANCE_INR` / `AMOUNT_TOLERANCE_INR` | `0.01` / `1.00` | Rule tolerances |
 | `DIGEST_LOCAL_TIME` / `QUIET_HOURS` | `10:00` / `20:00-09:00` | Daily digest schedule (Asia/Kolkata) |
 
@@ -226,7 +279,7 @@ Secrets come only from the environment. `data/` (credentials, files) and `.env` 
 
 | Command | What it proves |
 |---|---|
-| `make test` | 85 offline tests: rules, workflow, authority, isolation, lease fencing, snapshots, GSTR-2B, MCP |
+| `make test` | 189 offline tests: rules, workflow, authority, isolation, lease fencing, snapshots, GSTR-2B, MCP, purchase assurance |
 | `make acceptance` | Same suite, with a JSON report in `docs/release/` |
 | `make lint` · `make typecheck` | ruff and strict mypy |
 | `make health` | Database, environment, room bindings, identities, queues, outbox, Switch server and version |
@@ -246,7 +299,8 @@ The full pre-submission list is in [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIS
 | `refusing to reset in environment …` | Intended: seeding only runs with `ENVIRONMENT=demo` or `test` |
 | Switch stack fails to start: port 5434 in use | Change the Switch Postgres host port (we use 55434) |
 | GSTR-2B `.json` never arrives through Mattermost | Switch 0.31.0 bridge bug (D-18); attach the Excel file instead |
-| Agent replies nowhere / message withheld | Someone without an identity is in the room. See the alert in `af-operations`; bind them or remove them |
+| Agent replies nowhere / message withheld | Someone without an identity is in the room. See the alert in `af-operations`; bind them or remove them. On Telegram, a removal isn't noticed: create a fresh group and run `python -m scripts.admin rebind-room <name> <switch-room-id> <reason>` |
+| Adapter or worker exits saying one is already running | Another copy holds the lock, and the message names it. Stop that copy first |
 | `make health` shows unbound rooms | Run `python -m scripts.admin create-rooms …` or `bind-rooms` (Telegram: `bind-rooms --prefix "Telegram: "`) |
 
 ## Repository map
@@ -255,12 +309,12 @@ The full pre-submission list is in [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIS
 |---|---|
 | `api/` | FastAPI scoped business tools; `api/mcp/` MCP server |
 | `domain/` | Models, state table, `CaseWorkflow`, CA actions, periods, services (intake, checks, snapshots, reconciliation, digests, operations, compensation, disclosure) |
-| `rules/` | Deterministic checks, rule registry, routing, GSTR-2B matcher |
+| `rules/` | Deterministic checks, rule registry, routing, GSTR-2B matcher, purchase matcher (M01–M08) |
 | `workers/` | Queue, lanes, CPU pool, handlers, outbox |
 | `adapters/` | Switch client, inbox writer, storage, PDF, GSTR-2B parsers, Claude extraction, Excel |
 | `agents/rooms.yaml` | The six rooms and their tool allow-lists |
 | `migrations/` | Alembic, one revision per phase |
-| `seed/` | 21 synthetic invoices, GSTR-2B fixtures, recorded extractions, expected outcomes |
+| `seed/` | 23 synthetic invoices, GSTR-2B fixtures, seeded purchase order, recorded extractions, expected outcomes |
 | `tests/offline/`, `tests/live/` | Offline suite; live Switch tests |
 | `scripts/` | admin, health, measure, isolation matrix, acceptance, demo |
 | `legacy/` | Earlier MunimJi prototypes, kept for reference only (see below) |
@@ -286,6 +340,9 @@ DATABASE_URL=sqlite:///./legacy_test.db python -m pytest legacy/tests -o testpat
 * Credit/debit-note profiles and eligibility-evidence tracking (P6-06/07) need CA-approved examples and are not built.
 * Production phases are not started: P7 security and operations for real clients, P8 controlled pilot (two monthly
   cycles), P9 optional filing. They need sign-off from a practising CA and a named security owner.
+* Purchase assurance (U2) is the hackathon slice: seeded orders confirmed in chat (no order creation in chat or order OCR), one invoice per order, one unit per order line (the owner confirms the unit when linking, D-26), no price-change revisions, no reminders for tasks, no monthly-pack section yet (UAT10). Guided setup, permission preflight and routing policies (U2 §14–17) are not built. The CA is the purchase reviewer (D-24).
+* Telegram member check: Switch 0.31.0 reports display names and doesn't notice when someone leaves a Telegram group. An ambiguous or unknown name withholds the message, but a pass means only "no known unauthorized member", not a verified audience. After a removal, replies stay withheld; the recovery is a fresh group plus `python -m scripts.admin rebind-room`.
+* Purchase assurance is optional and off by default. Automated tests and a Mattermost live run cover it. Its full Telegram workflow still needs independent staff accounts for manual verification, so it isn't presented as verified end to end on Telegram.
 * Scope: INR domestic B2B purchase tax invoices only. Assure Flow does **not** file GST returns, verify live GSTIN
   registration, or decide ITC eligibility. Amounts are "tax associated with an issue", never "money lost". The CA
   files separately.

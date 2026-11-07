@@ -65,6 +65,9 @@ class Exec:
             context_id=self.context.context_id if self.context else None,
             grant_id=self.grant.grant_id if self.grant else None,
         )
+        from domain.services import purchases
+
+        purchases.on_case_change(self.s, self.case, self.correlation_id, self.context, self.grant)
 
     def _supersede_current_revision(self, c: Command) -> None:
         rev = current_revision(self.s, self.case)

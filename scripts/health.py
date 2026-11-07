@@ -5,11 +5,13 @@ Run: python -m scripts.health    (IDs and metadata only; never invoice content)
 
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
 
 import httpx
 from sqlalchemy import func, select, text
 
+from common import runtime
 from common.db import transaction
 from common.settings import get_settings
 from domain import models as m
@@ -58,10 +60,25 @@ def main() -> None:
             checks.append(
                 ("failed jobs", not dead, ", ".join(f"{t}:{str(i)[:8]}" for i, t in dead[:5]) or "none")
             )
-            withheld = s.execute(
-                select(func.count()).select_from(m.Outbox).where(m.Outbox.status.in_(("withheld", "dead")))
+            recent = m.utcnow() - timedelta(hours=24)
+            count = select(func.count()).select_from(m.Outbox)
+            dead_rows = s.execute(count.where(m.Outbox.status == "dead")).scalar_one()
+            new_withheld = s.execute(
+                count.where(m.Outbox.status == "withheld", m.Outbox.created_at >= recent)
             ).scalar_one()
-            checks.append(("outbox", withheld == 0, f"{withheld} withheld/dead messages"))
+            old_withheld = s.execute(
+                count.where(m.Outbox.status == "withheld", m.Outbox.created_at < recent)
+            ).scalar_one()
+            checks.append(
+                (
+                    "outbox",
+                    dead_rows == 0 and new_withheld == 0,
+                    f"{dead_rows} dead, {new_withheld} withheld in 24h, {old_withheld} older withheld kept as evidence",
+                )
+            )
+            for role in ("adapter", "worker"):
+                who = runtime.holder(s, role)
+                checks.append((f"{role} running", who is not None, who or "no process holds the lock"))
     except Exception as exc:  # noqa: BLE001 - the report shows failures instead of raising
         checks.append(("database", False, type(exc).__name__))
     creds = Path(settings.SWITCH_CREDENTIALS_FILE)

@@ -10,6 +10,7 @@ import socket
 import threading
 import time
 
+from common import runtime
 from common.logging import configure_logging, get_logger
 from common.settings import get_settings
 from workers.handlers import HANDLERS, classify
@@ -108,6 +109,10 @@ def drain(max_rounds: int = 50) -> None:
 def main() -> None:
     settings = get_settings()
     configure_logging()
+    try:
+        runtime.hold("worker")
+    except runtime.AlreadyRunning as exc:
+        raise SystemExit(str(exc)) from exc
     stop = threading.Event()
     threads = [
         threading.Thread(target=outbox_loop, args=(stop,), daemon=True),

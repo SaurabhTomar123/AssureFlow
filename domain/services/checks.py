@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from common.ids import next_ref
 from common.settings import get_settings
 from domain.models import (
+    CaAssignment,
     CheckResult,
     CheckRun,
     DuplicateKey,
@@ -23,10 +24,11 @@ from domain.models import (
     LineItem,
     ReviewRequest,
     Shop,
+    User,
     utcnow,
 )
 from domain.services import messages as msg
-from domain.services.base import post, room_for_shop
+from domain.services.base import post, review_room, room_for_shop
 from domain.services.cases import current_revision, duplicate_key
 from rules import registry, routing
 from rules.types import PASS, LineInput, RevisionInput, RuleResult, Tolerances
@@ -237,6 +239,28 @@ def issue_message(s: Session, issue: Issue) -> str:
     return f"{issue.rule_id}: {text}{amount}"
 
 
+def _suggestion(s: Session, case: Invoice) -> str:
+    """A next step worked out by code from the check results. It is never recorded as a decision."""
+    ca = s.execute(
+        select(User)
+        .join(CaAssignment, CaAssignment.ca_user_id == User.id)
+        .where(CaAssignment.shop_id == case.shop_id, CaAssignment.effective_to.is_(None))
+        .limit(1)
+    ).scalar_one_or_none()
+    who = ca.display_name.removeprefix("CA ").split()[0] if ca else "CA"
+    issues = open_issues(s, case)
+    blocking = [i for i in issues if i.blocking]
+    if any(i.rule_id not in registry.BY_ID or not registry.BY_ID[i.rule_id].overridable for i in blocking):
+        step = "request a corrected invoice from the supplier"
+    elif blocking:
+        step = "check the evidence, then override or ask for a correction"
+    elif issues:
+        step = "check the warning, then include or override"
+    else:
+        step = "include it"
+    return f"Suggestion from the checks, not a decision: {step}. {who}, your decision."
+
+
 def route_issues(s: Session, case: Invoice, correlation_id: str) -> None:
     owner_issues = [i for i in open_issues(s, case) if i.owner_role == "owner"]
     room = room_for_shop(s, case.shop_id, "shop_intake")
@@ -295,14 +319,14 @@ def open_review_request(s: Session, case: Invoice, correlation_id: str) -> Revie
     overridable = sorted(
         i.rule_id
         for i in open_issues(s, case)
-        if i.blocking and i.rule_id in registry.BY_ID and registry.BY_ID[i.rule_id].overridable
+        if i.rule_id in registry.BY_ID and registry.BY_ID[i.rule_id].overridable
     )
     shop = s.get(Shop, case.shop_id)
     assert shop is not None
     summary_lines = [issue_message(s, i) for i in ca_issues] or ["All required checks passed."]
     dedupe = hashlib.sha256(f"{case.id}|{rev.id}|review|ca".encode()).hexdigest()
     shop_room = room_for_shop(s, case.shop_id, "shop_intake")
-    ca_room = room_for_shop(s, case.shop_id, "ca_review")
+    ca_room = review_room(s, case.shop_id)
     if s.execute(select(Handoff).where(Handoff.dedupe_key == dedupe)).scalar_one_or_none() is None:
         s.add(
             Handoff(
@@ -333,16 +357,13 @@ def open_review_request(s: Session, case: Invoice, correlation_id: str) -> Revie
                 "Reply "
                 + (
                     f"`{rr.public_ref} resolve <RULE-ID> <reason>`"
-                    + (
-                        f", `{rr.public_ref} override {','.join(overridable)} <reason>`"
-                        if overridable
-                        else ""
-                    )
                     if blocking
                     else f"`{rr.public_ref} include`"
                 )
+                + (f", `{rr.public_ref} override {','.join(overridable)} <reason>`" if overridable else "")
                 + f", `{rr.public_ref} exclude <reason>`, `{rr.public_ref} clarify <question>` "
                 f"or `{rr.public_ref} supplier <reason>`.",
+                *([_suggestion(s, case)] if shop.shared_review else []),
             ]
         )
         post(
@@ -353,4 +374,15 @@ def open_review_request(s: Session, case: Invoice, correlation_id: str) -> Revie
             case_ref=case.case_ref,
             correlation_id=correlation_id,
         )
+        private = room_for_shop(s, case.shop_id, "ca_review")
+        if private is not None and private.id != ca_room.id:
+            post(
+                s,
+                private,
+                action_id=f"review-note:{rr.id}",
+                body=f"{rr.public_ref} · {case.case_ref} · {shop.name}: posted in the shop's group. "
+                "You can decide it there or here.",
+                case_ref=case.case_ref,
+                correlation_id=correlation_id,
+            )
     return rr

@@ -11,11 +11,13 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from adapters.storage import LocalStorage
 from common.errors import Forbidden, NotFound, ValidationFailed
 from common.ids import next_ref
 from domain.context import issue_grant, require_live_context
 from domain.extraction import HEADER_FIELDS, LINE_FIELDS
 from domain.models import (
+    Artifact,
     CheckResult,
     Decision,
     DecisionInvalidation,
@@ -290,6 +292,46 @@ def request_snapshot(s: Session, ctx: RequestContext, shop: Shop, period: str) -
 class ApprovalOutcome:
     approved: bool
     reply: str
+
+
+def resend_export(s: Session, ctx: RequestContext, ref: str, which: str | None) -> str:
+    """Post the stored export files again. Same bytes, verified by hash; a pack is never rebuilt here."""
+    require_live_context(ctx)
+    snap = s.execute(
+        select(Snapshot).where(Snapshot.practice_id == ctx.practice_id, Snapshot.public_ref == ref)
+    ).scalar_one_or_none()
+    if snap is None:
+        raise NotFound(f"No snapshot {ref}.")
+    if not is_assigned_ca(s, ctx.verified_user_id, snap.shop_id):
+        raise Forbidden("Only the assigned CA can ask for this pack's files.")
+    kinds = {"excel": "xlsx", "xlsx": "xlsx", "json": "json"}
+    if which is not None and which.lower() not in kinds:
+        raise ValidationFailed(f"Use `resend {ref}`, `resend {ref} excel` or `resend {ref} json`.")
+    query = select(Artifact).where(Artifact.snapshot_id == snap.id).order_by(Artifact.kind)
+    if which is not None:
+        query = query.where(Artifact.kind == kinds[which.lower()])
+    artifacts = list(s.execute(query).scalars())
+    if not artifacts:
+        raise ValidationFailed(f"{ref} has no export files yet.")
+    storage = LocalStorage()
+    for artifact in artifacts:
+        if hashlib.sha256(storage.get(artifact.storage_key)).hexdigest() != artifact.sha256:
+            raise ValidationFailed(f"{artifact.filename} no longer matches its recorded hash, so I did not send it.")
+    room = room_for_shop(s, snap.shop_id, "ca_review")
+    if room is None:
+        raise ValidationFailed("This shop has no CA review room to send the files to.")
+    status_note = "" if snap.status == "exported" else f" This pack is now {snap.status}."
+    for artifact in artifacts:
+        post(
+            s,
+            room,
+            action_id=f"resend:{artifact.id}:{ctx.request_id}",
+            body=f"{ref} export resent, {artifact.filename} (hash {snap.content_hash[:12]}).{status_note}",
+            kind="files",
+            attachments=[str(artifact.id)],
+            correlation_id=ctx.request_id,
+        )
+    return f"Sending {len(artifacts)} stored file{'s' if len(artifacts) != 1 else ''} from {ref} again."
 
 
 def approve_snapshot(

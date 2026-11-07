@@ -13,13 +13,28 @@ from sqlalchemy.orm import Session
 
 from common.settings import get_settings
 from domain.models import ChatIdentity, RoomBinding, RoomMember, User
-from domain.scope import is_assigned_ca, is_owner_of
+from domain.scope import has_capability, is_assigned_ca, is_owner_of
 from domain.services.base import shops_of_room
 
 
 def _authorized(s: Session, room: RoomBinding, user: User, shops: list[uuid.UUID]) -> bool:
     if room.purpose == "shop_intake":
-        return all(is_owner_of(s, user.id, shop) or is_assigned_ca(s, user.id, shop) for shop in shops)
+        return all(
+            is_owner_of(s, user.id, shop)
+            or is_assigned_ca(s, user.id, shop)
+            or has_capability(s, user.id, shop, "invoice_view")
+            for shop in shops
+        )
+    if room.purpose == "delivery":
+        # Receivers see item names and quantities only; never invoice prices or tax details (U2 section 3).
+        return all(
+            is_owner_of(s, user.id, shop) or has_capability(s, user.id, shop, "delivery_confirm") for shop in shops
+        )
+    if room.purpose == "submission":
+        # Only "received" notes are posted here, never case details (D-32).
+        return all(
+            is_owner_of(s, user.id, shop) or has_capability(s, user.id, shop, "invoice_submit") for shop in shops
+        )
     if room.purpose in ("ca_review", "practice_home"):
         return user.role in ("ca", "practice_staff") and all(
             is_assigned_ca(s, user.id, shop) for shop in shops
@@ -30,17 +45,27 @@ def _authorized(s: Session, room: RoomBinding, user: User, shops: list[uuid.UUID
 
 
 def unauthorized_live(s: Session, room: RoomBinding, usernames: list[str]) -> list[str]:
-    """Check Switch's live member list: every person must map to an authorized identity or be trusted."""
+    """Check Switch's live member list: every person must map to one authorized identity or be trusted.
+
+    Switch 0.31.0 reports display names only, so a pass means "no known unauthorized member", not a verified
+    audience. A name is not an identity: one that matches no one, several people or another practice fails closed.
+    """
     trusted = set(get_settings().SWITCH_TRUSTED_USERNAMES)
     shops = shops_of_room(s, room.id)
     bad: list[str] = []
     for name in usernames:
         if name in trusted:
             continue
-        identity = s.execute(
-            select(ChatIdentity).where(ChatIdentity.chat_username == name, ChatIdentity.revoked_at.is_(None))
-        ).scalar_one_or_none()
-        user = s.get(User, identity.user_id) if identity else None
+        identities = list(
+            s.execute(
+                select(ChatIdentity).where(ChatIdentity.chat_username == name, ChatIdentity.revoked_at.is_(None))
+            ).scalars()
+        )
+        user_ids = {i.user_id for i in identities}
+        if len(user_ids) != 1 or any(i.practice_id != room.practice_id for i in identities):
+            bad.append(name)
+            continue
+        user = s.get(User, identities[0].user_id)
         if user is None or not _authorized(s, room, user, shops):
             bad.append(name)
     return bad

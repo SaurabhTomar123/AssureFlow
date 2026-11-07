@@ -65,7 +65,7 @@ def main() -> None:
         snap = s.execute(select(m.Snapshot).order_by(m.Snapshot.created_at.desc()).limit(1)).scalar_one()
         ref, digest, counts = snap.public_ref, snap.content_hash, snap.manifest["counts"]
     say("ca", "ca", f"approve {ref} {digest[:12]} ack {counts['held']} {counts['unassigned']}")
-    print("\nFiles posted to the CA room:", h.switch.uploads[-1][1] if h.switch.uploads else "none")
+    print("\nFiles posted to the CA room:", [f for _, files, _ in h.switch.uploads for f in files] or "none")
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -95,13 +96,17 @@ class Shop(Base):
     state_code: Mapped[str] = mapped_column(String(2))
     name: Mapped[str] = mapped_column(String(200))
     timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata")
+    purchase_assurance: Mapped[bool] = mapped_column(Boolean, default=False)  # U2 opt-in
+    shared_review: Mapped[bool] = mapped_column(Boolean, default=False)  # D-31: review in the shop group
     created_at: Mapped[datetime] = ts()
 
 
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        CheckConstraint("role IN ('owner','ca','practice_staff','operator','developer')"),
+        CheckConstraint(
+            "role IN ('owner','ca','practice_staff','operator','developer','staff','client')", name="users_role_check"
+        ),
         UniqueConstraint("practice_id", "handle"),
         {"info": {"phase": "P0"}},
     )
@@ -131,7 +136,8 @@ class RoomBinding(Base):
     __table_args__ = (
         UniqueConstraint("environment", "switch_room_id"),
         CheckConstraint(
-            "purpose IN ('practice_home','shop_intake','ca_review','operations','synthetic_testing')"
+            "purpose IN ('practice_home','shop_intake','ca_review','operations','synthetic_testing','delivery','submission')",
+            name="room_bindings_purpose_check",
         ),
         {"info": {"phase": "P0"}},
     )
@@ -247,7 +253,8 @@ class ExecutionGrant(Base):
         *shop_fk(),
         CheckConstraint(
             "operation IN ('preserve_document','extract_generation','run_checks','notify',"
-            "'build_snapshot','build_export','import_statement','reconcile','run_acceptance')",
+            "'build_snapshot','build_export','import_statement','reconcile','run_acceptance',"
+            "'run_purchase_match','build_purchase_export')",
             name="execution_grants_operation_check",
         ),
         {"info": {"phase": "P0"}},
@@ -781,11 +788,17 @@ class Snapshot(Base):
 
 class Artifact(Base):
     __tablename__ = "artifacts"
-    __table_args__ = (*shop_fk(), UniqueConstraint("snapshot_id", "kind"), {"info": {"phase": "P4"}})
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("snapshot_id", "kind"),
+        UniqueConstraint("readiness_id", "kind", name="uq_artifacts_readiness_kind"),
+        {"info": {"phase": "P4"}},
+    )
     id: Mapped[uuid.UUID] = pk()
     practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
     shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
-    snapshot_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("snapshots.id"))
+    snapshot_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("snapshots.id"), nullable=True)
+    readiness_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)  # U2 purchase pack
     kind: Mapped[str] = mapped_column(String(8))
     filename: Mapped[str] = mapped_column(String(255))
     sha256: Mapped[str] = mapped_column(String(64))
@@ -926,6 +939,257 @@ class DigestRun(Base):
     created_at: Mapped[datetime] = ts()
 
 
+# --------------------------------------------------------------------------------------------- U2
+# Purchase assurance (docs/purchase-assurance-update.md). Every table is shop-scoped.
+
+
+class ShopCapability(Base):
+    """A verified, revocable business capability of one user in one shop (D-25). Titles grant nothing."""
+
+    __tablename__ = "shop_capabilities"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("user_id", "shop_id", "capability"),
+        CheckConstraint(
+            "capability IN ('order_confirm','delivery_confirm','task_assign','task_work','invoice_view',"
+            "'purchase_review','readiness_authorize','invoice_submit')"
+        ),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"))
+    capability: Mapped[str] = mapped_column(String(24))
+    granted_at: Mapped[datetime] = ts()
+    revoked_at: Mapped[datetime | None] = ts(nullable=True)
+
+
+class PurchaseOrder(Base):
+    __tablename__ = "purchase_orders"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("practice_id", "order_ref"),
+        CheckConstraint("status IN ('draft','confirmed','cancelled')"),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    order_ref: Mapped[str] = mapped_column(String(32))
+    supplier_name: Mapped[str] = mapped_column(String(255))
+    supplier_gstin: Mapped[str] = mapped_column(String(15))
+    status: Mapped[str] = mapped_column(String(12), default="draft")
+    current_revision_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = ts()
+
+
+class PurchaseOrderRevision(Base):
+    """Order contents; immutable once confirmed. Lines: [{line_id, item_code, description, ordered_qty,
+    unit, unit_price, tax_basis}] with Decimal values stored as strings."""
+
+    __tablename__ = "purchase_order_revisions"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("order_id", "revision_no"),
+        CheckConstraint("status IN ('draft','confirmed','superseded')"),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    order_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("purchase_orders.id"))
+    revision_no: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(12), default="draft")
+    expected_delivery_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    currency: Mapped[str] = mapped_column(String(3), default="INR")
+    lines: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    confirmed_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    confirmed_at: Mapped[datetime | None] = ts(nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
+class DeliveryReport(Base):
+    """One version of a delivery report. A confirmed newer version supersedes the older one; only current
+    confirmed versions count toward the received quantity (M03, M08)."""
+
+    __tablename__ = "delivery_reports"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("order_id", "report_ref", "report_version"),
+        CheckConstraint("status IN ('submitted','confirmed','superseded','rejected')"),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    order_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("purchase_orders.id"))
+    report_ref: Mapped[str] = mapped_column(String(16))
+    report_version: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(12), default="submitted")
+    lines: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    submitted_by: Mapped[uuid.UUID] = mapped_column(Uuid)
+    source_event_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    observed_at: Mapped[datetime] = ts()
+    created_at: Mapped[datetime] = ts()
+
+
+class DeliveryEvent(Base):
+    __tablename__ = "delivery_events"
+    __table_args__ = (
+        *shop_fk(),
+        CheckConstraint("action IN ('submitted','confirmed','superseded','rejected')"),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    report_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("delivery_reports.id"))
+    action: Mapped[str] = mapped_column(String(12))
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    context_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
+class PurchaseLink(Base):
+    """Invoice case <-> order. One active link per case and per order in this release (M08)."""
+
+    __tablename__ = "purchase_links"
+    __table_args__ = (
+        *shop_fk(),
+        CheckConstraint("status IN ('active','inactive')"),
+        CheckConstraint(
+            "purchase_state IN ('awaiting_evidence','needs_resolution','ready_for_review',"
+            "'awaiting_owner','ready_for_payment')"
+        ),
+        Index(
+            "uq_purchase_links_active_case", "case_id", unique=True, postgresql_where=text("status = 'active'")
+        ),
+        Index(
+            "uq_purchase_links_active_order", "order_id", unique=True, postgresql_where=text("status = 'active'")
+        ),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("invoices.id"))
+    order_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("purchase_orders.id"))
+    link_version: Mapped[int] = mapped_column(Integer, default=1)
+    mapping: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)  # invoice line_no -> order line_id
+    status: Mapped[str] = mapped_column(String(8), default="active")
+    purchase_state: Mapped[str] = mapped_column(String(20), default="awaiting_evidence")
+    partial_accepted_at: Mapped[datetime | None] = ts(nullable=True)
+    partial_accepted_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    confirmed_by: Mapped[uuid.UUID] = mapped_column(Uuid)
+    confirmed_at: Mapped[datetime] = ts()
+
+
+class PurchaseMatchRun(Base):
+    __tablename__ = "purchase_match_runs"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("link_id", "input_hash", "rule_version"),
+        CheckConstraint("status IN ('pass','hold','needs_evidence')"),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    link_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("purchase_links.id"))
+    input_vector: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    input_hash: Mapped[str] = mapped_column(String(64))
+    rule_version: Mapped[str] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(String(16))
+    findings: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    totals: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    results_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = ts()
+
+
+class BusinessTask(Base):
+    __tablename__ = "business_tasks"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("practice_id", "task_ref"),
+        CheckConstraint(
+            "status IN ('open','acknowledged','evidence_submitted','verified_complete','cancelled','superseded')"
+        ),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    task_ref: Mapped[str] = mapped_column(String(16))
+    link_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("purchase_links.id"))
+    case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("invoices.id"))
+    category: Mapped[str] = mapped_column(String(32))
+    reason: Mapped[str] = mapped_column(Text)
+    assignee_user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"))
+    assigned_by: Mapped[uuid.UUID] = mapped_column(Uuid)
+    due_at: Mapped[str] = mapped_column(String(10))
+    status: Mapped[str] = mapped_column(String(20), default="open")
+    blocker: Mapped[bool] = mapped_column(Boolean, default=True)
+    expected_input_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = ts()
+    updated_at: Mapped[datetime] = ts()
+
+
+class TaskEvent(Base):
+    __tablename__ = "task_events"
+    __table_args__ = (*shop_fk(), {"info": {"phase": "U2"}})
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    task_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("business_tasks.id"))
+    action: Mapped[str] = mapped_column(String(24))
+    from_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    to_status: Mapped[str] = mapped_column(String(20))
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    context_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
+class PaymentReadiness(Base):
+    """A frozen purchase-review record (PR-...). Its content is fixed at creation; the reviewer's sign-off and
+    the owner's authorization bind its content hash. Ready for payment never means paid."""
+
+    __tablename__ = "payment_readiness"
+    __table_args__ = (
+        *shop_fk(),
+        UniqueConstraint("practice_id", "public_ref"),
+        CheckConstraint("status IN ('awaiting_review','awaiting_owner','ready_for_payment','stale')"),
+        {"info": {"phase": "U2"}},
+    )
+    id: Mapped[uuid.UUID] = pk()
+    practice_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    public_ref: Mapped[str] = mapped_column(String(16))
+    link_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("purchase_links.id"))
+    match_run_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("purchase_match_runs.id"))
+    input_hash: Mapped[str] = mapped_column(String(64))
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    amount: Mapped[Decimal] = mapped_column(MONEY)
+    currency: Mapped[str] = mapped_column(String(3), default="INR")
+    status: Mapped[str] = mapped_column(String(20), default="awaiting_review")
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    reviewed_at: Mapped[datetime | None] = ts(nullable=True)
+    review_context_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    authorized_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    authorized_at: Mapped[datetime | None] = ts(nullable=True)
+    authorize_context_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    due_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    due_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    stale_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
 APPEND_ONLY_TABLES = (
     "documents",
     "field_evidence",
@@ -937,6 +1201,9 @@ APPEND_ONLY_TABLES = (
     "statement_lines",
     "reconciliation_results",
     "test_runs",
+    "delivery_events",
+    "purchase_match_runs",
+    "task_events",
 )
 
 

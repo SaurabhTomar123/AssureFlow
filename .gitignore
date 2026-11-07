@@ -50,3 +50,29 @@ data/
 docs/release/junit-*.xml
 .claude/
 legacy_test.db
+
+# Secrets: never commit keys, tokens or credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*secrets*.json
+*.dump
+
+# Test accounts, tokens and anything else that grants access
+*test_users*.json
+*token*.json
+*.token
+*api_key*
+*apikey*
+*password*.txt
+*password*.json
+switch_credentials*
+gateway*.secret
+.secrets/
+secrets/
+*.log

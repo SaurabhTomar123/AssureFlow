@@ -185,6 +185,17 @@ def get_switch() -> SwitchPort:
 # ----------------------------------------------------------------------------- WebSocket consumer
 
 
+EVICTION_LIMIT = 3
+EVICTION_WINDOW_SECONDS = 60.0
+
+
+def evictions_exceeded(times: list[float], now: float) -> bool:
+    """Record one eviction; True once more than the limit fall inside the window (a competing adapter)."""
+    times.append(now)
+    times[:] = [t for t in times if now - t <= EVICTION_WINDOW_SECONDS]
+    return len(times) > EVICTION_LIMIT
+
+
 def event_key(data: dict[str, Any]) -> str:
     payload = data.get("payload") or {}
     return str(payload.get("message_id") or f"seq-{data.get('sequence')}")
@@ -202,6 +213,7 @@ async def run_adapter(creds: SwitchCredentials, store_event: Any, load_cursor: A
     settings = get_settings()
     ws_base = settings.SWITCH_BASE_URL.replace("http://", "ws://").replace("https://", "wss://").rstrip("/")
     backoff = 1.0
+    evictions: list[float] = []
     while True:
         cursor, generation = await asyncio.to_thread(load_cursor)
         params = f"connection_id={creds.connection_id}&scope=all&filter=all&client=assure-flow&client_version=1.0.0"
@@ -246,6 +258,12 @@ async def run_adapter(creds: SwitchCredentials, store_event: Any, load_cursor: A
                             log.warning("switch.evicted", code=code)
                             if code in ("taken_over", "closed"):
                                 return
+                            if evictions_exceeded(evictions, asyncio.get_running_loop().time()):
+                                log.error("switch.eviction_loop", limit=EVICTION_LIMIT)
+                                raise SystemExit(
+                                    "Evicted repeatedly: another process is using this agent connection. "
+                                    "Check `python -m scripts.health` before starting the adapter again."
+                                )
                         elif kind in ("message", "command", "room_join"):
                             await queue.put(frame)
                 finally:

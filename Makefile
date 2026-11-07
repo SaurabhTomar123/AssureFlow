@@ -1,6 +1,6 @@
 PY ?= python
 
-.PHONY: up down migrate seed reset fixtures test lint typecheck health demo bootstrap acceptance
+.PHONY: up down migrate seed reset fixtures test eval-extraction lint typecheck health demo bootstrap acceptance
 
 up:            ## start db, api and worker
 	docker compose up -d --build db migrate api worker
@@ -19,6 +19,9 @@ fixtures:      ## regenerate the 21 synthetic documents (deterministic)
 
 test:          ## offline CI: fixtures, fake model, mocked Switch, real PostgreSQL
 	$(PY) -m pytest tests/offline
+
+eval-extraction:  ## live model accuracy against the recorded fixtures (needs LLM_PROVIDER and a key; makes API calls)
+	$(PY) -m scripts.eval_extraction
 
 lint:
 	$(PY) -m ruff check .

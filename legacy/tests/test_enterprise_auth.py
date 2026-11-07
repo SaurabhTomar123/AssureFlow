@@ -1,3 +1,4 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from src.api.main import app
@@ -35,7 +36,7 @@ def test_jwt_creation_and_decoding():
 def test_auth_login_seeded_admin():
     response = client.post(
         "/api/auth/login",
-        json={"email": "admin@munimji.ai", "password": "MunimJi@2026"},
+        json={"email": "admin@munimji.ai", "password": os.environ["LEGACY_SEED_ADMIN_PASSWORD"]},
     )
     assert response.status_code == 200
     data = response.json()

@@ -61,6 +61,28 @@ def received(receipt_ref: str, filename: str) -> str:
     return f"Received {receipt_ref} ({filename}). Saving the original now."
 
 
+def submission_received(filename: str) -> str:
+    return f"Received {filename}. Thank you, it has gone to the shop for review."
+
+
+def submission_duplicate(filename: str) -> str:
+    return f"{filename} has already been received. Nothing more is needed."
+
+
+def submitted_by(name: str, filename: str, receipt_ref: str) -> str:
+    return f"{name} sent {filename} ({receipt_ref}). Reading it now; you'll get the details to confirm."
+
+
+def help_submission() -> str:
+    return "Send your invoice here as a PDF, JPG or PNG. I'll confirm when it's received."
+
+
+def relay_failed(filename: str, reason: str) -> str:
+    if "exceeds" in reason:
+        return f"{filename} is too large for me to receive, so it hasn't been added. Please send a smaller file."
+    return f"I couldn't download {filename}, so it hasn't been added. Please send it again."
+
+
 def preserved(case_ref: str, receipt_ref: str, pages: int) -> str:
     return f"{receipt_ref} saved as {case_ref} ({pages} page{'s' if pages != 1 else ''}). Reading it now."
 
@@ -140,6 +162,27 @@ def help_ca() -> str:
         "Review requests: `RR-0001 include`, `RR-0001 exclude <reason>`, `RR-0001 resolve <RULE-ID> <reason>`, "
         "`RR-0001 clarify <question>`, `RR-0001 supplier <reason>`.\n"
         "Month: `readiness <shop> 2026-11`, `snapshot <shop> 2026-11`, "
-        "`approve SN-0001 <hash-12> [ack <held> <unassigned>]`, `assign INV-0001 2026-11`, `pending`.\n"
+        "`approve SN-0001 <hash-12> [ack <held> <unassigned>]`, `resend SN-0001 [excel|json]`, "
+        "`assign INV-0001 2026-11`, `pending`.\n"
         "GSTR-2B: attach the portal JSON/Excel to `gstr2b <shop> 2026-11`; `recon <shop> 2026-11` shows the result."
     )
+
+
+def help_shared() -> str:
+    return (
+        "\nThis group is shared with your CA. Talk freely: I only act on clear commands. The CA decides here with "
+        "`RR-0001 include`, `RR-0001 exclude <reason>`, `RR-0001 supplier <reason>`, `RR-0001 clarify <question>` "
+        "or `reopen INV-0001 <reason>`. Monthly packs stay in the CA's private room."
+    )
+
+
+def help_purchases_shop() -> str:
+    return (
+        "\nPurchases: `orders`, `ok PO-101` confirms an order, `link INV-0001 PO-101`, "
+        "`accept-partial PO-101`, `task INV-0001 <who> <due> <what>`, `TK-0001 ack|done|verify|cancel`, "
+        "`tasks`, `purchase PO-101`, `authorize PR-0001 <hash-12> due YYYY-MM-DD`."
+    )
+
+
+def help_purchases_ca() -> str:
+    return "\nPurchase review: `review PR-0001 <hash-12>` signs off the exact record."

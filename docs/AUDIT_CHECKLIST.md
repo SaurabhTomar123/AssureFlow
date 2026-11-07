@@ -43,11 +43,11 @@ virtual environment active.
 
 | ID | Check | How to check | Expected | Status |
 |---|---|---|---|---|
-| C-01 | Offline test suite | `make test` | **85 passed** | ✅ 85 passed |
+| C-01 | Offline test suite | `make test` | **189 passed** (85 v1.4 + 2 new fixture goldens + 7 purchase assurance + 28 Telegram regressions + 18 Gemini provider + 31 shared review + 18 client submission) | ✅ 189 passed |
 | C-02 | Tests fail if the database is missing | Stop the db, run `make test` | Errors, **not** skips | ✅ |
 | C-03 | Lint | `make lint` | `All checks passed!` | ✅ |
 | C-04 | Type check (strict) | `make typecheck` | `no issues found in 58 source files` | ✅ |
-| C-05 | Acceptance report | `make acceptance` | `docs/release/acceptance-*.json` shows 85/85 | ✅ |
+| C-05 | Acceptance report | `make acceptance` | `docs/release/acceptance-*.json` shows all passed | ⬜ rerun after the U2 merge (last report 85/85) |
 | C-06 | Live tests against Switch | `LIVE=1 python -m pytest tests/live` | 4 passed, 1 skipped (R02 is manual) | ✅ 2026-11-05 |
 
 ## D. Use of Switch (judging criterion 1)
@@ -118,7 +118,7 @@ virtual environment active.
 
 | ID | Check | How to check | Expected | Status |
 |---|---|---|---|---|
-| I-01 | Test count in README equals the real count | `make test` vs README | Both 85 | ✅ |
+| I-01 | Test count in README equals the real count | `make test` vs README | Both 189 | ✅ |
 | I-02 | Room list in README equals `agents/rooms.yaml` | Compare | Six rooms | ✅ |
 | I-03 | Tool list equals the room allow-lists | `test_tool_inventory_matches_room_allow_lists` | Passes | ✅ |
 | I-04 | Every phase item has evidence | `docs/gates/P0.md` … `P6.md` | Each row names a file or test | ✅ |
@@ -144,7 +144,7 @@ virtual environment active.
 | ID | Check | How to check | Expected | Status |
 |---|---|---|---|---|
 | K-01 | Submission branch is clean and pushed | `git status -sb` | `## main...origin/main`, nothing to commit | ✅ |
-| K-02 | `main` holds the release; old prototypes cannot affect it | `make test`; Dockerfile `CMD`; `legacy/` outside default `pytest` | 85 passed; Docker runs `api.main:app`; `legacy/` tests run only on a throwaway SQLite DB | ✅ 2026-11-06 |
+| K-02 | `main` holds the release; old prototypes cannot affect it | `make test`; Dockerfile `CMD`; `legacy/` outside default `pytest` | 189 passed; Docker runs `api.main:app`; `legacy/` tests run only on a throwaway SQLite DB | ✅ 2026-11-06 |
 | K-03 | Teammate features ported properly (optional) | Each port uses Switch rooms, `Decimal`, scoped tools and tests | Done the same way as the GSTR-2B port | ⬜ |
 | K-04 | `rebuild/assure-flow` frozen as a backup | `git log origin/rebuild/assure-flow -1` | No new commits after the switch to `main` | ✅ |
 
@@ -164,27 +164,53 @@ Run by a person with at least two Telegram accounts (owner and CA), following
 
 | ID | Check | Guide | Expected | Status |
 |---|---|---|---|---|
-| M-01 | Bot created, Group Privacy off, Telegram connected to Switch with no error | §3–4 | Connection listed under Messaging Apps | ⬜ |
-| M-02 | Groups created with exact titles, bot added, `assure-flow` invited | §5 | `!list-agents` shows `assure-flow`; no privacy warning | ⬜ |
-| M-03 | Rooms bound | §6 `bind-rooms --prefix "Telegram: "` | `BOUND` for each created group | ⬜ |
-| M-04 | People bound with their Telegram usernames; `make health` PASS | §7 | No unmapped senders left | ⬜ |
-| M-05 | Upload without a mention; summary; confirm | T-01, T-02 | Summary, then confirmed | ⬜ |
-| M-06 | Stored SHA-256 equals the sent file | T-03 | Hashes equal | ⬜ |
-| M-07 | Correction, hold, duplicate, split | T-04 – T-08 | As described in the guide | ⬜ |
-| M-08 | Handoff to CA, supplier replacement, withdrawal notice | T-09, T-10 | Same case, version 2; RR withdrawn | ⬜ |
-| M-09 | CA decisions, including a refused override and a refused stale decision | T-11, T-12 | Allowed and refused exactly as listed | ⬜ |
-| M-10 | Isolation: owner never sees the CA room, shop A never sees shop B | T-13, T-14 | No leaks | ⬜ |
-| M-11 | Wrong person in a room → message withheld and alert raised | T-15 | No reply in the room; alert with ids only | ⬜ |
-| M-12 | Unbound stranger ignored | T-16 | No data in any reply | ⬜ |
-| M-13 | GSTR-2B Excel reconciled; JSON result recorded | T-17 | RC summary; JSON outcome written in notes | ⬜ |
-| M-14 | Snapshot approved by hash; Excel + JSON arrive in Telegram; wrong hash refused | T-18 | Two files in the group | ⬜ |
-| M-15 | Practice home and operations rooms | T-19, T-20 | Correct answers; alerts visible in operations | ⬜ |
-| M-16 | Worker restart, adapter restart, Switch down, revoke | T-22 – T-25 | Processed once; no replays; nothing without Switch; revoked user ignored | ⬜ |
-| M-17 | Results sheet filled in, with tester, date and commit | Results sheet | Attached to the release notes | 👤 |
+| M-01 | Bot created, Group Privacy off, Telegram connected to Switch with no error | §3–4 | Connection listed under Messaging Apps | PASS: bot/privacy/connection verified by live bridge |
+| M-02 | Groups created with exact titles, bot added, `assure-flow` invited | §5 | `!list-agents` shows `assure-flow`; no privacy warning | PARTIAL: owner, CA, practice-home and recovery groups tested; other roles unavailable |
+| M-03 | Rooms bound | §6 `bind-rooms --prefix "Telegram: "` | `BOUND` for each created group | PASS: created groups bound; CA explicitly rebound to recovery room |
+| M-04 | People bound with their Telegram usernames; `make health` PASS | §7 | No unmapped senders left | PASS: owner/CA bound; restored owner access verified; expected withheld evidence remains |
+| M-05 | Upload without a mention; summary; confirm | T-01, T-02 | Summary, then confirmed | PASS: live Telegram |
+| M-06 | Stored SHA-256 equals the sent file | T-03 | Hashes equal | PASS: source/database/stored bytes match |
+| M-07 | Correction, hold, duplicate, split | T-04 – T-08 | As described in the guide | PASS: corrections, hold, both duplicate types, split and status |
+| M-08 | Handoff to CA, supplier replacement, withdrawal notice | T-09, T-10 | Same case, version 2; RR withdrawn | PASS: same case/version 2; invalidation notice delivered (wording differs) |
+| M-09 | CA decisions, including a refused override and a refused stale decision | T-11, T-12 | Allowed and refused exactly as listed | FAIL: approved-case reopen and allowed R-DUP-02 override refused; other decisions/stale refusal passed |
+| M-10 | Isolation: owner never sees the CA room, shop A never sees shop B | T-13, T-14 | No leaks | PARTIAL: owner routing observed; live second-shop test unavailable without third account |
+| M-11 | Wrong person in a room → message withheld and alert raised | T-15 | No reply in the room; alert with ids only | FAIL: withholding/alerts passed; removed member stays in Switch membership; fresh-room workaround verified |
+| M-12 | Unbound stranger ignored | T-16 | No data in any reply | NOT RUN: separate stranger account unavailable; revoked-owner and wrong-role denials verified separately |
+| M-13 | GSTR-2B Excel reconciled; JSON result recorded | T-17 | RC summary; JSON outcome written in notes | PASS: Excel, idempotence and JSON passed; current dataset has zero mismatches |
+| M-14 | Snapshot approved by hash; Excel + JSON arrive in Telegram; wrong hash refused | T-18 | Two files in the group | PARTIAL: hash approval/generation passed; original album not visible; individual retries confirmed visible |
+| M-15 | Practice home and operations rooms | T-19, T-20 | Correct answers; alerts visible in operations | PARTIAL: practice home passed; dedicated Telegram operations account unavailable |
+| M-16 | Worker restart, adapter restart, Switch down, revoke | T-22 – T-25 | Processed once; no replays; nothing without Switch; revoked user ignored | PARTIAL: worker/outage/revocation passed; adapter fresh reply once, restart attribution/no-replay audit limited |
+| M-18 | Purchase assurance on Telegram (flag on) | P-01 – P-08 | As described in the guide | NOT RUN: not run: additional staff accounts unavailable |
+| M-17 | Results sheet filled in, with tester, date and commit | Results sheet | Attached to the release notes | RECORDED: [2026-11-06 results](release/telegram-manual-2026-11-06.md) |
 
 Telegram differences to note in the results: the bot cannot create groups (rooms are created by hand and
 bound by name); agents appear as name-prefixed messages from one bot; Switch reports only members who have
 posted, so the live member check cannot see silent members (the declared-audience check still applies).
+
+
+## N. Purchase assurance (Update U2, behind a flag)
+
+Contract: [purchase-assurance-update.md](purchase-assurance-update.md). Evidence: [gates/U2.md](gates/U2.md).
+Live transcript: [release/live-run-2026-11-06-purchase.md](release/live-run-2026-11-06-purchase.md).
+
+| ID | Check | How to check | Expected | Status |
+|---|---|---|---|---|
+| N-01 | Flag off keeps v1.4 exactly | `test_flag_off_keeps_v14`; full suite with the default `.env.example` | No link proposals, no match runs, purchase commands say "not enabled" | ✅ |
+| N-02 | Migration up/down/up | `alembic downgrade p5 && alembic upgrade head` on the test database | No errors | ✅ |
+| N-03 | Storekeeper never sees a price | Read `af-delivery-sharma` | No ₹ amount or unit price in any message | ✅ test + live |
+| N-04 | Delivery correction replaces, never adds | `DR-0001 L1=9` then `ok DR-0001 v2` | Received 9, not 17; v1 superseded | ✅ |
+| N-05 | Billed > received holds with the exact difference | Order 10, received 8, billed 10 | Hold, "difference 2" (M03) | ✅ test + live |
+| N-06 | Finishing a task does not clear the hold | `TK-0001 done`, then `TK-0001 verify` | Still on hold; verify refused | ✅ test + live |
+| N-07 | Staff cannot act outside their capability | Storekeeper/assignee try link, accept-partial, verify, report | Refused with "not set up to …" | ✅ |
+| N-08 | Partial delivery needs the owner's explicit acceptance | Corrected invoice for 8 of 10 | M05 until `accept-partial PO-101`; 2 cartons stay outstanding | ✅ test + live |
+| N-09 | Reviewer and owner sign the same content hash | `review PR-0001 <h>`, `authorize PR-0001 <h> due …` | Owner refused before review; wrong hash refused | ✅ test + live |
+| N-10 | Any change after review withdraws the record | Correct the delivery after `review` | "Withdrawn: PR-0001 … because the confirmed delivery changed"; authorize refused | ✅ |
+| N-11 | One invoice per order | Link a second invoice to PO-101 | "already linked" (409 ORDER_ALREADY_LINKED) | ✅ |
+| N-12 | Nothing is ever marked paid | Read the pack JSON and room messages | "ready for payment … no payment has been made"; no paid status anywhere | ✅ |
+| N-13 | Purchase pack delivered through Switch | After `authorize` | Excel + JSON attached in shop and CA rooms | ✅ live |
+| N-14 | Invoice state untouched by purchase review (D-27) | `invoices.status` during the story | Stays `approved` while the purchase advances | ✅ |
+| N-15 | Monthly pack includes the purchase section (UAT10) | — | Not built in this release | ⚠️ |
+| N-16 | Guided setup, permission preflight, routing policies (U2 §14–17) | — | Not built in this release | ⚠️ |
 
 ---
 
